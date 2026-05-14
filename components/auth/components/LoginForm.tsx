@@ -7,8 +7,9 @@ import { Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginUser, resendOTP } from "../service/auth.service";
-import type { LoginFormState } from "../types";
+import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
+import { loginUser, resendOTP } from "@/components/auth/service/auth.service";
+import type { LoginFormState } from "@/components/auth/types";
 
 type CompletedFields = Partial<Record<keyof LoginFormState, boolean>>;
 
@@ -66,6 +67,7 @@ export function LoginForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black text-white overflow-hidden">
+      {/* Background */}
       <div className="absolute inset-3">
         <img
           src="/backgroundLogin.jpg"
@@ -75,7 +77,9 @@ export function LoginForm() {
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black" />
       </div>
 
+      {/* Content */}
       <div className="relative z-10 w-full max-w-md p-6 sm:p-8 bg-black/50 backdrop-blur-xl border border-white/30 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+        {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <Film className="w-10 h-10 text-primary" />
           <span className="text-3xl tracking-wider">INFINITY CINEMA</span>
@@ -165,6 +169,16 @@ export function LoginForm() {
           </div>
         </form>
       </div>
+
+      {showVerify && (
+        <VerifyEmailForm
+          email={form.email}
+          onClose={() => {
+            setShowVerify(false);
+            router.push("/login");
+          }}
+        />
+      )}
     </div>
   );
 }

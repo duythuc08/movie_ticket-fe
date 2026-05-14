@@ -7,8 +7,9 @@ import { Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { registerUser } from "../service/auth.service";
-import type { SignupFormState } from "../types";
+import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
+import { registerUser } from "@/components/auth/service/auth.service";
+import type { SignupFormState } from "@/components/auth/types";
 
 type CompletedFields = Partial<Record<keyof SignupFormState, boolean>>;
 
@@ -88,6 +89,10 @@ export function SignupForm() {
         ? "bg-white text-black border-white shadow-[0_0_12px_rgba(255,255,255,0.4)]"
         : "bg-white/5 text-white border-white/20"
     } focus:border-primary focus:ring-2 focus:ring-primary/60`;
+
+  if (mode === "verify") {
+    return <VerifyEmailForm email={form.email} onClose={() => router.push("/login")} />;
+  }
 
   return (
     <>
