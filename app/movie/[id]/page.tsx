@@ -5,82 +5,42 @@ import { useParams, useRouter } from "next/navigation";
 import { Play, Share2 } from "lucide-react";
 import { Showtimes } from "@/components/movie/components/MovieShowTime";
 import { saveBookingState } from "@/components/booking/utils/bookingStorage";
-import {
-  fetchMovieBanner,
-  fetchMovieDetail,
-  fetchShowtimeDates,
-  fetchShowtimesByDate,
-} from "@/components/movie/service/movie.service";
-import type { MovieDetail, ShowtimeDate, ShowtimeData } from "@/types";
+import { fetchMovieBanner } from "@/components/movie/service/movie.service";
+import { useMovieDetail } from "@/components/movie/hooks/use-movie-detail";
+import { getRatingColor, formatReleaseDate } from "@/components/movie/utils/movie.utils";
+import { AGE_RATING_LABELS } from "@/components/movie/constants/movie.constants";
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [movie, setMovie] = useState<MovieDetail | null>(null);
+  const { movie, showtimes, showtimeDates, selectedDateIndex, loading, selectDate } =
+    useMovieDetail(id);
+
   const [bannerUrl, setBannerUrl] = useState("");
-  const [trailerUrl, setTrailerUrl] = useState("");
-  const [availableDates, setAvailableDates] = useState<ShowtimeDate[]>([]);
-  const [selectedDateIndex, setSelectedDateIndex] = useState(0);
-  const [currentShowtimes, setCurrentShowtimes] = useState<ShowtimeData | null>(null);
+  const [autoplay, setAutoplay] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const trailerRef = useRef<HTMLDivElement>(null);
 
+  // Derive trailerSrc — không cần state riêng, không cần effect
+  const trailerSrc = movie?.trailerUrl
+    ? autoplay
+      ? movie.trailerUrl.includes("?")
+        ? `${movie.trailerUrl}&autoplay=1`
+        : `${movie.trailerUrl}?autoplay=1`
+      : movie.trailerUrl
+    : "";
+
   useEffect(() => {
-    fetchMovieBanner(id).then(setBannerUrl).catch((err) => console.error("Error fetching banner:", err));
+    fetchMovieBanner(id).then(setBannerUrl).catch(() => {});
   }, [id]);
-
-  useEffect(() => {
-    fetchMovieDetail(id)
-      .then((movieDetail) => {
-        setMovie(movieDetail);
-        setTrailerUrl(movieDetail.trailerUrl);
-      })
-      .catch((err) => console.error("Error fetching movie:", err));
-  }, [id]);
-
-  useEffect(() => {
-    fetchShowtimeDates()
-      .then((dates) => {
-        setAvailableDates(dates);
-        setSelectedDateIndex(0);
-      })
-      .catch((err) => console.error("Error finding start date:", err));
-  }, []);
-
-  useEffect(() => {
-    if (availableDates.length === 0 || !availableDates[selectedDateIndex]) return;
-
-    const dateObj = availableDates[selectedDateIndex].date;
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const dateString = `${year}-${month}-${day}`;
-
-    setCurrentShowtimes(null);
-    fetchShowtimesByDate(
-      id,
-      `${dateString}T00:00:00`,
-      `${dateString}T23:59:59`,
-      availableDates[selectedDateIndex].label
-    )
-      .then(setCurrentShowtimes)
-      .catch((err) => console.error("Error fetching showtimes by date:", err));
-  }, [selectedDateIndex, availableDates.length, id]);
 
   const handleWatchTrailer = () => {
-    if (trailerRef.current) {
-      trailerRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-    if (movie) {
-      const urlWithAutoplay = movie.trailerUrl.includes("?")
-        ? movie.trailerUrl + "&autoplay=1"
-        : movie.trailerUrl + "?autoplay=1";
-      setTrailerUrl(urlWithAutoplay);
-    }
+    trailerRef.current?.scrollIntoView({ behavior: "smooth" });
+    setAutoplay(true);
   };
 
-  if (!movie) {
+  if (loading || !movie) {
     return (
       <div className="min-h-screen">
         <div className="w-full h-[500px] lg:h-[600px] bg-muted animate-pulse" />
@@ -102,8 +62,11 @@ export default function MovieDetailsPage() {
     );
   }
 
+  const currentShowtimes = showtimes[selectedDateIndex] ?? null;
+
   return (
     <div className="min-h-screen">
+      {/* Banner */}
       <div className="relative w-full h-[500px] lg:h-[600px] overflow-hidden">
         <div className="absolute inset-0">
           <img
@@ -133,11 +96,13 @@ export default function MovieDetailsPage() {
               </h1>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4 text-sm sm:text-base text-white/90">
-                <span>{movie.releaseDate}</span>
+                <span>{formatReleaseDate(movie.releaseDate)}</span>
                 <span>•</span>
                 <span>{movie.duration}</span>
                 <span>•</span>
-                <span>{movie.ageRating}</span>
+                <span className={`px-2 py-0.5 rounded text-xs font-bold ${getRatingColor(movie.ageRating)}`}>
+                  {AGE_RATING_LABELS[movie.ageRating] ?? movie.ageRating}
+                </span>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
@@ -203,6 +168,7 @@ export default function MovieDetailsPage() {
         </div>
       </div>
 
+      {/* Cast */}
       {movie.cast && movie.cast.length > 0 && (
         <div className="px-4 sm:px-6 lg:px-8 py-3 max-w-[1920px] mx-auto border-b border-border/10">
           <h2 className="text-2xl font-bold mb-8 text-left">Diễn viên</h2>
@@ -231,12 +197,13 @@ export default function MovieDetailsPage() {
         </div>
       )}
 
+      {/* Trailer */}
       <div ref={trailerRef} className="px-4 sm:px-6 lg:px-8 py-12 max-w-[1920px] mx-auto">
         <div className="max-w-5xl mx-auto">
           <h2 className="mb-6 text-2xl font-bold">Trailer</h2>
           <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
             <iframe
-              src={trailerUrl}
+              src={trailerSrc}
               width="100%"
               height="100%"
               allow="autoplay; encrypted-media"
@@ -246,11 +213,12 @@ export default function MovieDetailsPage() {
         </div>
       </div>
 
+      {/* Showtimes */}
       <Showtimes
         data={currentShowtimes}
-        days={availableDates}
+        days={showtimeDates}
         selectedDate={selectedDateIndex}
-        onSelectDate={(i) => setSelectedDateIndex(i)}
+        onSelectDate={selectDate}
         onSelect={(bookingInfo) => {
           saveBookingState({
             movie: movie.title,

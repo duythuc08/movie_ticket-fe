@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
 import { loginUser, resendOTP } from "@/components/auth/service/auth.service";
+import { useAuth } from "@/context/AuthContext";
+import { AUTH_ROUTES, ERROR_MESSAGES } from "@/components/auth/constants/auth.constants";
+import { loginSchema } from "@/components/auth/schema";
 import type { LoginFormState } from "@/components/auth/types";
 
 type CompletedFields = Partial<Record<keyof LoginFormState, boolean>>;
@@ -16,7 +19,8 @@ type CompletedFields = Partial<Record<keyof LoginFormState, boolean>>;
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") ?? "/";
+  const from = searchParams.get("from") ?? AUTH_ROUTES.HOME;
+  const { login } = useAuth();
 
   const [completedFields, setCompletedFields] = useState<CompletedFields>({});
   const [form, setForm] = useState<LoginFormState>({ email: "", password: "" });
@@ -35,6 +39,12 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validation = loginSchema.safeParse(form);
+    if (!validation.success) {
+      setError(validation.error.issues[0].message);
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -43,22 +53,20 @@ export function LoginForm() {
 
       if (result.authenticated && result.token) {
         if (result.enabled) {
-          localStorage.setItem("token", result.token);
-          localStorage.setItem("user", JSON.stringify({ username: form.email }));
+          login(result.token);
           router.replace(from);
         } else {
           await resendOTP(form.email);
           setShowVerify(true);
         }
       } else {
-        setError("Sai tên đăng nhập hoặc mật khẩu!");
+        setError(ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
     } catch (err) {
-      console.error("Login error:", err);
       if (err instanceof TypeError) {
         setError("Không thể kết nối đến máy chủ. Vui lòng kiểm tra server.");
       } else {
-        setError((err as Error).message);
+        setError((err as Error).message || ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
     } finally {
       setLoading(false);
@@ -67,7 +75,6 @@ export function LoginForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black text-white overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-3">
         <img
           src="/backgroundLogin.jpg"
@@ -77,10 +84,8 @@ export function LoginForm() {
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 w-full max-w-md p-6 sm:p-8 bg-black/50 backdrop-blur-xl border border-white/30 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-        {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+        <Link href={AUTH_ROUTES.HOME} className="flex items-center justify-center gap-2 mb-8">
           <Film className="w-10 h-10 text-primary" />
           <span className="text-3xl tracking-wider">INFINITY CINEMA</span>
         </Link>
@@ -137,7 +142,7 @@ export function LoginForm() {
               <input type="checkbox" className="w-4 h-4 accent-primary" />
               <span className="text-muted-foreground">Ghi nhớ đăng nhập</span>
             </label>
-            <Link href="/login/forgot-password" className="text-primary hover:underline">
+            <Link href={AUTH_ROUTES.FORGOT_PASSWORD} className="text-primary hover:underline">
               Quên mật khẩu?
             </Link>
           </div>
@@ -154,7 +159,7 @@ export function LoginForm() {
           <div className="mt-12 space-y-5 text-center text-sm text-muted-foreground">
             <p>
               Chưa có tài khoản?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
+              <Link href={AUTH_ROUTES.SIGNUP} className="text-primary hover:underline">
                 Đăng ký ngay
               </Link>
             </p>
@@ -175,7 +180,7 @@ export function LoginForm() {
           email={form.email}
           onClose={() => {
             setShowVerify(false);
-            router.push("/login");
+            router.push(AUTH_ROUTES.LOGIN);
           }}
         />
       )}

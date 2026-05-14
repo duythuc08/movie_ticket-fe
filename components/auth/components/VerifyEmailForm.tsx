@@ -6,6 +6,8 @@ import { Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { verifyOTP, resendOTP } from "@/components/auth/service/auth.service";
+import { OTP_RESEND_COOLDOWN } from "@/components/auth/constants/auth.constants";
 
 interface VerifyEmailFormProps {
   email: string;
@@ -24,13 +26,7 @@ export function VerifyEmailForm({ email, onClose }: VerifyEmailFormProps) {
     setMessage("");
 
     try {
-      const response = await fetch(
-        `/api-proxy/auth/verify?otp=${code}&email=${email}`,
-        { method: "POST" }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || `Lỗi: ${response.status}`);
-
+      await verifyOTP(email, code);
       setMessage("Xác thực thành công! Đang chuyển về đăng nhập...");
       setTimeout(() => onClose(), 2000);
     } catch (error) {
@@ -44,22 +40,15 @@ export function VerifyEmailForm({ email, onClose }: VerifyEmailFormProps) {
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     try {
-      const response = await fetch(
-        `/api-proxy/auth/resendOTP?email=${email}`,
-        { method: "POST" }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || `Lỗi: ${response.status}`);
-
+      await resendOTP(email);
       setMessage("OTP mới đã được gửi đến email của bạn.");
-      setResendCooldown(30);
+      setResendCooldown(OTP_RESEND_COOLDOWN);
     } catch (error) {
       console.error("Resend OTP error:", error);
       setMessage("Không thể gửi lại OTP. Vui lòng thử lại sau.");
     }
   };
 
-  // Dùng setTimeout thay vì setInterval để tránh tạo interval mới mỗi tick
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setTimeout(() => {

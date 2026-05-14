@@ -5,20 +5,13 @@ import { Film, Search, User, LogOut, User2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
-
-interface StoredUser {
-  firstname: string;
-  lastname: string;
-  username: string;
-  birthday: string;
-  memberShipTierName: string;
-}
+import { useAuth } from "@/components/auth/hooks/use-auth";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
 
-  const [user, setUser] = useState<StoredUser | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -26,44 +19,13 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem("token");
+    logout();
     localStorage.removeItem("user");
     localStorage.removeItem("pendingOrder");
-    setUser(null);
     if (window.location.pathname !== "/") {
       router.push("/login");
     }
-  }, [router]);
-
-  const isTokenExpired = (token: string): boolean => {
-    if (!token) return true;
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      const { exp } = JSON.parse(jsonPayload);
-      return Date.now() >= exp * 1000;
-    } catch {
-      return true;
-    }
-  };
-
-  const saveUserToLocal = (rawData: StoredUser) => {
-    const filteredUser: StoredUser = {
-      firstname: rawData.firstname,
-      lastname: rawData.lastname,
-      username: rawData.username,
-      birthday: rawData.birthday,
-      memberShipTierName: rawData.memberShipTierName,
-    };
-    localStorage.setItem("user", JSON.stringify(filteredUser));
-    setUser(filteredUser);
-  };
+  }, [logout, router]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,44 +41,6 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (!token || isTokenExpired(token)) {
-      if (token || storedUser) {
-        handleLogout();
-      }
-      return;
-    }
-
-    if (storedUser && !user) {
-      setUser(JSON.parse(storedUser));
-    }
-
-    const fetchUserInfo = async () => {
-      try {
-        const res = await fetch("/api-proxy/users/myInfo", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.status === 401) {
-          handleLogout();
-          return;
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          saveUserToLocal(data?.result || data);
-        }
-      } catch (err) {
-        console.error("Lỗi cập nhật thông tin user:", err);
-      }
-    };
-
-    fetchUserInfo();
-  }, [pathname, handleLogout]);
 
   const isActive = (path: string) => pathname === path;
 
@@ -174,7 +98,7 @@ export function Navbar() {
 
             <ThemeToggle />
 
-            {user ? (
+            {isAuthenticated && user ? (
               <div
                 className="relative"
                 onMouseEnter={() => setShowUserMenu(true)}

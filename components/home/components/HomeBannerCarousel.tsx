@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Info, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import type { Banner } from "@/types";
+import { BANNER_INTERVAL } from "@/components/home/constants/home.constants";
+import type { BannerItem } from "@/components/home/types";
 
 interface HomeBannerCarouselProps {
-  banners: Banner[];
+  banners: BannerItem[];
 }
 
 export function HomeBannerCarousel({ banners }: HomeBannerCarouselProps) {
@@ -25,7 +26,7 @@ export function HomeBannerCarousel({ banners }: HomeBannerCarouselProps) {
 
   useEffect(() => {
     if (banners.length <= 1 || paused) return;
-    const id = setInterval(next, 5000);
+    const id = setInterval(next, BANNER_INTERVAL);
     return () => clearInterval(id);
   }, [next, banners.length, paused]);
 

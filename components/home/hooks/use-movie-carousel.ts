@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Movie, PagedMovieResult } from "@/types";
+import type { Movie, PagedMovieResult } from "@/components/movie/types";
 import { fetchMoviesPaged } from "@/components/movie/service/movie.service";
 
 type MovieStatusKey = "showing" | "comingSoon" | "imax";
@@ -30,7 +30,6 @@ export function useMovieCarousel({
   const goToPage = useCallback(
     async (page: number) => {
       if (loading) return;
-      // Clamp page index
       const target = Math.max(0, Math.min(page, totalPages - 1));
       if (target === currentPage && movies.length > 0) return;
 
