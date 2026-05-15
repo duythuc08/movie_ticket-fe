@@ -75,12 +75,11 @@ export function useMovieDetail(movieId: string): UseMovieDetailReturn {
     if (!entry) return;
 
     const { date, label } = entry;
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
-    const startStr = start.toISOString().replace(".000Z", "");
-    const endStr = end.toISOString().replace(".000Z", "");
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const fmt = (d: Date, h: number, m: number, s: number) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(m)}:${pad(s)}`;
+    const startStr = fmt(date, 0, 0, 0);
+    const endStr = fmt(date, 23, 59, 59);
 
     let cancelled = false;
 

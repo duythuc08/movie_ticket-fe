@@ -17,7 +17,6 @@ interface ShowtimesProps {
   }) => void;
 }
 
-/** Kiểm tra ngày có phải hôm nay không */
 function isToday(date: Date): boolean {
   const today = new Date();
   return (
@@ -27,8 +26,6 @@ function isToday(date: Date): boolean {
   );
 }
 
-/** Lọc bỏ suất chiếu đã qua nếu đang xem lịch ngày hôm nay.
- *  `time` có dạng "HH:mm" (24h). */
 function filterValidTimes(
   times: { id: number; time: string; roomName: string }[],
   isCurrentDay: boolean
@@ -57,11 +54,9 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
     });
   };
 
-  // Xác định tab đang chọn có phải hôm nay không
   const selectedDay = days[selectedDate];
   const currentDaySelected = selectedDay ? isToday(selectedDay.date) : false;
 
-  // Lọc và chỉ giữ rạp còn suất hợp lệ
   const filteredCinemas = (data?.cinemas ?? [])
     .map((cinema) => ({
       ...cinema,
@@ -73,7 +68,6 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-12 max-w-[1920px] mx-auto bg-background">
-      {/* Section heading */}
       <div className="flex items-center gap-3 mb-8">
         <div className="w-1 h-6 bg-primary rounded-full" />
         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/60">
@@ -81,7 +75,6 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
         </h2>
       </div>
 
-      {/* Date tabs */}
       <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
         {days.map((day, idx) => (
           <button
@@ -98,7 +91,6 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
         ))}
       </div>
 
-      {/* Showtimes grid */}
       {!hasShowtimes ? (
         <div className="text-center py-16 border border-dashed rounded-2xl border-border bg-secondary/20">
           <p className="text-muted-foreground text-base">
