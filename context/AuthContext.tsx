@@ -14,6 +14,8 @@ import {
   isTokenExpired,
   removeStoredToken,
   setStoredToken,
+  setTokenCookie,
+  removeTokenCookie,
 } from "@/components/auth/utils/auth.utils";
 
 interface AuthContextType {
@@ -45,8 +47,10 @@ function readStoredToken(): string | null {
   const stored = localStorage.getItem(AUTH_TOKEN_KEY);
   if (!stored || isTokenExpired(stored)) {
     if (stored) removeStoredToken();
+    removeTokenCookie();
     return null;
   }
+  setTokenCookie(stored);
   return stored;
 }
 
@@ -65,11 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback((newToken: string) => {
     setStoredToken(newToken);
+    setTokenCookie(newToken);
     setToken(newToken);
   }, []);
 
   const logout = useCallback(() => {
     removeStoredToken();
+    removeTokenCookie();
     setToken(null);
     setUser(null);
   }, []);

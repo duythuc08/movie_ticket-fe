@@ -27,3 +27,14 @@ export function setStoredToken(token: string): void {
 export function removeStoredToken(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
 }
+
+export function setTokenCookie(token: string): void {
+  const decoded = decodeToken(token);
+  const exp = decoded?.exp as number | undefined;
+  const maxAge = exp ? exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24;
+  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${maxAge}; SameSite=Strict`;
+}
+
+export function removeTokenCookie(): void {
+  document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0`;
+}
