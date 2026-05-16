@@ -38,62 +38,6 @@ export function PersonalInfo({ userInfo, allTiers, form, saving, loading, onForm
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Trophy className="w-4 h-4 text-primary" />
-          </div>
-          <h2 className="text-base font-bold text-foreground">Hạng thành viên</h2>
-        </div>
-
-        {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-36 rounded-lg" />
-            <Skeleton className="h-2 w-full rounded-full" />
-            <Skeleton className="h-3 w-52 rounded" />
-          </div>
-        ) : (
-          <>
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${tier.bg} mb-4`}>
-              <Star className={`w-4 h-4 ${tier.text}`} />
-              <span className={`text-lg font-black ${tier.text}`}>{tierName}</span>
-              <span className="text-sm font-medium text-muted-foreground">
-                — {pts.toLocaleString("vi-VN")} điểm
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                <span>{pts.toLocaleString("vi-VN")} điểm</span>
-                {nextTier && (
-                  <span>{nextTier.pointsRequired.toLocaleString("vi-VN")} điểm</span>
-                )}
-              </div>
-              <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${tier.bar}`}
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              {nextTier ? (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Còn{" "}
-                  <span className={`font-bold ${tier.text}`}>
-                    {(nextTier.pointsRequired - pts).toLocaleString("vi-VN")} điểm
-                  </span>{" "}
-                  để lên hạng{" "}
-                  <span className={`font-bold ${TIER_STYLE[nextTier.name]?.text ?? "text-foreground"}`}>
-                    {nextTier.name}
-                  </span>
-                </p>
-              ) : (
-                <p className="text-xs text-amber-500 font-medium">Bạn đang ở hạng cao nhất</p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
       <div className="bg-card border border-border rounded-xl shadow-sm">
         <div className="px-6 py-5 border-b border-border">
           <h2 className="text-base font-bold text-foreground">Thông tin cá nhân</h2>
