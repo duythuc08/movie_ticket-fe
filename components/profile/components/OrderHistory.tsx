@@ -96,7 +96,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
         ) : sorted.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border rounded-xl bg-secondary/20">
             <Ticket className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Bạn chưa có đơn hàng nào.</p>
+            <p className="text-sm text-muted-foreground">Bạn chưa có đơn hàng nào thành công !.</p>
           </div>
         ) : (
           /* ── Table-style header + rows ── */
@@ -131,7 +131,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                       <td className="py-3.5 pr-3">
                         <div className="min-w-0">
                           <p className="text-foreground font-medium truncate max-w-[180px]">
-                            {order.movieTitle || `Đặt vé (${ticketCount} vé)`}
+                            {order.movieTitle || order.tickets?.[0]?.movieName || `Đặt vé (${ticketCount} vé)`}
                           </p>
                         </div>
                       </td>

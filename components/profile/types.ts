@@ -9,7 +9,7 @@ export interface OrderData {
   discountAmount?: number;
   finalPrice?: number;
   promotionCode?: string;
-  tickets?: { seatName: string; seatType: string; price: number }[];
+  tickets?: { seatName: string; seatType: string; price: number; roomName?: string; movieName?: string; showTime?: string }[];
   foods?: { name: string; quantity: number; totalPrice: number }[];
 }
 

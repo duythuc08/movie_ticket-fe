@@ -4,16 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  fetchMyInfo,
   updateMyInfo,
   fetchAllMembershipTiers,
   fetchOrdersByUser,
 } from "@/components/profile/service/user.service";
+import { useAuth } from "@/context/AuthContext";
 import type { UserInfo, MembershipTier, Order } from "@/types";
 import type { ProfileFormState } from "@/components/profile/user.types";
 
 export function useProfile() {
   const router = useRouter();
+  const { user: authUser, token, isAuthenticated } = useAuth();
 
   const [activeTab,     setActiveTab]     = useState<"info" | "orders">("info");
   const [loadingInfo,   setLoadingInfo]   = useState(true);
@@ -36,53 +37,41 @@ export function useProfile() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token") ?? "";
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  // Sync userInfo and form from AuthContext — no extra API call
+  useEffect(() => {
+    if (!authUser) return;
+    setUserInfo(authUser);
+    setForm({
+      firstname:   authUser.firstname   || "",
+      lastname:    authUser.lastname    || "",
+      phoneNumber: authUser.phoneNumber || "",
+      birthday:    authUser.birthday    || "",
+    });
+    localStorage.setItem("user", JSON.stringify({
+      userId:             authUser.userId,
+      username:           authUser.username,
+      firstname:          authUser.firstname,
+      lastname:           authUser.lastname,
+      birthday:           authUser.birthday,
+      memberShipTierName: authUser.memberShipTierName,
+    }));
+    setLoadingInfo(false);
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!token) return;
     fetchAllMembershipTiers(token)
       .then(setAllTiers)
       .catch((e) => console.error("Lỗi lấy hạng thành viên:", e));
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
-
-    (async () => {
-      try {
-        const info = await fetchMyInfo(token);
-        setUserInfo(info);
-        setForm({
-          firstname:   info.firstname   || "",
-          lastname:    info.lastname    || "",
-          phoneNumber: info.phoneNumber || "",
-          birthday:    info.birthday    || "",
-        });
-        localStorage.setItem("user", JSON.stringify({
-          userId:             info.userId,
-          username:           info.username,
-          firstname:          info.firstname,
-          lastname:           info.lastname,
-          birthday:           info.birthday,
-          memberShipTierName: info.memberShipTierName,
-        }));
-      } catch (e) {
-        const err = e as Error;
-        if (err.message?.includes("401") || err.message?.includes("403")) {
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          router.push("/login");
-        } else {
-          toast.error("Không thể tải thông tin tài khoản.");
-        }
-      } finally {
-        setLoadingInfo(false);
-      }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!userInfo?.userId) return;
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!userInfo?.userId || !token) return;
 
     setLoadingOrders(true);
     (async () => {
@@ -97,7 +86,7 @@ export function useProfile() {
         setLoadingOrders(false);
       }
     })();
-  }, [userInfo?.userId]);
+  }, [userInfo?.userId, token]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -106,7 +95,6 @@ export function useProfile() {
     e.preventDefault();
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
       if (!token) { router.push("/login"); return; }
       await updateMyInfo(token, form);
       setUserInfo((p) => (p ? { ...p, ...form } : p));

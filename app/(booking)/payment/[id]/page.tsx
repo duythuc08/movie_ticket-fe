@@ -12,13 +12,14 @@ import {
 import { createPayment } from "@/components/booking/service/booking.service";
 import { fetchMembershipTierByName } from "@/components/profile/service/user.service";
 import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
-import type { MembershipTier } from "@/types";
+import type { BookingState, MembershipTier } from "@/types";
 import { formatCurrency } from "@/components/booking/utils/booking.utils";
+
 export default function PaymentPage() {
   const router = useRouter();
   useParams<{ id: string }>();
 
-  const bookingInfo = getBookingState();
+  const [bookingInfo, setBookingInfo] = useState<BookingState | null>(null);
 
   const [paymentMethod, setPaymentMethod] = useState("MOMO");
   const [loading, setLoading] = useState(false);
@@ -29,10 +30,14 @@ export default function PaymentPage() {
   const [isTierLoading, setIsTierLoading] = useState(true);
 
   useEffect(() => {
-    if (!bookingInfo) {
+    const state = getBookingState();
+    if (!state) {
       toast.error("Không có thông tin đặt vé. Vui lòng bắt đầu lại.");
       router.push("/");
+      return;
     }
+    setBookingInfo(state);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
