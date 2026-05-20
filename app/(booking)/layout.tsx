@@ -29,7 +29,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
       {!isSuccessOrFail && (
         <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center h-16 sm:h-[68px]">
+            <div className="flex items-center h-16 sm:h-17">
 
               <div className="w-24 sm:w-44 flex items-center">
                 <button
@@ -85,7 +85,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
                   className="flex items-center gap-1.5 group"
                 >
                   <Film className="w-5 h-5 text-primary transition-transform duration-200 group-hover:scale-110" />
-                  <span className="hidden sm:inline text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/70">
+                  <span className="hidden sm:inline text-sm font-black tracking-wider text-transparent bg-clip-text bg-linear-to-r from-foreground to-foreground/70">
                     INFINITY CINEMA
                   </span>
                 </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Download, Home, Ticket } from "lucide-react";
@@ -189,9 +190,11 @@ function PaymentSuccessContent() {
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg shadow-black/5">
               <div className="flex items-start gap-4 mb-5">
                 {extraInfo?.moviePoster && (
-                  <img
+                  <Image
                     src={extraInfo.moviePoster}
-                    alt={extraInfo?.movie}
+                    alt={extraInfo?.movie ?? "Movie poster"}
+                    width={64}
+                    height={96}
                     className="w-16 h-24 object-cover rounded-xl border border-border shadow-md flex-shrink-0"
                   />
                 )}
