@@ -74,9 +74,6 @@ export async function getShowingMoviesPaged(page = 0, size = 4) {
 export async function getComingSoonMoviesPaged(page = 0, size = 4) {
   return apiFetchPaged(`/movies/comingSoon/paged?page=${page}&size=${size}`);
 }
-export async function getImaxMoviesPaged(page = 0, size = 4) {
-  return apiFetchPaged(`/movies/imax/paged?page=${page}&size=${size}`);
-}
 
 // ─── Cinemas ──────────────────────────────────────────────
 export async function getCinemas() {

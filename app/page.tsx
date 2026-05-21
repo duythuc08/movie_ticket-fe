@@ -5,15 +5,13 @@ import {
   getBanners,
   getShowingMoviesPaged,
   getComingSoonMoviesPaged,
-  getImaxMoviesPaged,
 } from "@/lib/serverApi";
 
 export default async function HomePage() {
-  const [banners, showing, comingSoon, imax] = await Promise.all([
+  const [banners, showing, comingSoon] = await Promise.all([
     getBanners(),
     getShowingMoviesPaged(0, 4),
     getComingSoonMoviesPaged(0, 4),
-    getImaxMoviesPaged(0, 4),
   ]);
 
   return (
@@ -34,13 +32,6 @@ export default async function HomePage() {
           initialMovies={comingSoon.movies}
           initialTotalPages={comingSoon.totalPages}
           initialTotalElements={comingSoon.totalElements}
-        />
-        <MovieCarousel
-          title="Phim IMAX"
-          movieStatus="imax"
-          initialMovies={imax.movies}
-          initialTotalPages={imax.totalPages}
-          initialTotalElements={imax.totalElements}
         />
       </div>
     </div>
