@@ -11,6 +11,7 @@ import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
 import { loginUser, resendOTP } from "@/components/auth/service/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { AUTH_ROUTES, ERROR_MESSAGES } from "@/components/auth/constants/auth.constants";
+import { decodeToken } from "@/components/auth/utils/auth.utils";
 import { loginSchema } from "@/components/auth/schema";
 import type { LoginFormState } from "@/components/auth/types";
 
@@ -54,7 +55,10 @@ export function LoginForm() {
       if (result.authenticated && result.token) {
         if (result.enabled) {
           login(result.token);
-          router.replace(from);
+          const payload = decodeToken(result.token);
+          const scope = String(payload?.scope ?? payload?.scope ?? "");
+          const destination = scope.includes("ADMIN") ? "/admin" : from;
+          router.replace(destination);
         } else {
           await resendOTP(form.email);
           setShowVerify(true);

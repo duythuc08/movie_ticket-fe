@@ -9,6 +9,8 @@ import { useAuth } from "@/components/auth/hooks/use-auth";
 
 export function Navbar() {
   const pathname = usePathname();
+
+  if (pathname.startsWith("/admin")) return null;
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
 

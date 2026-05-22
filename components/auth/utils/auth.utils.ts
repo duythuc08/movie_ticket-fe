@@ -2,8 +2,9 @@ import { AUTH_TOKEN_KEY } from "../constants/auth.constants";
 
 export function decodeToken(token: string): Record<string, unknown> | null {
   try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload));
+    const base64url = token.split(".")[1];
+    const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(base64));
   } catch {
     return null;
   }

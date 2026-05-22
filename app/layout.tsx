@@ -5,6 +5,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { FooterConditional } from "@/components/layout/FooterConditional";
 import { Providers } from "@/components/shared/Providers";
 import { Toaster } from "@/components/ui/sonner";
+import { Suspense } from "react";
+import { ForbiddenToast } from "@/components/admin/layout/AdminGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +47,9 @@ export default function RootLayout({
           <main className="flex-grow">{children}</main>
           <FooterConditional />
           <Toaster richColors position="top-right" duration={4000} />
+          <Suspense>
+            <ForbiddenToast />
+          </Suspense>
         </Providers>
       </body>
     </html>

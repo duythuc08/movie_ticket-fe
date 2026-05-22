@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard,
   Film,
@@ -19,8 +19,11 @@ import {
   ChevronDown,
   ChevronRight,
   Clapperboard,
+  LogOut,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarLeafItem {
   label: string;
@@ -198,15 +201,85 @@ function SidebarGroup({
   );
 }
 
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    logout();
+    router.push("/login");
+  }
+
+  const initials = user
+    ? `${user.firstname?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase()
+    : "A";
+
+  const fullName = user ? `${user.firstname} ${user.lastname}`.trim() : "Admin";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center gap-3 rounded-lg px-2 py-2 hover:bg-gray-800 transition-colors"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <p className="truncate text-sm font-medium text-gray-200">{fullName}</p>
+          <p className="truncate text-xs text-gray-500">{user?.username ?? ""}</p>
+        </div>
+        <ChevronDown
+          size={14}
+          className={cn("shrink-0 text-gray-500 transition-transform", open && "rotate-180")}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+          >
+            <Home size={14} />
+            Về trang chủ
+          </Link>
+          <div className="my-1 border-t border-gray-700" />
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-900/30 transition-colors"
+          >
+            <LogOut size={14} />
+            Đăng xuất
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-gray-800 bg-gray-900">
       <div className="flex h-16 items-center gap-2 border-b border-gray-800 px-4">
-        <Film className="text-indigo-500" size={22} />
+        <Film className="text-red-500" size={22} />
         <span className="text-lg font-bold tracking-tight text-white">
-          Admin Panel
+          Admin Control
         </span>
       </div>
 
@@ -233,12 +306,7 @@ export function AdminSidebar() {
       </nav>
 
       <div className="border-t border-gray-800 p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
-        >
-          <span>← Về trang chủ</span>
-        </Link>
+        <UserMenu />
       </div>
     </aside>
   );
