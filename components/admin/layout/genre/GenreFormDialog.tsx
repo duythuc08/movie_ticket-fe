@@ -1,0 +1,70 @@
+"use client";
+
+import { FormDialog } from "@/components/shared";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { genreFormSchema, type GenreFormSchema } from "@/lib/validations/admin.schemas";
+import type { AdminGenre } from "@/types/admin.type";
+
+interface GenreFormDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    genre?: AdminGenre | null;
+    onSubmit: (data: GenreFormSchema) => Promise<void>;
+    isSubmitting: boolean;
+}
+
+export function GenreFormDialog({
+    open,
+    onOpenChange,
+    genre,
+    onSubmit,
+    isSubmitting,
+}: GenreFormDialogProps) {
+    const isCreateMode = !genre;
+
+    return (
+        <FormDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={isCreateMode ? "Thêm thể loại mới" : "Chi tiết thể loại"}
+            schema={genreFormSchema}
+            defaultValues={{
+                name: genre?.name ?? "",
+                description: genre?.description ?? "",
+            }}
+            onSubmit={onSubmit}
+            isSubmitting={isSubmitting}
+            submitLabel={isCreateMode ? "Tạo thể loại" : "Cập nhật"}
+        >
+            {(form) => (
+                <>
+                    <div className="space-y-2">
+                        <Label htmlFor="genre-name">
+                            Tên thể loại <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                            id="genre-name"
+                            {...form.register("name")}
+                            placeholder="VD: Hành động, Tình cảm, Kinh dị..."
+                        />
+                        {form.formState.errors.name && (
+                            <p className="text-xs text-destructive">
+                                {form.formState.errors.name.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="genre-description">Mô tả</Label>
+                        <Input
+                            id="genre-description"
+                            {...form.register("description")}
+                            placeholder="Mô tả ngắn về thể loại phim..."
+                        />
+                    </div>
+                </>
+            )}
+        </FormDialog>
+    );
+}
