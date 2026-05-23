@@ -35,7 +35,8 @@ export function GenreFormDialog({
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
-            submitLabel={isCreateMode ? "Tạo thể loại" : "Cập nhật"}
+            submitLabel="Tạo thể loại"
+            readOnly={!isCreateMode}
         >
             {(form) => (
                 <>

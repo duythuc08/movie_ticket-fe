@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { AdminPerson } from "@/types/admin.type";
 import { StatusBadge, ActionMenu, ColumnHeader } from "@/components/shared";
 import type { StatusMap } from "@/components/shared";
-import { Eye, Pencil, Power, PowerOff } from "lucide-react";
+import { Eye, Power, PowerOff } from "lucide-react";
 import Image from "next/image";
 
 const PERSON_STATUS_MAP: StatusMap = {
@@ -78,8 +78,8 @@ export function createPersonColumns(
                     <ActionMenu
                         actions={[
                             {
-                                label: "Chỉnh sửa",
-                                icon: Pencil,
+                                label: "Xem chi tiết",
+                                icon: Eye,
                                 onClick: () => actions.onEdit(person),
                             },
                             {

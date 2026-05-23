@@ -29,6 +29,7 @@ interface FormDialogProps<TSchema extends FieldValues> {
   onSubmit: (values: TSchema) => void | Promise<void>;
   isSubmitting?: boolean;
   submitLabel?: string;
+  readOnly?: boolean;
   children: (form: UseFormReturn<TSchema>) => React.ReactNode;
 }
 
@@ -42,6 +43,7 @@ export function FormDialog<TSchema extends FieldValues>({
   onSubmit,
   isSubmitting = false,
   submitLabel = "Lưu",
+  readOnly = false,
   children,
 }: FormDialogProps<TSchema>) {
   const form = useForm<TSchema>({
@@ -77,23 +79,34 @@ export function FormDialog<TSchema extends FieldValues>({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-          <fieldset disabled={isSubmitting} className="space-y-4 border-none p-0 m-0">
+          <fieldset
+            disabled={isSubmitting}
+            className={`space-y-4 border-none p-0 m-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
+          >
             {children(form)}
           </fieldset>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {submitLabel}
-            </Button>
+            {readOnly ? (
+              <Button className="cursor-pointer" type="button" variant="outline" onClick={handleClose}>
+                Đóng
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isSubmitting}
+                >
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {submitLabel}
+                </Button>
+              </>
+            )}
           </div>
         </form>
       </DialogContent>

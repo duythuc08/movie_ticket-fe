@@ -36,7 +36,8 @@ export function PersonFormDialog({
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
-            submitLabel={isCreateMode ? "Thêm mới" : "Cập nhật"}
+            submitLabel="Thêm mới"
+            readOnly={!isCreateMode}
         >
             {(form) => (
                 <>
