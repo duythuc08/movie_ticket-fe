@@ -60,14 +60,11 @@ export function PersonFormDialog({
                         <Label>Ảnh đại diện</Label>
                         <ImageUploadPreview
                             currentImageUrl={person?.avatarUrl ?? null}
-                            onFileSelect={(file) => form.setValue("avatarUrl", file, { shouldDirty: true })}
+                            onFileSelect={(file) =>
+                                form.setValue("avatarUrl", file, { shouldDirty: true })
+                            }
                             aspectRatio="avatar"
                         />
-                        {form.formState.errors.avatarUrl && (
-                            <p className="text-xs text-destructive">
-                                {form.formState.errors.avatarUrl.message}
-                            </p>
-                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -88,6 +85,11 @@ export function PersonFormDialog({
                                 </label>
                             ))}
                         </div>
+                        {form.formState.errors.movieRole && (
+                            <p className="text-xs text-destructive">
+                                {form.formState.errors.movieRole.message}
+                            </p>
+                        )}
                     </div>
                 </>
             )}

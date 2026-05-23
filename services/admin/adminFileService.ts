@@ -1,31 +1,21 @@
-import { adminPostFormData } from "./adminApiClient";
-
-interface FileUploadResult {
-    url: string;
-    publicId: string;
-}
-
-export async function uploadFile(
-  token: string,
-  file: File
-): Promise<FileUploadResult> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const result = await adminPostFormData<FileUploadResult>(
-    token,
-    "/file/upload",
-    formData
-  );
-
-  return result;
-}
+import { buildAuthHeadersMultipart } from "./adminApiClient";
 
 export async function uploadFileAndGetUrl(
   token: string,
   file: File
 ): Promise<string> {
-  const result = await uploadFile(token, file);
-  return result.url;
-}
+  const formData = new FormData();
+  formData.append("file", file);
 
+  const response = await fetch("/api-proxy/api/files/upload", {
+    method: "POST",
+    headers: buildAuthHeadersMultipart(token),
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload thất bại: ${response.status}`);
+  }
+
+  return response.text();
+}

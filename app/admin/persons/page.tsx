@@ -15,6 +15,7 @@ import { DataTable, PageHeader } from "@/components/shared";
 import { PersonFormDialog } from "@/components/admin/layout/person/PersonFormDialog";
 import { createPersonColumns } from "@/components/admin/layout/person/PersonColumns";
 import { Button } from "@/components/ui/button";
+import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 
 const STATUS_FILTER_OPTIONS = [
     { label: "Hoạt động", value: "ACTIVE" },
@@ -65,12 +66,18 @@ export default function AdminPersonsPage() {
         setIsSubmitting(true);
         try {
             if (selectedPerson) {
-                // TODO: Thêm PUT /admin/persons/{id} vào BE
                 toast.info("Tính năng cập nhật đang được phát triển");
             } else {
+                let avatarUrl: string | undefined;
+                if (data.avatarUrl instanceof File) {
+                    avatarUrl = await uploadFileAndGetUrl(token, data.avatarUrl);
+                } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
+                    avatarUrl = data.avatarUrl;
+                }
+
                 const created = await createPerson(token, {
                     name: data.name,
-                    avatarUrl: data.avatarUrl || undefined,
+                    avatarUrl,
                     movieRole: data.movieRole,
                 });
                 toast.success(`Đã thêm "${created.name}" thành công`);
@@ -83,7 +90,6 @@ export default function AdminPersonsPage() {
             setIsSubmitting(false);
         }
     }
-
     async function handleToggleStatus(person: AdminPerson) {
         if (!token) return;
         const action = person.entityStatus === "ACTIVE" ? "vô hiệu hóa" : "kích hoạt";
