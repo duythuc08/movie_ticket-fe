@@ -2,6 +2,7 @@
 
 import { FormDialog } from "@/components/shared";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { genreFormSchema, type GenreFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminGenre } from "@/types/admin.type";
@@ -58,10 +59,11 @@ export function GenreFormDialog({
 
                     <div className="space-y-2">
                         <Label htmlFor="genre-description">Mô tả</Label>
-                        <Input
+                        <Textarea
                             id="genre-description"
                             {...form.register("description")}
                             placeholder="Mô tả ngắn về thể loại phim..."
+                            rows={4}
                         />
                     </div>
                 </>

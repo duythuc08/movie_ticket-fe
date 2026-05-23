@@ -19,6 +19,11 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const toastShown = useRef(false);
 
   useEffect(() => {
+    document.body.setAttribute("data-theme", "dark");
+    return () => document.body.removeAttribute("data-theme");
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated || !token) return;
 
     if (!hasAdminRole(token) && !toastShown.current) {

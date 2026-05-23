@@ -140,8 +140,8 @@ function SidebarLeaf({
       className={cn(
         "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
         isActive
-          ? "bg-indigo-600 text-white font-medium"
-          : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+          ? "border-l-2 border-primary bg-primary/10 text-primary font-medium"
+          : "border-l-2 border-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-100"
       )}
     >
       <span className="shrink-0">{item.icon}</span>
@@ -175,7 +175,7 @@ function SidebarGroup({
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
           isAnyChildActive
-            ? "text-indigo-400 font-medium"
+            ? "text-primary font-medium"
             : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
         )}
       >
@@ -234,7 +234,7 @@ function UserMenu() {
         onClick={() => setOpen((p) => !p)}
         className="flex w-full items-center gap-3 rounded-lg px-2 py-2 hover:bg-gray-800 transition-colors"
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
           {initials}
         </div>
         <div className="flex-1 min-w-0 text-left">
@@ -248,19 +248,19 @@ function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+        <div className="absolute bottom-full left-0 right-0 mb-1 rounded-xl border border-white/10 bg-[#111827] py-1 shadow-2xl backdrop-blur-xl overflow-hidden">
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 transition-colors"
           >
             <Home size={14} />
             Về trang chủ
           </Link>
-          <div className="my-1 border-t border-gray-700" />
+          <div className="my-1 border-t border-white/10" />
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-900/30 transition-colors"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <LogOut size={14} />
             Đăng xuất
@@ -277,8 +277,8 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-gray-800 bg-gray-900">
       <div className="flex h-16 items-center gap-2 border-b border-gray-800 px-4">
-        <Film className="text-red-500" size={22} />
-        <span className="text-lg font-bold tracking-tight text-white">
+        <Film className="text-primary shrink-0" size={20} />
+        <span className="text-base font-black tracking-wider text-transparent bg-clip-text bg-linear-to-r from-white to-white/70 uppercase whitespace-nowrap">
           Infinity Cinema
         </span>
       </div>
