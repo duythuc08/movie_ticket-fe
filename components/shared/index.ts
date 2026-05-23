@@ -14,3 +14,10 @@ export type { ActionItem } from "./action-menu";
 export { PageHeader } from "./page-header";
 
 export { ColumnHeader } from "./column-header";
+
+export { MultiSelectWithSearch } from "./multi-select";
+export type { SelectOption } from "./multi-select";
+
+export { ImageUploadPreview } from "./image-upload";
+
+export { QuickAddGenreButton, QuickAddPersonButton } from "./quick-add-dialog";

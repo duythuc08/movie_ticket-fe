@@ -80,3 +80,11 @@ export function DialogTitle({ className = "", children, ...props }: React.HTMLAt
     </h2>
   );
 }
+
+export function DialogFooter({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={`px-6 py-5 border-t border-border flex justify-end ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
