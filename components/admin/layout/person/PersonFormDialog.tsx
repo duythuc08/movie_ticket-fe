@@ -1,6 +1,7 @@
 "use client";
 
-import { FormDialog, ImageUploadPreview } from "@/components/shared";
+import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { ImageUploadPreview } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { personFormSchema, type PersonFormSchema } from "@/lib/validations/admin.schemas";
@@ -24,10 +25,11 @@ export function PersonFormDialog({
     const isCreateMode = !person;
 
     return (
-        <FormDialog
+        <AdminFormDialog
             open={open}
             onOpenChange={onOpenChange}
             title={isCreateMode ? "Thêm diễn viên / đạo diễn" : "Chỉnh sửa thông tin"}
+            subtitle={!isCreateMode ? person.name : undefined}
             schema={personFormSchema}
             defaultValues={{
                 name: person?.name ?? "",
@@ -36,8 +38,9 @@ export function PersonFormDialog({
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Thêm mới"
+            submitLabel={isCreateMode ? "Thêm mới" : "Cập nhật"}
             readOnly={!isCreateMode}
+            maxWidth="max-w-md"
         >
             {(form) => (
                 <>
@@ -94,6 +97,6 @@ export function PersonFormDialog({
                     </div>
                 </>
             )}
-        </FormDialog>
+        </AdminFormDialog>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormDialog } from "@/components/shared";
+import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -25,10 +25,11 @@ export function GenreFormDialog({
     const isCreateMode = !genre;
 
     return (
-        <FormDialog
+        <AdminFormDialog
             open={open}
             onOpenChange={onOpenChange}
             title={isCreateMode ? "Thêm thể loại mới" : "Chi tiết thể loại"}
+            subtitle={!isCreateMode ? genre.name : undefined}
             schema={genreFormSchema}
             defaultValues={{
                 name: genre?.name ?? "",
@@ -38,6 +39,7 @@ export function GenreFormDialog({
             isSubmitting={isSubmitting}
             submitLabel="Tạo thể loại"
             readOnly={!isCreateMode}
+            maxWidth="max-w-md"
         >
             {(form) => (
                 <>
@@ -68,6 +70,6 @@ export function GenreFormDialog({
                     </div>
                 </>
             )}
-        </FormDialog>
+        </AdminFormDialog>
     );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { AdminHeader } from "@/components/admin/layout/AdminHeader";
 import { AdminGuard } from "@/components/admin/layout/AdminGuard";
+import { AdminBodyClass } from "@/components/admin/layout/AdminBodyClass";
 
 export const metadata: Metadata = {
   title: "Admin — Infinity Cinema",
@@ -15,7 +16,8 @@ export default function AdminLayout({
 }) {
   return (
     <AdminGuard>
-      <div data-theme="dark" className="flex h-screen overflow-hidden bg-gray-950 text-gray-100">
+      <AdminBodyClass />
+      <div className="admin-layout flex h-screen overflow-hidden bg-admin-bg text-admin">
         <AdminSidebar />
 
         <div className="flex flex-col flex-1 overflow-hidden">

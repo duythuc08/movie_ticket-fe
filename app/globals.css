@@ -1,8 +1,41 @@
 @import "tailwindcss";
+@import "../styles/admin-tokens.css";
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 @theme inline {
+    /* ── Admin color classes ─────────────────────────────────────────── */
+    --color-admin-bg:          var(--admin-bg);
+    --color-admin-surface:     var(--admin-surface);
+    --color-admin-surface-2:   var(--admin-surface-2);
+    --color-admin-surface-3:   var(--admin-surface-3);
+    --color-admin-surface-4:   var(--admin-surface-4);
+
+    --color-admin-border:      var(--admin-border);
+    --color-admin-border-2:    var(--admin-border-2);
+    --color-admin-border-3:    var(--admin-border-3);
+
+    --color-admin:             var(--admin-text);
+    --color-admin-2:           var(--admin-text-2);
+    --color-admin-3:           var(--admin-text-3);
+    --color-admin-4:           var(--admin-text-4);
+
+    --color-admin-accent:      var(--admin-accent);
+    --color-admin-accent-h:    var(--admin-accent-h);
+    --color-admin-accent-a:    var(--admin-accent-a);
+    --color-admin-accent-sub:  var(--admin-accent-sub);
+    --color-admin-accent-fg:   var(--admin-accent-fg);
+
+    --color-admin-success:     var(--admin-success);
+    --color-admin-success-sub: var(--admin-success-sub);
+    --color-admin-warning:     var(--admin-warning);
+    --color-admin-warning-sub: var(--admin-warning-sub);
+    --color-admin-danger:      var(--admin-danger);
+    --color-admin-danger-sub:  var(--admin-danger-sub);
+    --color-admin-info:        var(--admin-info);
+    --color-admin-info-sub:    var(--admin-info-sub);
+
+    /* ── App theme colors ────────────────────────────────────────────── */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -115,6 +148,9 @@
 @layer base {
     * {
         @apply border-border outline-ring/50;
+        /* Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
     }
     body {
         @apply bg-background text-foreground;
@@ -124,6 +160,25 @@
     }
     html {
         scroll-behavior: smooth;
+    }
+    /* Custom scrollbar — Chrome/Safari/Edge */
+    ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 9999px;
+        transition: background 0.2s;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--ring);
+    }
+    ::-webkit-scrollbar-corner {
+        background: transparent;
     }
     /* Fix native <select> option colors — browser uses color-scheme to style options */
     select {
