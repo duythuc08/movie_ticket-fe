@@ -19,12 +19,7 @@ export const personFormSchema = z.object({
     .string()
     .min(1, "Tên không được để trống")
     .max(100, "Tên tối đa 100 ký tự"),
-  avatarUrl: z
-    .string()
-    .url("URL ảnh đại diện không hợp lệ")
-    .optional()
-    .or(z.literal(""))
-    .default(""),
+  avatarUrl: z.union([z.string(), z.instanceof(File), z.null()]).optional(),
   movieRole: z.enum(["DIRECTOR", "ACTOR"] as const, {
     error: "Vui lòng chọn vai trò",
   }),
@@ -79,37 +74,21 @@ export const movieFormSchema = z.object({
     error: "Vui lòng chọn phân loại độ tuổi",
   }),
 
-  genreNames: z
-    .array(z.string())
-    .min(1, "Phải chọn ít nhất 1 thể loại"),
+  genreNames: z.array(z.string()).min(1, "Phải chọn ít nhất 1 thể loại"),
 
-  castIds: z
-    .array(z.number())
-    .optional()
-    .default([]),
+  castIds: z.array(z.number()).optional().default([]),
 
-  directorIds: z
-    .array(z.number())
-    .min(1, "Phải chọn ít nhất 1 đạo diễn"),
+  directorIds: z.array(z.number()).min(1, "Phải chọn ít nhất 1 đạo diễn"),
 
-  posterUrl: z
-    .string()
-    .optional()
-    .default(""),
+  posterUrl: z.string().optional().default(""),
 
-  posterFile: z
-    .instanceof(File)
-    .optional()
-    .nullable()
-    .default(null),
+  posterFile: z.instanceof(File).optional().nullable().default(null),
 });
 
 export type MovieFormSchema = z.infer<typeof movieFormSchema>;
 
 export const bannerFormSchema = z.object({
-  imageUrl: z
-    .string()
-    .min(1, "URL ảnh không được để trống"),
+  imageUrl: z.string().min(1, "URL ảnh không được để trống"),
 
   title: z
     .string()

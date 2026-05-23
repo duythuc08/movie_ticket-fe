@@ -279,7 +279,7 @@ export function AdminSidebar() {
       <div className="flex h-16 items-center gap-2 border-b border-gray-800 px-4">
         <Film className="text-red-500" size={22} />
         <span className="text-lg font-bold tracking-tight text-white">
-          Admin Control
+          Infinity Cinema
         </span>
       </div>
 

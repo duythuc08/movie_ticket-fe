@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { FooterConditional } from "@/components/layout/FooterConditional";
 import { Providers } from "@/components/shared/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
@@ -41,11 +39,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full bg-background text-foreground">
         <Providers>
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <FooterConditional />
+          {children}
           <Toaster richColors position="top-right" duration={4000} />
           <Suspense>
             <ForbiddenToast />

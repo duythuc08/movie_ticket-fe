@@ -15,7 +15,7 @@ export default function AdminLayout({
 }) {
   return (
     <AdminGuard>
-      <div className="flex h-screen overflow-hidden bg-gray-950 text-gray-100">
+      <div data-theme="dark" className="flex h-screen overflow-hidden bg-gray-950 text-gray-100">
         <AdminSidebar />
 
         <div className="flex flex-col flex-1 overflow-hidden">
