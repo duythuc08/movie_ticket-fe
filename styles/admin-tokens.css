@@ -1,64 +1,45 @@
 /*
- * ═══════════════════════════════════════════════════════════════════════
- *  ADMIN DESIGN SYSTEM — "Deep Space Cinema"
- *  File này là nguồn duy nhất cho màu admin. KHÔNG hardcode gray-*, slate-*
- *  hay dùng var theme mặc định (--background...) trong component /admin.
+ * ADMIN DESIGN SYSTEM
+ * Palette: neutral dark gray (cool 264°), slightly brighter than Tailwind gray-900.
+ * Accent: red-orange oklch(0.570 0.223 27) — complementary.
+ * Single source of truth — KHÔNG hardcode gray-*, slate-* trong /admin.
  *
- *  Chiến lược:
- *  - Raw tokens (--admin-*) định nghĩa palette thực
- *  - .admin-layout remap các CSS var theme (--background, --border...)
- *    → tất cả shared components (DataTable, Dialog, Input, Badge...)
- *      tự động nhận màu admin mà không cần sửa từng file
- *
- *  Hue chủ đạo: 258° (indigo-violet, sáng hơn pure indigo)
- *  Accent: oklch(0.570 0.223 27) — đỏ-cam complementary
- * ═══════════════════════════════════════════════════════════════════════
- *
- *  CLASS REFERENCE (dùng trực tiếp khi cần override):
- *    Nền      : bg-admin-bg  bg-admin-surface  bg-admin-surface-2/3/4
- *    Border   : border-admin-border  border-admin-border-2  border-admin-border-3
- *    Text     : text-admin  text-admin-2  text-admin-3  text-admin-4
- *    Accent   : bg-admin-accent  text-admin-accent  border-admin-accent
- *               bg-admin-accent-sub  text-admin-accent-h (hover)
- *    Status   : text-admin-success/warning/danger/info
- *               bg-admin-success-sub/warning-sub/danger-sub/info-sub
- * ═══════════════════════════════════════════════════════════════════════
+ * CLASS REFERENCE:
+ *   Nền    : bg-admin-bg  bg-admin-surface  bg-admin-surface-2/3/4
+ *   Border : border-admin-border  border-admin-border-2  border-admin-border-3
+ *   Text   : text-admin  text-admin-2  text-admin-3  text-admin-4
+ *   Accent : bg-admin-accent  text-admin-accent  border-admin-accent
+ *            bg-admin-accent-sub  text-admin-accent-h
+ *   Status : text-admin-success/warning/danger/info
+ *            bg-admin-success-sub/warning-sub/danger-sub/info-sub
  */
 
-/* ── Raw design tokens ──────────────────────────────────────────────── */
 :root {
+  --admin-bg:          oklch(0.180 0.008 264);
+  --admin-surface:     oklch(0.210 0.008 264);
+  --admin-surface-2:   oklch(0.240 0.008 264);
+  --admin-surface-3:   oklch(0.275 0.008 264);
+  --admin-surface-4:   oklch(0.310 0.008 264);
 
-  /* Backgrounds — 5 lớp, tông xanh-tím nhẹ tạo chiều sâu */
-  --admin-bg:          oklch(0.145 0.030 258);   /* page body              */
-  --admin-surface:     oklch(0.185 0.026 258);   /* sidebar, panel chính   */
-  --admin-surface-2:   oklch(0.218 0.024 258);   /* card, dialog, table    */
-  --admin-surface-3:   oklch(0.252 0.022 258);   /* input, dropdown        */
-  --admin-surface-4:   oklch(0.288 0.020 258);   /* hover row, selected    */
+  --admin-border:      oklch(0.320 0.010 264);
+  --admin-border-2:    oklch(0.420 0.012 264);
+  --admin-border-3:    oklch(0.550 0.012 264);
 
-  /* Borders */
-  --admin-border:      oklch(0.295 0.024 258);   /* divider nhẹ            */
-  --admin-border-2:    oklch(0.390 0.026 258);   /* border hover / visible */
-  --admin-border-3:    oklch(0.520 0.028 258);   /* focus ring             */
+  --admin-text:        oklch(0.960 0.004 264);
+  --admin-text-2:      oklch(0.720 0.008 264);
+  --admin-text-3:      oklch(0.520 0.010 264);
+  --admin-text-4:      oklch(0.380 0.008 264);
 
-  /* Text — tông trắng-xanh lạnh, dễ đọc */
-  --admin-text:        oklch(0.945 0.008 258);   /* heading, value chính   */
-  --admin-text-2:      oklch(0.695 0.022 258);   /* label, caption         */
-  --admin-text-3:      oklch(0.490 0.018 258);   /* muted / placeholder    */
-  --admin-text-4:      oklch(0.345 0.014 258);   /* disabled               */
-
-  /* Brand accent — đỏ-cam, complementary mạnh với indigo */
   --admin-accent:      oklch(0.5705 0.2228 27.21);
-  --admin-accent-h:    oklch(0.640  0.220  27.21);   /* hover               */
-  --admin-accent-a:    oklch(0.510  0.225  27.21);   /* active/pressed      */
-  --admin-accent-sub:  oklch(0.5705 0.2228 27.21 / 0.14); /* subtle bg     */
-  --admin-accent-fg:   oklch(0.985  0      0    );   /* text trên nền accent*/
+  --admin-accent-h:    oklch(0.640  0.220  27.21);
+  --admin-accent-a:    oklch(0.510  0.225  27.21);
+  --admin-accent-sub:  oklch(0.5705 0.2228 27.21 / 0.14);
+  --admin-accent-fg:   oklch(0.985  0      0    );
 
-  /* Sidebar nav states */
   --admin-nav-active-bg:   oklch(0.5705 0.2228 27.21 / 0.16);
   --admin-nav-active-text: oklch(0.860  0.140  27.21);
-  --admin-nav-hover-bg:    oklch(0.288  0.020  258);
+  --admin-nav-hover-bg:    oklch(0.310  0.008  264);
 
-  /* Status — vivid, dễ phân biệt trên nền tối */
   --admin-success:     oklch(0.740 0.160 145);
   --admin-success-sub: oklch(0.740 0.160 145 / 0.14);
   --admin-warning:     oklch(0.805 0.168 75);
@@ -68,18 +49,11 @@
   --admin-info:        oklch(0.705 0.162 232);
   --admin-info-sub:    oklch(0.705 0.162 232 / 0.14);
 
-  /* Scrollbar */
-  --admin-scrollbar-thumb: oklch(0.340 0.024 258);
-  --admin-scrollbar-hover: oklch(0.460 0.026 258);
+  --admin-scrollbar-thumb: oklch(0.360 0.010 264);
+  --admin-scrollbar-hover: oklch(0.480 0.012 264);
 }
 
-/*
- * ── Theme variable remap ─────────────────────────────────────────────
- * Đặt trong .admin-layout → tất cả shared components (Dialog, Input,
- * DataTable, Badge, Button...) tự nhận màu admin mà không cần sửa.
- */
 [data-admin] {
-  /* Page / component backgrounds */
   --background:            var(--admin-surface-2);
   --foreground:            var(--admin-text);
   --card:                  var(--admin-surface-2);
@@ -87,12 +61,10 @@
   --popover:               var(--admin-surface-3);
   --popover-foreground:    var(--admin-text);
 
-  /* Borders & inputs */
   --border:                var(--admin-border);
   --input:                 var(--admin-surface-3);
   --ring:                  var(--admin-border-3);
 
-  /* Muted / secondary */
   --muted:                 var(--admin-surface-3);
   --muted-foreground:      var(--admin-text-3);
   --secondary:             var(--admin-surface-3);
@@ -100,15 +72,12 @@
   --accent:                var(--admin-surface-4);
   --accent-foreground:     var(--admin-text);
 
-  /* Brand */
   --primary:               var(--admin-accent);
   --primary-foreground:    var(--admin-accent-fg);
 
-  /* Status */
   --destructive:           var(--admin-danger);
 }
 
-/* ── Scrollbar ──────────────────────────────────────────────────────── */
 [data-admin] ::-webkit-scrollbar-thumb {
   background: var(--admin-scrollbar-thumb) !important;
   border-radius: 9999px;

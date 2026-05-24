@@ -22,11 +22,11 @@ export function AdminHeader() {
   const pageTitle = PATH_LABELS[pathname] ?? "Quản trị hệ thống";
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900/80 px-6 backdrop-blur-sm">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-admin-border bg-admin-surface px-6">
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-xs uppercase tracking-widest text-gray-500 font-medium select-none">Admin</span>
-        <span className="text-gray-700">/</span>
-        <span className="font-semibold text-gray-100">{pageTitle}</span>
+        <span className="text-xs uppercase tracking-widest text-admin-3 font-medium select-none">Admin</span>
+        <span className="text-admin-border-2">/</span>
+        <span className="font-semibold text-admin">{pageTitle}</span>
       </div>
     </header>
   );
