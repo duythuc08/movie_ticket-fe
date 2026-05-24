@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
                   borderRadius: "8px",
                   color: "#f9fafb",
                 }}
-                formatter={(value: number) => [formatVND(value), "Doanh thu"]}
+                formatter={(value) => [formatVND(typeof value === "number" ? value : 0), "Doanh thu"]}
               />
               <Area
                 type="monotone"

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-/* ─── Dialog Root ─────────────────────────────────────────── */
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,12 +31,10 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      {/* Content wrapper */}
       <div className="relative z-10 w-full flex items-start justify-center min-h-full py-6">
         {children}
       </div>
@@ -46,7 +43,6 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   );
 }
 
-/* ─── DialogContent ───────────────────────────────────────── */
 export interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
@@ -63,7 +59,6 @@ export function DialogContent({ className = "", children, ...props }: DialogCont
   );
 }
 
-/* ─── DialogHeader ────────────────────────────────────────── */
 export function DialogHeader({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={`px-6 py-5 border-b border-border ${className}`} {...props}>
@@ -72,7 +67,6 @@ export function DialogHeader({ className = "", children, ...props }: React.HTMLA
   );
 }
 
-/* ─── DialogTitle ─────────────────────────────────────────── */
 export function DialogTitle({ className = "", children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2 className={`text-lg font-bold text-foreground leading-tight ${className}`} {...props}>

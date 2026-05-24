@@ -37,15 +37,12 @@ export async function fetchPersonsByRoleForSelect(
   token: string,
   movieRole: "DIRECTOR" | "ACTOR"
 ): Promise<AdminPerson[]> {
-  const filterString = buildFilterString({ movieRole });
-
   const result = await adminGet<ApiPagedResult<AdminPerson>>(
     token,
     "/admin/persons",
-    { page: 0, size: 200, sort: "name,asc", filter: filterString }
+    { page: 0, size: 999, sort: "name,asc" }
   );
-
-  return result.content;
+  return result.content.filter((p) => p.movieRole === movieRole);
 }
 
 export async function fetchPersonById(

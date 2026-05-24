@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+    genreFormSchema, type GenreFormSchema,
+    quickAddPersonSchema, type QuickAddPersonSchema,
+} from "@/lib/validations/admin.schemas";
 
 // ─── QuickAdd Genre ────────────────────────────────────────────────────────────
 
@@ -16,24 +21,16 @@ interface QuickAddGenreProps {
 
 export function QuickAddGenreButton({ onCreated, onCreateRequest }: QuickAddGenreProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
-    function handleOpen() { setName(""); setDescription(""); setError(null); setIsOpen(true); }
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!name.trim()) { setError("Tên thể loại không được để trống"); return; }
+    async function handleSubmit(data: GenreFormSchema) {
         setIsSubmitting(true);
-        setError(null);
         try {
-            await onCreateRequest(name.trim(), description.trim());
-            onCreated(name.trim());
+            await onCreateRequest(data.name, data.description || "");
+            onCreated(data.name);
             setIsOpen(false);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Tạo thể loại thất bại");
+            toast.error(err instanceof Error ? err.message : "Tạo thể loại thất bại");
         } finally {
             setIsSubmitting(false);
         }
@@ -43,35 +40,54 @@ export function QuickAddGenreButton({ onCreated, onCreateRequest }: QuickAddGenr
         <>
             <button
                 type="button"
-                onClick={handleOpen}
-                title="Thêm thể loại mới"
-                className="flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
+                onClick={() => setIsOpen(true)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-                <Plus size={16} />
+                <Plus size={14} className="shrink-0" />
+                Tạo thể loại mới
             </button>
 
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Thêm thể loại mới</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            <AdminFormDialog
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                title="Thêm thể loại mới"
+                schema={genreFormSchema}
+                defaultValues={{ name: "", description: "" }}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                submitLabel="Tạo thể loại"
+                maxWidth="max-w-md"
+            >
+                {(form) => (
+                    <>
                         <div className="space-y-2">
-                            <Label htmlFor="quick-genre-name">Tên thể loại <span className="text-destructive">*</span></Label>
-                            <Input id="quick-genre-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Hành động..." autoFocus />
+                            <Label htmlFor="quick-genre-name">
+                                Tên thể loại <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="quick-genre-name"
+                                {...form.register("name")}
+                                placeholder="VD: Hành động, Tình cảm, Kinh dị..."
+                                autoFocus
+                            />
+                            {form.formState.errors.name && (
+                                <p className="text-xs text-destructive">
+                                    {form.formState.errors.name.message}
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="quick-genre-desc">Mô tả</Label>
-                            <Input id="quick-genre-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn..." />
+                            <Textarea
+                                id="quick-genre-desc"
+                                {...form.register("description")}
+                                placeholder="Mô tả ngắn về thể loại phim..."
+                                rows={4}
+                            />
                         </div>
-                        {error && <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
-                        <DialogFooter className="gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>Hủy</Button>
-                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Đang tạo..." : "Tạo thể loại"}</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </>
+                )}
+            </AdminFormDialog>
         </>
     );
 }
@@ -86,71 +102,92 @@ interface QuickAddPersonProps {
 
 export function QuickAddPersonButton({ defaultRole, onCreated, onCreateRequest }: QuickAddPersonProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [name, setName] = useState("");
-    const [role, setRole] = useState<"DIRECTOR" | "ACTOR">(defaultRole);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
-    function handleOpen() { setName(""); setRole(defaultRole); setError(null); setIsOpen(true); }
+    const roleLabel = defaultRole === "DIRECTOR" ? "đạo diễn" : "diễn viên";
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!name.trim()) { setError("Tên không được để trống"); return; }
+    async function handleSubmit(data: QuickAddPersonSchema) {
         setIsSubmitting(true);
-        setError(null);
         try {
-            const created = await onCreateRequest(name.trim(), role);
+            const created = await onCreateRequest(data.name, data.movieRole);
             onCreated(created.id, created.name);
             setIsOpen(false);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Tạo thất bại");
+            toast.error(err instanceof Error ? err.message : "Tạo thất bại");
         } finally {
             setIsSubmitting(false);
         }
     }
 
-    const roleLabel = defaultRole === "DIRECTOR" ? "đạo diễn" : "diễn viên";
-
     return (
         <>
             <button
                 type="button"
-                onClick={handleOpen}
-                title={`Thêm ${roleLabel} mới`}
-                className="flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
+                onClick={() => setIsOpen(true)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-                <Plus size={16} />
+                <Plus size={14} className="shrink-0" />
+                Tạo {roleLabel} mới
             </button>
 
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="capitalize">Thêm {roleLabel} mới</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            <AdminFormDialog
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                title={`Thêm ${roleLabel} mới`}
+                schema={quickAddPersonSchema}
+                defaultValues={{ name: "", movieRole: defaultRole, avatarUrl: "" }}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                submitLabel={`Thêm ${roleLabel}`}
+                maxWidth="max-w-md"
+            >
+                {(form) => (
+                    <>
                         <div className="space-y-2">
-                            <Label>Họ và tên <span className="text-destructive">*</span></Label>
-                            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập họ tên..." autoFocus />
+                            <Label htmlFor="quick-person-name">
+                                Họ và tên <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="quick-person-name"
+                                {...form.register("name")}
+                                placeholder="Nhập họ và tên đầy đủ"
+                                autoFocus
+                            />
+                            {form.formState.errors.name && (
+                                <p className="text-xs text-destructive">
+                                    {form.formState.errors.name.message}
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
-                            <Label>Vai trò</Label>
+                            <Label>
+                                Vai trò <span className="text-destructive">*</span>
+                            </Label>
                             <div className="flex gap-4">
-                                {(["DIRECTOR", "ACTOR"] as const).map((r) => (
-                                    <label key={r} className="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" value={r} checked={role === r} onChange={() => setRole(r)} className="accent-primary" />
-                                        <span className="text-sm">{r === "DIRECTOR" ? "Đạo diễn" : "Diễn viên"}</span>
+                                {(["DIRECTOR", "ACTOR"] as const).map((roleOption) => (
+                                    <label key={roleOption} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            value={roleOption}
+                                            checked={form.watch("movieRole") === roleOption}
+                                            onChange={() => form.setValue("movieRole", roleOption)}
+                                            className="accent-primary"
+                                        />
+                                        <span className="text-sm">
+                                            {roleOption === "DIRECTOR" ? "Đạo diễn" : "Diễn viên"}
+                                        </span>
                                     </label>
                                 ))}
                             </div>
+                            {form.formState.errors.movieRole && (
+                                <p className="text-xs text-destructive">
+                                    {form.formState.errors.movieRole.message}
+                                </p>
+                            )}
                         </div>
-                        {error && <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>}
-                        <DialogFooter className="gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>Hủy</Button>
-                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Đang tạo..." : "Tạo"}</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    </>
+                )}
+            </AdminFormDialog>
         </>
     );
 }

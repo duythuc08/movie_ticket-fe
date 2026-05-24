@@ -1,6 +1,6 @@
 /*
  * ADMIN DESIGN SYSTEM
- * Palette: neutral dark gray (cool 264°), slightly brighter than Tailwind gray-900.
+ * Palette: deep blue (cool 255°), slightly brightened.
  * Accent: red-orange oklch(0.570 0.223 27) — complementary.
  * Single source of truth — KHÔNG hardcode gray-*, slate-* trong /admin.
  *
@@ -15,15 +15,15 @@
  */
 
 :root {
-  --admin-bg:          oklch(0.180 0.008 264);
-  --admin-surface:     oklch(0.210 0.008 264);
-  --admin-surface-2:   oklch(0.240 0.008 264);
-  --admin-surface-3:   oklch(0.275 0.008 264);
-  --admin-surface-4:   oklch(0.310 0.008 264);
+  --admin-bg:          oklch(0.255 0.022 255);
+  --admin-surface:     oklch(0.285 0.022 255);
+  --admin-surface-2:   oklch(0.315 0.022 255);
+  --admin-surface-3:   oklch(0.350 0.022 255);
+  --admin-surface-4:   oklch(0.385 0.022 255);
 
-  --admin-border:      oklch(0.320 0.010 264);
-  --admin-border-2:    oklch(0.420 0.012 264);
-  --admin-border-3:    oklch(0.550 0.012 264);
+  --admin-border:      oklch(0.395 0.024 255);
+  --admin-border-2:    oklch(0.490 0.026 255);
+  --admin-border-3:    oklch(0.620 0.026 255);
 
   --admin-text:        oklch(0.960 0.004 264);
   --admin-text-2:      oklch(0.720 0.008 264);
@@ -49,8 +49,8 @@
   --admin-info:        oklch(0.705 0.162 232);
   --admin-info-sub:    oklch(0.705 0.162 232 / 0.14);
 
-  --admin-scrollbar-thumb: oklch(0.360 0.010 264);
-  --admin-scrollbar-hover: oklch(0.480 0.012 264);
+  --admin-scrollbar-thumb: oklch(0.430 0.022 255);
+  --admin-scrollbar-hover: oklch(0.550 0.024 255);
 }
 
 [data-admin] {

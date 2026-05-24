@@ -13,7 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, X, Clock } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, X, Clock, Film, Info, Users } from "lucide-react";
 import { movieFormSchema, type MovieFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminMovie } from "@/types/admin.type";
 import {
@@ -31,8 +39,8 @@ const AGE_RATING_OPTIONS = [
   { value: "G",     label: "G — Mọi lứa tuổi" },
   { value: "PG",    label: "PG — Có hướng dẫn phụ huynh" },
   { value: "PG_13", label: "PG-13 — Trên 13 tuổi" },
-  { value: "R",     label: "R — 18+" },
-  { value: "NC_17", label: "NC-17 — Chỉ người lớn" },
+  { value: "R",     label: "R — Trên 18 tuổi" },
+  { value: "NC_17", label: "NC-17 — Chỉ dành cho người lớn" },
 ] as const;
 
 interface MovieFormDialogProps {
@@ -81,7 +89,7 @@ export function MovieFormDialog({
       setDirectorOptions(directors.map((p) => ({ value: String(p.id), label: p.name })));
       setActorOptions(actors.map((p) => ({ value: String(p.id), label: p.name })));
     } catch {
-      toast.error("Không thể tải dữ liệu dropdown");
+      toast.error("Không thể tải dữ liệu danh sách lựa chọn");
     } finally {
       setIsLoadingOptions(false);
     }
@@ -153,236 +161,276 @@ export function MovieFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto gap-0 p-0 [&>button]:hidden">
-
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-
-          <DialogHeader className="sticky top-0 z-10 bg-card flex flex-row items-start justify-between px-6 py-4 border-b border-border space-y-0">
-            <div className="space-y-0.5 min-w-0">
-              <DialogTitle className="text-base font-semibold leading-tight">
-                {isCreateMode ? "Thêm phim mới" : "Cập nhật thông tin phim"}
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
+        
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+          
+          {/* ── HEADER CỐ ĐỊNH ── */}
+          <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1 min-w-0 flex-1">
+              <DialogTitle className="text-base font-bold tracking-tight text-foreground">
+                {isCreateMode ? "Thêm phim mới vào hệ thống" : "Cập nhật thông tin chi tiết phim"}
               </DialogTitle>
               {!isCreateMode && movie && (
-                <p className="text-sm text-muted-foreground truncate max-w-md">{movie.title}</p>
+                <p className="text-xs text-muted-foreground truncate max-w-xl">Đang chỉnh sửa: {movie.title}</p>
               )}
             </div>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="shrink-0 h-8 w-8 -mt-1 -mr-1 rounded-full text-muted-foreground hover:text-foreground"
+              className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border transition-all"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              <X size={15} />
+              <X size={16} />
             </Button>
           </DialogHeader>
 
-          <fieldset disabled={isSubmitting} className="border-none m-0 p-0">
-            <div className="px-6 py-5 space-y-5">
-
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-[160px_1fr]">
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Poster phim</Label>
-                  <Controller
-                    name="posterFile"
-                    control={form.control}
-                    render={({ field }) => (
-                      <ImageUploadPreview
-                        currentImageUrl={movie?.posterUrl}
-                        aspectRatio="poster"
-                        onFileSelect={field.onChange}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="movie-title" className="text-sm font-medium">
-                      Tên phim <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="movie-title" {...form.register("title")} placeholder="Nhập tên phim..." />
-                    {form.formState.errors.title && (
-                      <p className="text-xs text-destructive">{form.formState.errors.title.message}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="movie-duration" className="text-sm font-medium">
-                        Thời lượng (phút) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input id="movie-duration" type="number" min={1} max={600}
-                        {...form.register("duration", { valueAsNumber: true })} />
-                      {form.formState.errors.duration && (
-                        <p className="text-xs text-destructive">{form.formState.errors.duration.message}</p>
+          {/* ── NỘI DUNG CUỘN CHIA 2 CỘT NĂNG ĐỘNG ── */}
+          <div className="flex-1 overflow-y-auto p-6 bg-background">
+            <fieldset disabled={isSubmitting} className="border-none m-0 p-0">
+              <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-8 items-start">
+                
+                {/* CỘT TRÁI (SIDEBAR): Quản lý Poster & Phân loại nhanh */}
+                <div className="space-y-5 mx-auto md:mx-0 w-full max-w-[220px] sticky top-0">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Poster Phim</Label>
+                    <Controller
+                      name="posterFile"
+                      control={form.control}
+                      render={({ field }) => (
+                        <div className="rounded-xl overflow-hidden border border-border/80 shadow-sm bg-muted/30 p-1.5">
+                          <ImageUploadPreview
+                            currentImageUrl={movie?.posterUrl}
+                            aspectRatio="poster"
+                            onFileSelect={field.onChange}
+                          />
+                        </div>
                       )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="movie-language" className="text-sm font-medium">
-                        Ngôn ngữ <span className="text-destructive">*</span>
-                      </Label>
-                      <Input id="movie-language" {...form.register("language")} placeholder="VD: Tiếng Anh" />
-                    </div>
+                    />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="movie-release" className="text-sm font-medium">
-                        Ngày ra mắt <span className="text-destructive">*</span>
-                      </Label>
-                      <Input id="movie-release" type="date" {...form.register("releaseDate")}
-                        className="scheme-light dark:scheme-dark" />
-                      {form.formState.errors.releaseDate && (
-                        <p className="text-xs text-destructive">{form.formState.errors.releaseDate.message}</p>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="movie-subtitle" className="text-sm font-medium">Phụ đề</Label>
-                      <Input id="movie-subtitle" {...form.register("subTitle")} placeholder="VD: Lồng tiếng Việt" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="movie-age-rating" className="text-sm font-medium">
+                  <div className="space-y-2">
+                    <Label htmlFor="movie-age-rating" className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                       Phân loại độ tuổi <span className="text-destructive">*</span>
                     </Label>
-                    <select
-                      id="movie-age-rating"
-                      {...form.register("ageRating")}
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      {AGE_RATING_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    <Controller
+                      name="ageRating"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger id="movie-age-rating" className="w-full bg-background border-border/80 shadow-sm h-9">
+                            <SelectValue placeholder="Chọn độ tuổi..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AGE_RATING_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
+
+                {/* CỘT PHẢI (MAIN CONTENT): Nhóm thông tin nhập liệu chi tiết */}
+                <div className="space-y-6 min-w-0 flex-1">
+                  
+                  {/* Khối 1: Thông tin cơ bản */}
+                  <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
+                    <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
+                      <Info size={14} className="text-blue-500" />
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/90">Thông tin cơ bản</h3>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="movie-title" className="text-sm font-semibold">
+                        Tên bộ phim <span className="text-destructive">*</span>
+                      </Label>
+                      <Input id="movie-title" {...form.register("title")} placeholder="Nhập tên phim chính thức..." className="h-9" />
+                      {form.formState.errors.title && (
+                        <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.title.message}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="movie-duration" className="text-sm font-semibold">
+                          Thời lượng (phút) <span className="text-destructive">*</span>
+                        </Label>
+                        <Input id="movie-duration" type="number" min={1} max={600}
+                          {...form.register("duration", { valueAsNumber: true })} className="h-9" />
+                        {form.formState.errors.duration && (
+                          <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.duration.message}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="movie-language" className="text-sm font-semibold">
+                          Ngôn ngữ bản quyền <span className="text-destructive">*</span>
+                        </Label>
+                        <Input id="movie-language" {...form.register("language")} placeholder="VD: Tiếng Anh, Tiếng Việt" className="h-9" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="movie-release" className="text-sm font-semibold">
+                          Ngày khởi chiếu chính thức <span className="text-destructive">*</span>
+                        </Label>
+                        <Input id="movie-release" type="date" {...form.register("releaseDate")}
+                          className="h-9 scheme-light dark:scheme-dark" />
+                        {form.formState.errors.releaseDate && (
+                          <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.releaseDate.message}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="movie-subtitle" className="text-sm font-semibold">Cấu hình phụ đề</Label>
+                        <Input id="movie-subtitle" {...form.register("subTitle")} placeholder="VD: Phụ đề Tiếng Việt, Lồng tiếng" className="h-9" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Khối 2: Nội dung & Truyền thông */}
+                  <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
+                    <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
+                      <Film size={14} className="text-amber-500" />
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/90">Nội dung & Truyền thông</h3>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="movie-description" className="text-sm font-semibold">
+                        Tóm tắt nội dung cốt truyện <span className="text-destructive">*</span>
+                      </Label>
+                      <Textarea
+                        id="movie-description"
+                        {...form.register("description")}
+                        rows={4}
+                        placeholder="Nhập mô tả tóm tắt diễn biến hoặc nội dung chính của bộ phim..."
+                        className="resize-none min-h-[100px]"
+                      />
+                      {form.formState.errors.description && (
+                        <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.description.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="movie-trailer" className="text-sm font-semibold">Đường dẫn Video Trailer (YouTube)</Label>
+                      <Input id="movie-trailer" {...form.register("trailerUrl")} placeholder="https://www.youtube.com/watch?v=..." className="h-9" />
+                      {form.formState.errors.trailerUrl && (
+                        <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.trailerUrl.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Khối 3: Phân loại nhân sự & Thể loại */}
+                  <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
+                    <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
+                      <Users size={14} className="text-emerald-500" />
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/90">Thể loại & Nhân sự chính</h3>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">
+                        Thể loại phim <span className="text-destructive">*</span>
+                      </Label>
+                      <Controller
+                        name="genreNames"
+                        control={form.control}
+                        render={({ field }) => (
+                          <MultiSelectWithSearch
+                            options={genreOptions}
+                            selectedValues={field.value}
+                            onChange={field.onChange}
+                            placeholder={isLoadingOptions ? "Đang tải dữ liệu..." : "Lựa chọn các thể loại phim..."}
+                            disabled={isLoadingOptions}
+                            quickAddSlot={
+                              <QuickAddGenreButton
+                                onCreated={() => {}}
+                                onCreateRequest={handleQuickAddGenre}
+                              />
+                            }
+                          />
+                        )}
+                      />
+                      {form.formState.errors.genreNames && (
+                        <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.genreNames.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">
+                        Đạo diễn phụ trách <span className="text-destructive">*</span>
+                      </Label>
+                      <Controller
+                        name="directorIds"
+                        control={form.control}
+                        render={({ field }) => (
+                          <MultiSelectWithSearch
+                            options={directorOptions}
+                            selectedValues={field.value.map(String)}
+                            onChange={(stringValues) => field.onChange(stringValues.map(Number))}
+                            placeholder={isLoadingOptions ? "Đang tải dữ liệu..." : "Lựa chọn đạo diễn..."}
+                            disabled={isLoadingOptions}
+                            quickAddSlot={
+                              <QuickAddPersonButton
+                                defaultRole="DIRECTOR"
+                                onCreated={handleDirectorCreated}
+                                onCreateRequest={handleQuickAddDirector}
+                              />
+                            }
+                          />
+                        )}
+                      />
+                      {form.formState.errors.directorIds && (
+                        <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.directorIds.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Dàn diễn viên tham gia</Label>
+                      <Controller
+                        name="castIds"
+                        control={form.control}
+                        render={({ field }) => (
+                          <MultiSelectWithSearch
+                            options={actorOptions}
+                            selectedValues={field.value.map(String)}
+                            onChange={(stringValues) => field.onChange(stringValues.map(Number))}
+                            placeholder={isLoadingOptions ? "Đang tải dữ liệu..." : "Lựa chọn diễn viên..."}
+                            disabled={isLoadingOptions}
+                            quickAddSlot={
+                              <QuickAddPersonButton
+                                defaultRole="ACTOR"
+                                onCreated={handleActorCreated}
+                                onCreateRequest={handleQuickAddActor}
+                              />
+                            }
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                </div>
               </div>
+            </fieldset>
+          </div>
 
-              <div className="border-t border-border" />
-
-              <div className="space-y-1.5">
-                <Label htmlFor="movie-description" className="text-sm font-medium">
-                  Mô tả / Nội dung phim <span className="text-destructive">*</span>
-                </Label>
-                <textarea
-                  id="movie-description"
-                  {...form.register("description")}
-                  rows={4}
-                  placeholder="Nhập mô tả nội dung phim..."
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                />
-                {form.formState.errors.description && (
-                  <p className="text-xs text-destructive">{form.formState.errors.description.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="movie-trailer" className="text-sm font-medium">URL Trailer (YouTube)</Label>
-                <Input id="movie-trailer" {...form.register("trailerUrl")} placeholder="https://www.youtube.com/watch?v=..." />
-                {form.formState.errors.trailerUrl && (
-                  <p className="text-xs text-destructive">{form.formState.errors.trailerUrl.message}</p>
-                )}
-              </div>
-
-              <div className="border-t border-border" />
-
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">
-                  Thể loại <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  name="genreNames"
-                  control={form.control}
-                  render={({ field }) => (
-                    <MultiSelectWithSearch
-                      options={genreOptions}
-                      selectedValues={field.value}
-                      onChange={field.onChange}
-                      placeholder={isLoadingOptions ? "Đang tải..." : "Chọn thể loại..."}
-                      disabled={isLoadingOptions}
-                      quickAddSlot={
-                        <QuickAddGenreButton
-                          onCreated={() => {}}
-                          onCreateRequest={handleQuickAddGenre}
-                        />
-                      }
-                    />
-                  )}
-                />
-                {form.formState.errors.genreNames && (
-                  <p className="text-xs text-destructive">{form.formState.errors.genreNames.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">
-                  Đạo diễn <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  name="directorIds"
-                  control={form.control}
-                  render={({ field }) => (
-                    <MultiSelectWithSearch
-                      options={directorOptions}
-                      selectedValues={field.value.map(String)}
-                      onChange={(stringValues) => field.onChange(stringValues.map(Number))}
-                      placeholder={isLoadingOptions ? "Đang tải..." : "Chọn đạo diễn..."}
-                      disabled={isLoadingOptions}
-                      quickAddSlot={
-                        <QuickAddPersonButton
-                          defaultRole="DIRECTOR"
-                          onCreated={handleDirectorCreated}
-                          onCreateRequest={handleQuickAddDirector}
-                        />
-                      }
-                    />
-                  )}
-                />
-                {form.formState.errors.directorIds && (
-                  <p className="text-xs text-destructive">{form.formState.errors.directorIds.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5 pb-2">
-                <Label className="text-sm font-medium">Diễn viên</Label>
-                <Controller
-                  name="castIds"
-                  control={form.control}
-                  render={({ field }) => (
-                    <MultiSelectWithSearch
-                      options={actorOptions}
-                      selectedValues={field.value.map(String)}
-                      onChange={(stringValues) => field.onChange(stringValues.map(Number))}
-                      placeholder={isLoadingOptions ? "Đang tải..." : "Chọn diễn viên..."}
-                      disabled={isLoadingOptions}
-                      quickAddSlot={
-                        <QuickAddPersonButton
-                          defaultRole="ACTOR"
-                          onCreated={handleActorCreated}
-                          onCreateRequest={handleQuickAddActor}
-                        />
-                      }
-                    />
-                  )}
-                />
-              </div>
-
-            </div>
-          </fieldset>
-
-          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3 flex items-center justify-between gap-4">
+          {/* ── FOOTER CỐ ĐỊNH ── */}
+          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
             <div className="text-xs text-muted-foreground">
               {updatedAtLabel ? (
-                <span className="flex items-center gap-1.5">
-                  <Clock size={12} />
-                  Cập nhật lần cuối: {updatedAtLabel}
+                <span className="flex items-center gap-1.5 font-medium text-muted-foreground/80">
+                  <Clock size={13} className="text-muted-foreground/60" />
+                  Hệ thống cập nhật lúc: {updatedAtLabel}
                 </span>
               ) : (
-                <span>Các trường có dấu <span className="text-destructive">*</span> là bắt buộc</span>
+                <span className="font-medium">
+                  Lưu ý: Các trường đánh dấu <span className="text-destructive">*</span> không được bỏ trống.
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -391,12 +439,13 @@ export function MovieFormDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
+                className="h-9 text-xs font-semibold"
               >
-                Hủy
+                Hủy bỏ
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="min-w-32.5">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isCreateMode ? "Thêm phim" : "Lưu thay đổi"}
+              <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
+                {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                {isCreateMode ? "Thêm phim ngay" : "Lưu thay đổi"}
               </Button>
             </div>
           </div>

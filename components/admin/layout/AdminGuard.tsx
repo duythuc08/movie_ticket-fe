@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -17,13 +17,16 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const { token, isAuthenticated } = useAuth();
   const router = useRouter();
   const toastShown = useRef(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     document.body.setAttribute("data-theme", "dark");
     return () => document.body.removeAttribute("data-theme");
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     if (!isAuthenticated || !token) return;
 
     if (!hasAdminRole(token) && !toastShown.current) {
@@ -31,9 +34,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       toast.error("Bạn không có quyền truy cập trang quản trị");
       router.replace("/");
     }
-  }, [isAuthenticated, token, router]);
+  }, [mounted, isAuthenticated, token, router]);
 
-  if (!isAuthenticated || !token || !hasAdminRole(token)) {
+  if (!mounted || !isAuthenticated || !token || !hasAdminRole(token)) {
     return null;
   }
 
