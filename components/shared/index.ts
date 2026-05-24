@@ -18,6 +18,8 @@ export { ColumnHeader } from "./column-header";
 export { MultiSelectWithSearch } from "./multi-select";
 export type { SelectOption } from "./multi-select";
 
+export { SingleSelectWithSearch } from "./single-select";
+
 export { ImageUploadPreview } from "./image-upload";
 
 export { QuickAddGenreButton, QuickAddPersonButton } from "./quick-add-dialog";

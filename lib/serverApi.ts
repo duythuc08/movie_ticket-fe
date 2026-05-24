@@ -87,7 +87,7 @@ export async function getCinemas() {
 
 // ─── Banners ──────────────────────────────────────────────
 export async function getBanners() {
-  const data = await apiFetch<{ result: unknown[] }>("/banners/getBanners");
+  const data = await apiFetch<{ result: unknown[] }>("/banners/getBannerActive");
   return (data.result ?? []).map(mapBanner);
 }
 

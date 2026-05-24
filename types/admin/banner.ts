@@ -36,3 +36,15 @@ export interface BannerCreatePayload {
   eventId?: number;
   bannerType: BannerType;
 }
+
+export interface BannerUpdatePayload {
+  imageUrl?: string;
+  title?: string;
+  description?: string;
+  linkUrl?: string;
+  priority?: number;
+  active?: boolean;
+  movieId?: number | null;
+  eventId?: number | null;
+  bannerType?: BannerType;
+}

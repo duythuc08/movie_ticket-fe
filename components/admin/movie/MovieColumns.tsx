@@ -62,7 +62,7 @@ export function createMovieColumns(
       cell: ({ row }) => {
         const genres = row.original.genre ?? [];
         return (
-          <div className="flex flex-wrap gap-1 max-w-[160px]">
+          <div className="flex flex-wrap gap-1 max-w-[180px]">
             {genres.slice(0, 2).map((g) => (
               <span
                 key={g.genreId}

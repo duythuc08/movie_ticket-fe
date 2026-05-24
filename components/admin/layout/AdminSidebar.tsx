@@ -58,7 +58,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
       { label: "Thể loại (Genre)",      href: "/admin/genres",  icon: <Tag size={16} /> },
       { label: "Diễn viên & Đạo diễn", href: "/admin/persons", icon: <Users size={16} /> },
       { label: "Đánh giá (Review)",     href: "/admin/reviews", icon: <Star size={16} />, developing: true },
-      { label: "Banner quảng cáo",      href: "/admin/banners", icon: <Image size={16} />, developing: true },
+      { label: "Banner quảng cáo",      href: "/admin/banners", icon: <Image size={16} /> },
     ],
   },
   {

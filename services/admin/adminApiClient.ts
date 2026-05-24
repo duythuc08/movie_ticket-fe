@@ -117,6 +117,21 @@ export async function adminPostFormData<T>(
   return data.result;
 }
 
+export async function adminDelete(
+  token: string,
+  path: string
+): Promise<void> {
+  const response = await fetch(`${ADMIN_BASE}${path}`, {
+    method: "DELETE",
+    headers: buildAuthHeaders(token),
+  });
+
+  if (!response.ok) {
+    const data: ApiResponse<null> = await response.json().catch(() => ({ message: `Lỗi ${response.status}` }));
+    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+  }
+}
+
 export function buildFilterString(
   filters: Record<string, string | undefined | null>
 ): string {

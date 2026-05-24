@@ -84,7 +84,7 @@ export function PersonFormDialog({
 
                         {!imageSrc ? (
                             /* TRẠNG THÁI 1: Chưa chọn ảnh mới - Hiển thị Avatar tròn sang trọng */
-                            <label className="relative w-28 h-28 rounded-full border-2 border-dashed border-primary/30 hover:border-primary bg-background shadow-sm flex flex-col items-center justify-center cursor-pointer group overflow-hidden transition-all duration-300">
+                            <label className="relative w-28 h-28 rounded-full border-2 border-dashed border-green-500/40 hover:border-green-500 bg-background shadow-sm flex flex-col items-center justify-center cursor-pointer group overflow-hidden transition-all duration-300">
                                 <input
                                     type="file"
                                     accept="image/*"
