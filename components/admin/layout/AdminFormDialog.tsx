@@ -67,11 +67,11 @@ export function AdminFormDialog<TSchema extends FieldValues>({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={`${maxWidth} max-h-[88vh] overflow-y-auto gap-0 p-0 [&>button]:hidden`}>
+      <DialogContent className={`${maxWidth} max-h-[88vh] overflow-hidden gap-0 p-0 [&>button]:hidden`}>
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex max-h-[88vh] flex-col">
 
-          <DialogHeader className="sticky top-0 z-10 bg-card flex flex-row items-start justify-between px-6 py-4 border-b border-border space-y-0">
+          <DialogHeader className="z-10 flex shrink-0 flex-row items-start justify-between border-b border-border bg-card px-6 py-4 space-y-0">
             <div className="space-y-0.5 min-w-0 flex-1">
               <DialogTitle className="text-base font-semibold leading-tight text-foreground">
                 {title}
@@ -92,16 +92,18 @@ export function AdminFormDialog<TSchema extends FieldValues>({
             </Button>
           </DialogHeader>
 
-          <fieldset
-            disabled={isSubmitting || readOnly}
-            className={`border-none m-0 p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
-          >
-            <div className="px-6 py-5 space-y-4">
-              {children(form)}
-            </div>
-          </fieldset>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <fieldset
+              disabled={isSubmitting || readOnly}
+              className={`m-0 border-none p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
+            >
+              <div className="px-6 py-5 space-y-4">
+                {children(form)}
+              </div>
+            </fieldset>
+          </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3 flex items-center justify-between gap-4">
+          <div className="z-10 flex shrink-0 items-center justify-between gap-4 border-t border-border bg-card px-6 py-3">
             <div className="text-xs text-muted-foreground">
               {updatedAtLabel ? (
                 <span className="flex items-center gap-1.5">
