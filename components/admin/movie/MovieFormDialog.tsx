@@ -162,10 +162,9 @@ export function MovieFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
-        
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
-          
-          {/* ── HEADER CỐ ĐỊNH ── */}
+
           <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
             <div className="space-y-1 min-w-0 flex-1">
               <DialogTitle className="text-base font-bold tracking-tight text-foreground">
@@ -187,12 +186,10 @@ export function MovieFormDialog({
             </Button>
           </DialogHeader>
 
-          {/* ── NỘI DUNG CUỘN CHIA 2 CỘT NĂNG ĐỘNG ── */}
           <div className="flex-1 overflow-y-auto p-6 bg-background">
             <fieldset disabled={isSubmitting} className="border-none m-0 p-0">
               <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-8 items-start">
-                
-                {/* CỘT TRÁI (SIDEBAR): Quản lý Poster & Phân loại nhanh */}
+
                 <div className="space-y-5 mx-auto md:mx-0 w-full max-w-[220px] sticky top-0">
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Poster Phim</Label>
@@ -236,10 +233,8 @@ export function MovieFormDialog({
                   </div>
                 </div>
 
-                {/* CỘT PHẢI (MAIN CONTENT): Nhóm thông tin nhập liệu chi tiết */}
                 <div className="space-y-6 min-w-0 flex-1">
-                  
-                  {/* Khối 1: Thông tin cơ bản */}
+
                   <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
                     <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
                       <Info size={14} className="text-blue-500" />
@@ -293,7 +288,6 @@ export function MovieFormDialog({
                     </div>
                   </div>
 
-                  {/* Khối 2: Nội dung & Truyền thông */}
                   <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
                     <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
                       <Film size={14} className="text-amber-500" />
@@ -325,7 +319,6 @@ export function MovieFormDialog({
                     </div>
                   </div>
 
-                  {/* Khối 3: Phân loại nhân sự & Thể loại */}
                   <div className="space-y-4 border border-border/60 rounded-xl p-5 bg-muted/10">
                     <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 mb-1">
                       <Users size={14} className="text-emerald-500" />
@@ -419,7 +412,6 @@ export function MovieFormDialog({
             </fieldset>
           </div>
 
-          {/* ── FOOTER CỐ ĐỊNH ── */}
           <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
             <div className="text-xs text-muted-foreground">
               {updatedAtLabel ? (

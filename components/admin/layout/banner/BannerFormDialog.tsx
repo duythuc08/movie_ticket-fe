@@ -31,7 +31,6 @@ interface BannerFormDialogProps {
   readOnly?: boolean;
 }
 
-// Inner component để dùng hooks (useEffect watch bannerType)
 function BannerFormContent({
   form,
   movies,
@@ -62,7 +61,6 @@ function BannerFormContent({
   return (
     <div className="space-y-6 py-2">
 
-      {/* 1. Ảnh Banner */}
       <div className="space-y-3">
         <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
           <ImageIcon size={14} /> Hình ảnh Banner <span className="text-destructive">*</span>
@@ -87,7 +85,6 @@ function BannerFormContent({
         )}
       </div>
 
-      {/* 2. Tiêu đề & Mô tả */}
       <div className="space-y-4 border border-border/60 rounded-xl p-4 bg-muted/5">
         <div className="space-y-2">
           <Label htmlFor="banner-title" className="text-sm font-semibold">
@@ -120,7 +117,6 @@ function BannerFormContent({
         </div>
       </div>
 
-      {/* 3. Phân loại & Độ ưu tiên */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -156,7 +152,6 @@ function BannerFormContent({
         </div>
       </div>
 
-      {/* 4. URL & Liên kết */}
       <div className="space-y-4 border border-border/60 rounded-xl p-4 bg-muted/5">
         <div className="space-y-2">
           <Label htmlFor="banner-linkUrl" className="text-sm font-semibold flex items-center gap-1.5">
@@ -170,7 +165,6 @@ function BannerFormContent({
           />
         </div>
 
-        {/* Select phim */}
         {watchedType === "MOVIE" && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
             <Label className="text-xs font-bold text-blue-600">
@@ -180,7 +174,6 @@ function BannerFormContent({
               control={form.control}
               name="movieId"
               render={({ field }) => {
-                // Đảm bảo phim đang liên kết luôn có trong danh sách kể cả khi đang load
                 const base = movies.map((m) => ({ value: String(m.movieId), label: m.title }));
                 if (linkedMovie && !base.some((o) => o.value === String(linkedMovie.movieId))) {
                   base.unshift({ value: String(linkedMovie.movieId), label: linkedMovie.title });
@@ -203,7 +196,6 @@ function BannerFormContent({
           </div>
         )}
 
-        {/* Event placeholder */}
         {watchedType === "EVENT" && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
             <Label className="text-xs font-bold text-emerald-600">
@@ -216,7 +208,6 @@ function BannerFormContent({
         )}
       </div>
 
-      {/* 5. Trạng thái hiển thị */}
       <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-4 transition-all hover:bg-primary/10">
         <div className="space-y-0.5">
           <Label htmlFor="banner-active" className="text-sm font-bold text-primary cursor-pointer">
