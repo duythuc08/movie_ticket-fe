@@ -65,8 +65,8 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Quản lý Rạp chiếu",
     icon: <Building2 size={18} />,
     children: [
-      { label: "Cụm rạp (Cinema)",   href: "/admin/cinemas", icon: <Building2 size={16} />, developing: true },
-      { label: "Phòng chiếu (Room)", href: "/admin/rooms",   icon: <DoorOpen size={16} />, developing: true },
+      { label: "Cụm rạp (Cinema)",   href: "/admin/cinemas", icon: <Building2 size={16} /> },
+      { label: "Phòng chiếu (Room)", href: "/admin/rooms",   icon: <DoorOpen size={16} /> },
     ],
   },
   { label: "Suất chiếu",         href: "/admin/showtimes",  icon: <Clock size={18} />,   developing: true },
