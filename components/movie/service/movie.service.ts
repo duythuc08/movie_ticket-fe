@@ -125,11 +125,7 @@ export async function fetchShowtimesByDate(
 
     (data.result as Record<string, unknown>[]).forEach((show) => {
       const rooms = show.rooms as Record<string, unknown>;
-      if (
-        rooms.roomStatus !== "ACTIVE" ||
-        show.showTimeStatus === "CLOSED" ||
-        show.showTimeStatus === "MAINTENANCE"
-      ) return;
+      if (rooms.roomStatus !== "OPERATIONAL") return;
 
       const cinema = rooms.cinemas as Record<string, unknown>;
       const cinemaKey = cinema.cinemaId as string;
