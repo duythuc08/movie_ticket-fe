@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Loader2, Eraser, MousePointer2 } from "lucide-react";
+import { Loader2, MousePointer2, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { seatSetupDimensionSchema, type SeatSetupDimensionSchema } from "@/lib/validations/admin.schemas";
@@ -49,8 +49,9 @@ export function SeatSetupDialog({
   const [dims, setDims] = useState<SeatSetupDimensionSchema | null>(null);
   
   // Paint tool state
-  const [activeTool, setActiveTool] = useState<SeatType | null>("STANDARD");
+  const [activeTool, setActiveTool] = useState<SeatType>("STANDARD");
   const [isDragging, setIsDragging] = useState(false);
+  const [dragMode, setDragMode] = useState<"PAINT" | "ERASE" | null>(null);
 
   const form = useForm<SeatSetupDimensionSchema>({
     resolver: zodResolver(seatSetupDimensionSchema),
@@ -68,7 +69,7 @@ export function SeatSetupDialog({
         setStep(1);
         setDims(null);
         setGrid([]);
-        form.reset({ rows: 8, cols: 10 });
+        form.reset({ rows: undefined, cols: undefined });
       }
       setActiveTool("STANDARD");
       setIsDragging(false);
@@ -89,11 +90,24 @@ export function SeatSetupDialog({
     setStep(2);
   }
 
-  const applyToolToCell = useCallback((r: number, c: number, currentGrid: (SeatType | null)[][]) => {
+  const applyActionToCell = useCallback((r: number, c: number, currentGrid: (SeatType | null)[][], mode: "PAINT" | "ERASE") => {
     if (!dims) return currentGrid;
     const next = currentGrid.map((row) => [...row]);
     
+    if (mode === "ERASE") {
+      if (next[r][c] === "COUPLE") {
+        next[r][c] = null;
+        if (c < dims.cols - 1 && next[r][c + 1] === "COUPLE") next[r][c + 1] = null;
+        else if (c > 0 && next[r][c - 1] === "COUPLE") next[r][c - 1] = null;
+      } else {
+        next[r][c] = null;
+      }
+      return next;
+    }
+
     if (activeTool === "COUPLE") {
+      if (currentGrid[r][c] === "COUPLE") return currentGrid;
+
       if (c < dims.cols - 1) {
         next[r][c] = "COUPLE";
         next[r][c + 1] = "COUPLE";
@@ -109,17 +123,21 @@ export function SeatSetupDialog({
 
   function handlePointerDown(r: number, c: number) {
     setIsDragging(true);
-    setGrid((prev) => applyToolToCell(r, c, prev));
+    const isSame = grid[r][c] === activeTool;
+    const mode = isSame ? "ERASE" : "PAINT";
+    setDragMode(mode);
+    setGrid((prev) => applyActionToCell(r, c, prev, mode));
   }
 
   function handlePointerEnter(r: number, c: number) {
-    if (isDragging) {
-      setGrid((prev) => applyToolToCell(r, c, prev));
+    if (isDragging && dragMode) {
+      setGrid((prev) => applyActionToCell(r, c, prev, dragMode));
     }
   }
 
   function handlePointerUp() {
     setIsDragging(false);
+    setDragMode(null);
   }
 
   async function handleSubmitSetup() {
@@ -132,13 +150,18 @@ export function SeatSetupDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent data-admin="" className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0 [&>button]:hidden">
-        <DialogHeader className="border-b px-6 py-4 shrink-0 bg-background">
-          <DialogTitle className="text-base">
-            Thiết lập sơ đồ ghế — {roomName}
-          </DialogTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {step === 1 ? "Bước 1: Xác định kích thước phòng" : "Bước 2: Cấu hình loại ghế (Kéo thả để vẽ)"}
-          </p>
+        <DialogHeader className="border-b px-6 py-4 shrink-0 bg-background flex flex-row items-start justify-between">
+          <div>
+            <DialogTitle className="text-base">
+              Thiết lập sơ đồ ghế — {roomName}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {step === 1 ? "Bước 1: Xác định kích thước phòng" : "Bước 2: Cấu hình loại ghế (Kéo thả để vẽ)"}
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent" onClick={handleClose} disabled={isSubmitting}>
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-muted/10" onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
@@ -185,24 +208,10 @@ export function SeatSetupDialog({
                       </button>
                     );
                   })}
-                  <div className="w-px h-6 bg-border mx-1" />
-                  <button
-                    type="button"
-                    onClick={() => setActiveTool(null)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
-                      activeTool === null
-                        ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
-                        : "border-transparent hover:bg-muted text-muted-foreground"
-                    )}
-                  >
-                    <Eraser className="w-4 h-4" />
-                    Cục tẩy
-                  </button>
                 </div>
 
                 <div className="overflow-x-auto p-4 bg-background rounded-xl border shadow-sm touch-none w-full">
-                  <div className="inline-flex flex-col items-center gap-1.5 select-none min-w-max mx-auto">
+                  <div className="w-max mx-auto flex flex-col items-center gap-1.5 select-none">
                     <div className="mb-8 flex flex-col items-center w-full max-w-2xl">
                       <div className="w-3/4 h-2 bg-gradient-to-b from-primary/40 to-transparent rounded-t-full blur-[2px]" />
                       <div className="w-full text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-2">

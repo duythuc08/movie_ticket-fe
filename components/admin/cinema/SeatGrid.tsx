@@ -49,8 +49,8 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="inline-block min-w-full space-y-1 p-2">
+    <div className="overflow-x-auto w-full">
+      <div className="w-max mx-auto space-y-1 p-2">
         {sortedRows.map(([rowLabel, rowSeats]) => (
           <div key={rowLabel} className="flex items-center gap-1">
             <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground">

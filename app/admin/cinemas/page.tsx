@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import type { AdminCinema } from "@/types/admin.type";
+import type { AdminCinema, AdminCinemaDetail } from "@/types/admin.type";
 import type { CinemaFormSchema } from "@/lib/validations/admin.schemas";
 import {
   fetchAdminCinemas,
@@ -31,7 +31,7 @@ export default function AdminCinemasPage() {
   const [isLoading,     setIsLoading]     = useState(false);
   const [isFormOpen,    setIsFormOpen]    = useState(false);
   const [isDetailOpen,  setIsDetailOpen]  = useState(false);
-  const [selectedCinema, setSelectedCinema] = useState<AdminCinema | null>(null);
+  const [selectedCinema, setSelectedCinema] = useState<AdminCinemaDetail | AdminCinema | null>(null);
   const [isSubmitting,  setIsSubmitting]  = useState(false);
 
   const loadCinemas = useCallback(async () => {
@@ -59,9 +59,18 @@ export default function AdminCinemasPage() {
     setIsDetailOpen(true);
   }
 
-  function handleEdit(cinema: AdminCinema) {
-    setSelectedCinema(cinema);
-    setIsFormOpen(true);
+  async function handleEdit(cinema: AdminCinema) {
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const detail = await fetchAdminCinemaById(token, cinema.cinemaId);
+      setSelectedCinema(detail);
+      setIsFormOpen(true);
+    } catch {
+      toast.error("Không thể tải chi tiết rạp");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleEditFromDetail(detail: any) {
@@ -75,17 +84,9 @@ export default function AdminCinemasPage() {
     setIsSubmitting(true);
     try {
       if (selectedCinema) {
-        const currentDetail = await fetchAdminCinemaById(token, selectedCinema.cinemaId);
-        const mappedRooms = currentDetail.rooms.map((r) => ({
-          roomId: r.roomId,
-          name: r.name,
-          capacity: r.capacity,
-          roomType: r.roomType,
-          roomStatus: r.roomStatus,
-        }));
         await updateAdminCinema(token, selectedCinema.cinemaId, {
           ...data,
-          rooms: mappedRooms,
+          rooms: data.rooms || [],
         });
         toast.success(`Đã cập nhật rạp "${data.name}"`);
       } else {

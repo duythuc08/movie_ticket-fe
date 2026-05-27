@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -34,6 +34,9 @@ export default function AdminRoomsPage() {
   const searchParams = useSearchParams();
   const cinemaIdParam = searchParams.get("cinemaId");
 
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [rooms,         setRooms]         = useState<AdminRoom[]>([]);
   const [cinemas,       setCinemas]       = useState<AdminCinema[]>([]);
   const [isLoading,     setIsLoading]     = useState(false);
@@ -56,6 +59,13 @@ export default function AdminRoomsPage() {
         cinemaId: defaultCinemaId ?? undefined 
       });
       setRooms(result.content);
+      
+      // Update selectedRoom to reflect capacity changes if we just set up seats
+      setSelectedRoom((prev) => {
+        if (!prev) return null;
+        const updated = result.content.find((r) => r.roomId === prev.roomId);
+        return updated || prev;
+      });
     } catch {
       toast.error("Không thể tải danh sách phòng chiếu");
     } finally {
@@ -83,8 +93,11 @@ export default function AdminRoomsPage() {
     if (action === "create" && !isFormOpen) {
       setSelectedRoom(null);
       setIsFormOpen(true);
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete("action");
+      router.replace(`${pathname}?${newSearchParams.toString()}`);
     }
-  }, [searchParams, isFormOpen]);
+  }, [searchParams, isFormOpen, pathname, router]);
 
   function handleOpenCreate() {
     setSelectedRoom(null);
@@ -218,6 +231,7 @@ export default function AdminRoomsPage() {
           setSelectedRoom(room);
           setIsFormOpen(true);
         }}
+        onRefresh={loadRooms}
       />
 
       <SeatSetupDialog

@@ -39,10 +39,10 @@ export function RoomFormDialog({
     name:       room?.name              ?? "",
     capacity:   room?.capacity          ?? 0,
     cinemaId:   room?.cinemas?.cinemaId ?? defaultCinemaId ?? 0,
-    roomType:   (room?.roomType         ?? "STANDARD") as RoomType,
-    roomStatus: (room?.roomStatus       ?? "OPERATIONAL") as RoomStatus,
-    rowCount:   8,
-    columnCount: 10,
+    roomType:   (room?.roomType         ?? "") as RoomType,
+    roomStatus: (room?.roomStatus       ?? "") as RoomStatus,
+    rowCount:   undefined,
+    columnCount: undefined,
   };
 
   return (
@@ -107,7 +107,7 @@ export function RoomFormDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="room-row-count">
-                  Kích thước: Số hàng <span className="text-destructive">*</span>
+                  Số hàng <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="room-row-count"
@@ -115,7 +115,6 @@ export function RoomFormDialog({
                   min={1}
                   max={30}
                   {...form.register("rowCount", { valueAsNumber: true })}
-                  placeholder="VD: 8"
                 />
                 {form.formState.errors.rowCount && (
                   <p className="text-xs text-destructive">{form.formState.errors.rowCount.message}</p>
@@ -131,7 +130,6 @@ export function RoomFormDialog({
                   min={1}
                   max={30}
                   {...form.register("columnCount", { valueAsNumber: true })}
-                  placeholder="VD: 10"
                 />
                 {form.formState.errors.columnCount && (
                   <p className="text-xs text-destructive">{form.formState.errors.columnCount.message}</p>

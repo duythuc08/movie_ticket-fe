@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Building2, MapPin, Phone, Mail, Activity } from "lucide-react";
+import { ExternalLink, Building2, MapPin, Phone, Mail, Activity, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import type { AdminCinemaDetail } from "@/types/admin.type";
 import { fetchAdminCinemaById } from "@/services/admin/adminCinemaService";
@@ -68,11 +68,14 @@ export function CinemaDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent data-admin="" className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 gap-0">
-        <DialogHeader className="px-6 py-5 border-b bg-muted/20">
+        <DialogHeader className="px-6 py-5 border-b bg-muted/20 flex flex-row items-center justify-between">
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
             Chi tiết cụm rạp
           </DialogTitle>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 -mr-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => onOpenChange(false)}>
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
 
         {!cinema ? (

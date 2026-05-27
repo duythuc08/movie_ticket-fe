@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, LayoutGrid, MonitorPlay, Building2, Tag, Users } from "lucide-react";
+import { Pencil, LayoutGrid, MonitorPlay, Building2, Tag, Users, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { AdminRoom, AdminSeat, SeatType } from "@/types/admin.type";
@@ -28,6 +28,7 @@ interface RoomDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   room: AdminRoom | null;
   onEdit?: (room: AdminRoom) => void;
+  onRefresh?: () => void;
 }
 
 export function RoomDetailDialog({
@@ -35,6 +36,7 @@ export function RoomDetailDialog({
   onOpenChange,
   room,
   onEdit,
+  onRefresh,
 }: RoomDetailDialogProps) {
   const { token } = useAuth();
   const [seats, setSeats] = useState<AdminSeat[]>([]);
@@ -84,6 +86,7 @@ export function RoomDetailDialog({
       toast.success("Thiết lập sơ đồ ghế thành công");
       setIsSetupOpen(false);
       loadSeats();
+      if (onRefresh) onRefresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Thiết lập thất bại");
     } finally {
@@ -97,11 +100,14 @@ export function RoomDetailDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent data-admin="" className="max-w-4xl max-h-[88vh] overflow-y-auto p-0 gap-0">
-        <DialogHeader className="px-6 py-5 border-b bg-muted/20">
+        <DialogHeader className="px-6 py-5 border-b bg-muted/20 flex flex-row items-center justify-between">
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
             <MonitorPlay className="w-5 h-5 text-primary" />
             Chi tiết phòng chiếu
           </DialogTitle>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 -mr-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => onOpenChange(false)}>
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
 
         <div className="p-6 space-y-8 bg-background">
