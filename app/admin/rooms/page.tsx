@@ -19,7 +19,6 @@ import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { RoomFormDialog } from "@/components/admin/cinema/RoomFormDialog";
 import { RoomDetailDialog } from "@/components/admin/cinema/RoomDetailDialog";
-import { SeatSetupDialog } from "@/components/admin/cinema/SeatSetupDialog";
 import { createRoomColumns } from "@/components/admin/cinema/RoomColumns";
 
 const ROOM_TYPE_FILTER = [
@@ -42,10 +41,10 @@ export default function AdminRoomsPage() {
   const [isLoading,     setIsLoading]     = useState(false);
   const [isFormOpen,    setIsFormOpen]    = useState(false);
   const [isDetailOpen,  setIsDetailOpen]  = useState(false);
+  const [defaultEditMode, setDefaultEditMode] = useState(false);
+  const [initialSetupDims, setInitialSetupDims] = useState<{ rows: number, cols: number } | undefined>();
   const [selectedRoom,  setSelectedRoom]  = useState<AdminRoom | null>(null);
   const [isSubmitting,  setIsSubmitting]  = useState(false);
-  const [setupRoom, setSetupRoom] = useState<{ roomId: number, roomName: string, rows: number, cols: number } | null>(null);
-  const [isSettingUp, setIsSettingUp] = useState(false);
 
   const defaultCinemaId = cinemaIdParam ? Number(cinemaIdParam) : null;
 
@@ -60,7 +59,6 @@ export default function AdminRoomsPage() {
       });
       setRooms(result.content);
       
-      // Update selectedRoom to reflect capacity changes if we just set up seats
       setSelectedRoom((prev) => {
         if (!prev) return null;
         const updated = result.content.find((r) => r.roomId === prev.roomId);
@@ -106,6 +104,7 @@ export default function AdminRoomsPage() {
 
   function handleViewDetail(room: AdminRoom) {
     setSelectedRoom(room);
+    setDefaultEditMode(false);
     setIsDetailOpen(true);
   }
 
@@ -140,12 +139,10 @@ export default function AdminRoomsPage() {
         loadRooms();
 
         if (data.rowCount && data.columnCount) {
-          setSetupRoom({
-            roomId: created.roomId,
-            roomName: created.name,
-            rows: data.rowCount,
-            cols: data.columnCount,
-          });
+          setInitialSetupDims({ rows: data.rowCount, cols: data.columnCount });
+          setSelectedRoom(created);
+          setDefaultEditMode(true);
+          setIsDetailOpen(true);
         }
       }
     } catch (error) {
@@ -223,39 +220,20 @@ export default function AdminRoomsPage() {
         open={isDetailOpen}
         onOpenChange={(isOpen) => {
           setIsDetailOpen(isOpen);
-          if (!isOpen) setSelectedRoom(null);
+          if (!isOpen) {
+            setSelectedRoom(null);
+            setDefaultEditMode(false);
+          }
         }}
         room={selectedRoom}
+        defaultEditMode={defaultEditMode}
+        initialSetupDims={initialSetupDims}
         onEdit={(room) => {
           setIsDetailOpen(false);
           setSelectedRoom(room);
           setIsFormOpen(true);
         }}
         onRefresh={loadRooms}
-      />
-
-      <SeatSetupDialog
-        open={!!setupRoom}
-        onOpenChange={(open) => !open && setSetupRoom(null)}
-        roomId={setupRoom?.roomId ?? 0}
-        roomName={setupRoom?.roomName ?? ""}
-        initialRows={setupRoom?.rows}
-        initialCols={setupRoom?.cols}
-        onSetupComplete={async (rows, cols, seatTypes) => {
-          if (!token || !setupRoom) return;
-          setIsSettingUp(true);
-          try {
-            await setupSeatsForRoom(token, setupRoom.roomId, { rows, cols, seatTypes });
-            toast.success("Thiết lập sơ đồ ghế thành công");
-            setSetupRoom(null);
-            loadRooms();
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Thiết lập thất bại");
-          } finally {
-            setIsSettingUp(false);
-          }
-        }}
-        isSubmitting={isSettingUp}
       />
     </div>
   );

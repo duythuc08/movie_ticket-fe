@@ -197,13 +197,13 @@ export function SeatSetupDialog({
                         type="button"
                         onClick={() => setActiveTool(t)}
                         className={cn(
-                          "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
+                          "flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all border",
                           isActive 
                             ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
                             : "border-transparent hover:bg-muted"
                         )}
                       >
-                        <span className={cn("h-4 w-4 rounded border block", SETUP_CELL_CLASSES[t])} />
+                        <span className={cn("h-4 w-4 border block", SETUP_CELL_CLASSES[t])} />
                         {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : "Đôi"}
                       </button>
                     );
@@ -238,7 +238,7 @@ export function SeatSetupDialog({
                                 handlePointerEnter(rowIdx, colIdx);
                               }}
                               className={cn(
-                                "h-8 w-8 sm:h-10 sm:w-10 rounded-t-lg rounded-b-sm border text-[10px] sm:text-xs font-bold transition-colors select-none",
+                                "h-8 w-8 sm:h-10 sm:w-10 border text-[10px] sm:text-xs font-bold transition-colors select-none",
                                 SETUP_CELL_CLASSES[cellType ?? "null"]
                               )}
                             >
