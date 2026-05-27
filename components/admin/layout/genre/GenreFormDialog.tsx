@@ -37,7 +37,7 @@ export function GenreFormDialog({
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Tạo thể loại"
+            submitLabel="Thêm mới"
             readOnly={!isCreateMode}
             maxWidth="max-w"
         >

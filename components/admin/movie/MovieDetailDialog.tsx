@@ -75,7 +75,7 @@ export function MovieDetailDialog({
   return (
     <>
       <Dialog open={open && !isEditMode} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl border border-border/80 shadow-2xl [&>button]:hidden">
+        <DialogContent data-admin="" className="max-w-4xl max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl border border-border/80 shadow-2xl [&>button]:hidden">
 
           <div className="relative h-48 w-full bg-muted overflow-hidden shrink-0 select-none">
             {movie.posterUrl && (
@@ -141,8 +141,8 @@ export function MovieDetailDialog({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                  <StatusBadge status={movie.movieStatus} statusMap={MOVIE_STATUS_MAP} />
                   <StatusBadge status={movie.ageRating} statusMap={AGE_RATING_MAP} />
+                  <StatusBadge status={movie.movieStatus} statusMap={MOVIE_STATUS_MAP} />
                   <StatusBadge status={movie.entityStatus} statusMap={ENTITY_STATUS_MAP} />
                 </div>
               </div>

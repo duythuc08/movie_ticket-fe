@@ -67,7 +67,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={`${maxWidth} max-h-[88vh] overflow-hidden gap-0 p-0 [&>button]:hidden`}>
+      <DialogContent data-admin="" className={`${maxWidth} max-h-[88vh] overflow-hidden gap-0 p-0 [&>button]:hidden`}>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex max-h-[88vh] flex-col">
 

@@ -36,10 +36,10 @@ import { fetchPersonsByRoleForSelect, createPerson } from "@/services/admin/admi
 import { useAuth } from "@/context/AuthContext";
 
 const AGE_RATING_OPTIONS = [
-  { value: "G",     label: "G — Mọi lứa tuổi" },
-  { value: "PG",    label: "PG — Có hướng dẫn phụ huynh" },
+  { value: "G", label: "G — Mọi lứa tuổi" },
+  { value: "PG", label: "PG — Có phụ huynh" },
   { value: "PG_13", label: "PG-13 — Trên 13 tuổi" },
-  { value: "R",     label: "R — Trên 18 tuổi" },
+  { value: "R", label: "R — Trên 18 tuổi" },
   { value: "NC_17", label: "NC-17 — Chỉ dành cho người lớn" },
 ] as const;
 
@@ -61,9 +61,9 @@ export function MovieFormDialog({
   const { token } = useAuth();
   const isCreateMode = !movie;
 
-  const [genreOptions,    setGenreOptions]    = useState<SelectOption[]>([]);
+  const [genreOptions, setGenreOptions] = useState<SelectOption[]>([]);
   const [directorOptions, setDirectorOptions] = useState<SelectOption[]>([]);
-  const [actorOptions,    setActorOptions]    = useState<SelectOption[]>([]);
+  const [actorOptions, setActorOptions] = useState<SelectOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
   const form = useForm<MovieFormSchema>({
@@ -98,30 +98,45 @@ export function MovieFormDialog({
   useEffect(() => { loadOptions(); }, [loadOptions]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || isLoadingOptions) return;
+
     if (movie) {
       const releaseDateValue = movie.releaseDate
         ? new Date(movie.releaseDate).toISOString().split("T")[0]
         : "";
       form.reset({
-        title: movie.title, description: movie.description, duration: movie.duration,
-        trailerUrl: movie.trailerUrl ?? "", releaseDate: releaseDateValue,
-        language: movie.language, subTitle: movie.subTitle ?? "",
+        title: movie.title,
+        description: movie.description,
+        duration: movie.duration,
+        trailerUrl: movie.trailerUrl ?? "",
+        releaseDate: releaseDateValue,
+        language: movie.language,
+        subTitle: movie.subTitle ?? "",
         ageRating: movie.ageRating,
-        genreNames:  (movie.genre        ?? []).map((g) => g.name),
-        castIds:     (movie.castPersons  ?? []).map((p) => p.id),
-        directorIds: (movie.directors    ?? []).map((p) => p.id),
-        posterUrl: movie.posterUrl ?? "", posterFile: null,
+        genreNames: (movie.genre ?? []).map((g) => g.name),
+        castIds: (movie.castPersons ?? []).map((p) => p.id),
+        directorIds: (movie.directors ?? []).map((p) => p.id),
+        posterUrl: movie.posterUrl ?? "",
+        posterFile: null,
       });
     } else {
       form.reset({
-        title: "", description: "", duration: 90, trailerUrl: "",
-        releaseDate: "", language: "Tiếng Việt", subTitle: "",
-        ageRating: "PG", genreNames: [], castIds: [], directorIds: [],
-        posterUrl: "", posterFile: null,
+        title: "",
+        description: "",
+        duration: "" as unknown as number,
+        trailerUrl: "",
+        releaseDate: "",
+        language: "",
+        subTitle: "",
+        ageRating: "" as unknown as "G" | "PG" | "PG_13" | "R" | "NC_17",
+        genreNames: [],
+        castIds: [],
+        directorIds: [],
+        posterUrl: "",
+        posterFile: null,
       });
     }
-  }, [open, movie, form]);
+  }, [open, movie, form, isLoadingOptions]);
 
   async function handleQuickAddGenre(name: string, description: string): Promise<void> {
     if (!token) throw new Error("Chưa đăng nhập");
@@ -161,7 +176,7 @@ export function MovieFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
+      <DialogContent data-admin="" className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
 
@@ -220,7 +235,7 @@ export function MovieFormDialog({
                           <SelectTrigger id="movie-age-rating" className="w-full bg-background border-border/80 shadow-sm h-9">
                             <SelectValue placeholder="Chọn độ tuổi..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent data-admin="">
                             {AGE_RATING_OPTIONS.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
@@ -275,8 +290,13 @@ export function MovieFormDialog({
                         <Label htmlFor="movie-release" className="text-sm font-semibold">
                           Ngày khởi chiếu chính thức <span className="text-destructive">*</span>
                         </Label>
-                        <Input id="movie-release" type="date" {...form.register("releaseDate")}
-                          className="h-9 scheme-light dark:scheme-dark" />
+                        <Input
+                          id="movie-release"
+                          type="date"
+                          {...form.register("releaseDate")}
+                          className="h-9"
+                          style={{ colorScheme: "light" }}
+                        />
                         {form.formState.errors.releaseDate && (
                           <p className="text-xs font-medium text-destructive mt-1">{form.formState.errors.releaseDate.message}</p>
                         )}
@@ -341,7 +361,7 @@ export function MovieFormDialog({
                             disabled={isLoadingOptions}
                             quickAddSlot={
                               <QuickAddGenreButton
-                                onCreated={() => {}}
+                                onCreated={() => { }}
                                 onCreateRequest={handleQuickAddGenre}
                               />
                             }
@@ -383,7 +403,7 @@ export function MovieFormDialog({
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Dàn diễn viên tham gia</Label>
+                      <Label className="text-sm font-semibold">Các diễn viên tham gia</Label>
                       <Controller
                         name="castIds"
                         control={form.control}
@@ -437,7 +457,7 @@ export function MovieFormDialog({
               </Button>
               <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
                 {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                {isCreateMode ? "Thêm phim ngay" : "Lưu thay đổi"}
+                {isCreateMode ? "Thêm mới" : "Lưu thay đổi"}
               </Button>
             </div>
           </div>

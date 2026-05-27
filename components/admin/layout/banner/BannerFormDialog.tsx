@@ -130,7 +130,7 @@ function BannerFormContent({
                 <SelectTrigger className="h-10 shadow-sm">
                   <SelectValue placeholder="Chọn loại banner..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent data-admin="">
                   <SelectItem value="MOVIE">Phim</SelectItem>
                   <SelectItem value="EVENT">Sự kiện / Ưu đãi</SelectItem>
                 </SelectContent>
@@ -319,7 +319,7 @@ export function BannerFormDialog({
       }}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
-      submitLabel={isEditMode ? "Cập nhật Banner" : "Tạo Banner mới"}
+      submitLabel={isEditMode ? "Lưu thay đổi" : "Thêm mới"}
       readOnly={readOnly}
       maxWidth="max-w-xl"
     >
