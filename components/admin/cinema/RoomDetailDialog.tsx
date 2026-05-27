@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, LayoutGrid } from "lucide-react";
+import { Pencil, LayoutGrid, MonitorPlay, Building2, Tag, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { AdminRoom, AdminSeat, SeatType } from "@/types/admin.type";
@@ -21,7 +21,7 @@ import {
 } from "@/services/admin/adminSeatService";
 import { SeatGrid } from "./SeatGrid";
 import { SeatSetupDialog } from "./SeatSetupDialog";
-import { ROOM_TYPE_LABELS } from "./RoomColumns";
+import { ROOM_TYPE_LABELS, ROOM_TYPE_BADGE_CLASSES } from "./RoomColumns";
 
 interface RoomDetailDialogProps {
   open: boolean;
@@ -96,77 +96,80 @@ export function RoomDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent data-admin="" className="max-w-3xl max-h-[88vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Chi tiết phòng chiếu</DialogTitle>
-          </DialogHeader>
+        <DialogContent data-admin="" className="max-w-4xl max-h-[88vh] overflow-y-auto p-0 gap-0">
+        <DialogHeader className="px-6 py-5 border-b bg-muted/20">
+          <DialogTitle className="text-lg font-bold flex items-center gap-2">
+            <MonitorPlay className="w-5 h-5 text-primary" />
+            Chi tiết phòng chiếu
+          </DialogTitle>
+        </DialogHeader>
 
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Tên phòng</p>
-                <p className="font-medium">{room.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Rạp chiếu</p>
-                <p className="font-medium">{room.cinemas.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Loại phòng</p>
-                <Badge variant="outline" className="text-xs">
-                  {ROOM_TYPE_LABELS[room.roomType]}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Sức chứa</p>
-                <p className="font-medium">{room.capacity} ghế</p>
+        <div className="p-6 space-y-8 bg-background">
+          {/* Header Section */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">{room.name}</h2>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                <Building2 className="w-4 h-4 text-primary/70" />
+                Thuộc rạp: <span className="text-foreground">{room.cinemas.name}</span>
               </div>
             </div>
-
-            <div className="flex items-center justify-end gap-2">
-              {onEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-xs"
-                  onClick={() => {
-                    onOpenChange(false);
-                    onEdit(room);
-                  }}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Chỉnh sửa phòng
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-xs"
-                onClick={() => setIsSetupOpen(true)}
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline" className={`text-xs uppercase tracking-wider font-bold ${ROOM_TYPE_BADGE_CLASSES[room.roomType]}`}>
+                {ROOM_TYPE_LABELS[room.roomType]}
+              </Badge>
+              <Badge
+                variant={room.roomStatus === "OPERATIONAL" ? "success" : room.roomStatus === "MAINTENANCE" ? "warning" : "secondary"}
+                className="text-[10px] uppercase tracking-wider"
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Thiết lập ghế
-              </Button>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">
-                  Sơ đồ ghế {seats.length > 0 && `(${seats.length} ghế)`}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Click vào ghế để kích hoạt / vô hiệu hóa
-                </p>
-              </div>
-              <SeatGrid
-                seats={seats}
-                onSeatClick={handleSeatClick}
-                isLoading={isLoadingSeats}
-              />
+                {room.roomStatus === "OPERATIONAL" ? "Hoạt động" : room.roomStatus === "MAINTENANCE" ? "Bảo trì" : "Vệ sinh"}
+              </Badge>
             </div>
           </div>
+
+          <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-background rounded-lg shadow-sm border text-primary">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Sức chứa hợp lệ</p>
+                <p className="text-lg font-bold text-foreground">{room.capacity} <span className="text-sm font-medium text-muted-foreground">ghế</span></p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <Button size="sm" variant="outline" className="gap-1.5 shadow-sm bg-background" onClick={() => { onOpenChange(false); onEdit(room); }}>
+                  <Pencil className="h-3.5 w-3.5" /> Chỉnh sửa
+                </Button>
+              )}
+              <Button size="sm" className="gap-1.5 shadow-sm" onClick={() => setIsSetupOpen(true)}>
+                <LayoutGrid className="h-3.5 w-3.5" /> Cập nhật Sơ đồ
+              </Button>
+            </div>
+          </div>
+
+          <Separator className="opacity-50" />
+
+          {/* Seat Grid Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-lg font-bold flex items-center gap-2">
+                  Sơ đồ ghế hiện tại
+                  {seats.length > 0 && <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">{seats.length}</Badge>}
+                </h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Click vào ghế để kích hoạt hoặc vô hiệu hóa ghế hỏng
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-muted/10 border rounded-xl p-4 md:p-6 overflow-hidden">
+              <SeatGrid seats={seats} onSeatClick={handleSeatClick} isLoading={isLoadingSeats} />
+            </div>
+          </div>
+        </div>
         </DialogContent>
       </Dialog>
 

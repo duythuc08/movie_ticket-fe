@@ -3,18 +3,33 @@ import type {
   RoomCreatePayload,
   RoomUpdatePayload,
   EntityStatus,
+  RoomListQuery,
+  ApiPagedResult,
 } from "@/types/admin.type";
-import { adminGet, adminPost, adminPut, adminPutEmpty } from "./adminApiClient";
+import { adminGet, adminPost, adminPut, adminPutEmpty, buildFilterString } from "./adminApiClient";
 
-export async function fetchAllRooms(token: string): Promise<AdminRoom[]> {
-  return adminGet<AdminRoom[]>(token, "/rooms/getRooms");
-}
-
-export async function fetchRoomsByCinema(
+export async function fetchAdminRooms(
   token: string,
-  cinemaId: number
-): Promise<AdminRoom[]> {
-  return adminGet<AdminRoom[]>(token, `/rooms/getRooms/by-cinema/${cinemaId}`);
+  query: RoomListQuery = {}
+): Promise<ApiPagedResult<AdminRoom>> {
+  const { page = 0, size = 10, cinemaId, roomType, roomStatus, entityStatus } = query;
+
+  const filterString = buildFilterString({
+    "cinemas.cinemaId": cinemaId,
+    roomType,
+    roomStatus,
+    entityStatus,
+  });
+
+  const params: Record<string, string | number | undefined> = {
+    page,
+    size,
+    sort: "createdAt,desc",
+  };
+
+  if (filterString) params.filter = filterString;
+
+  return adminGet<ApiPagedResult<AdminRoom>>(token, "/admin/rooms", params);
 }
 
 export async function createAdminRoom(

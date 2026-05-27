@@ -44,6 +44,18 @@ export const roomFormSchema = z.object({
   roomStatus: z.enum(["OPERATIONAL", "MAINTENANCE", "CLEANING"] as const, {
     error: "Vui lòng chọn trạng thái phòng",
   }),
+  rowCount: z
+    .number({ error: "Số hàng phải là số" })
+    .int()
+    .min(1, "Phải có ít nhất 1 hàng")
+    .max(30, "Tối đa 30 hàng")
+    .optional(),
+  columnCount: z
+    .number({ error: "Số cột phải là số" })
+    .int()
+    .min(1, "Phải có ít nhất 1 cột")
+    .max(30, "Tối đa 30 cột")
+    .optional(),
 });
 
 export type RoomFormSchema = z.infer<typeof roomFormSchema>;

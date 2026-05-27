@@ -8,17 +8,18 @@ import { useAuth } from "@/context/AuthContext";
 import type { AdminRoom, AdminCinema } from "@/types/admin.type";
 import type { RoomFormSchema } from "@/lib/validations/admin.schemas";
 import {
-  fetchAllRooms,
-  fetchRoomsByCinema,
+  fetchAdminRooms,
   createAdminRoom,
   updateAdminRoom,
   toggleRoomEntityStatus,
 } from "@/services/admin/adminRoomService";
+import { setupSeatsForRoom } from "@/services/admin/adminSeatService";
 import { fetchActiveCinemasForSelect } from "@/services/admin/adminCinemaService";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { RoomFormDialog } from "@/components/admin/cinema/RoomFormDialog";
 import { RoomDetailDialog } from "@/components/admin/cinema/RoomDetailDialog";
+import { SeatSetupDialog } from "@/components/admin/cinema/SeatSetupDialog";
 import { createRoomColumns } from "@/components/admin/cinema/RoomColumns";
 
 const ROOM_TYPE_FILTER = [
@@ -40,6 +41,8 @@ export default function AdminRoomsPage() {
   const [isDetailOpen,  setIsDetailOpen]  = useState(false);
   const [selectedRoom,  setSelectedRoom]  = useState<AdminRoom | null>(null);
   const [isSubmitting,  setIsSubmitting]  = useState(false);
+  const [setupRoom, setSetupRoom] = useState<{ roomId: number, roomName: string, rows: number, cols: number } | null>(null);
+  const [isSettingUp, setIsSettingUp] = useState(false);
 
   const defaultCinemaId = cinemaIdParam ? Number(cinemaIdParam) : null;
 
@@ -47,10 +50,12 @@ export default function AdminRoomsPage() {
     if (!token) return;
     setIsLoading(true);
     try {
-      const result = defaultCinemaId
-        ? await fetchRoomsByCinema(token, defaultCinemaId)
-        : await fetchAllRooms(token);
-      setRooms(result);
+      const result = await fetchAdminRooms(token, { 
+        page: 0, 
+        size: 999, 
+        cinemaId: defaultCinemaId ?? undefined 
+      });
+      setRooms(result.content);
     } catch {
       toast.error("Không thể tải danh sách phòng chiếu");
     } finally {
@@ -72,6 +77,14 @@ export default function AdminRoomsPage() {
     loadRooms();
     loadCinemas();
   }, [loadRooms, loadCinemas]);
+
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (action === "create" && !isFormOpen) {
+      setSelectedRoom(null);
+      setIsFormOpen(true);
+    }
+  }, [searchParams, isFormOpen]);
 
   function handleOpenCreate() {
     setSelectedRoom(null);
@@ -101,18 +114,27 @@ export default function AdminRoomsPage() {
         });
         toast.success(`Đã cập nhật phòng "${data.name}"`);
       } else {
-        await createAdminRoom(token, {
+        const created = await createAdminRoom(token, {
           name:       data.name,
-          capacity:   data.capacity,
+          capacity:   0,
           cinemas:    { cinemaId: data.cinemaId },
           roomType:   data.roomType,
           roomStatus: data.roomStatus,
         });
         toast.success(`Đã thêm phòng "${data.name}"`);
+        setIsFormOpen(false);
+        setSelectedRoom(null);
+        loadRooms();
+
+        if (data.rowCount && data.columnCount) {
+          setSetupRoom({
+            roomId: created.roomId,
+            roomName: created.name,
+            rows: data.rowCount,
+            cols: data.columnCount,
+          });
+        }
       }
-      setIsFormOpen(false);
-      setSelectedRoom(null);
-      loadRooms();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lưu phòng chiếu thất bại");
     } finally {
@@ -196,6 +218,30 @@ export default function AdminRoomsPage() {
           setSelectedRoom(room);
           setIsFormOpen(true);
         }}
+      />
+
+      <SeatSetupDialog
+        open={!!setupRoom}
+        onOpenChange={(open) => !open && setSetupRoom(null)}
+        roomId={setupRoom?.roomId ?? 0}
+        roomName={setupRoom?.roomName ?? ""}
+        initialRows={setupRoom?.rows}
+        initialCols={setupRoom?.cols}
+        onSetupComplete={async (rows, cols, seatTypes) => {
+          if (!token || !setupRoom) return;
+          setIsSettingUp(true);
+          try {
+            await setupSeatsForRoom(token, setupRoom.roomId, { rows, cols, seatTypes });
+            toast.success("Thiết lập sơ đồ ghế thành công");
+            setSetupRoom(null);
+            loadRooms();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Thiết lập thất bại");
+          } finally {
+            setIsSettingUp(false);
+          }
+        }}
+        isSubmitting={isSettingUp}
       />
     </div>
   );

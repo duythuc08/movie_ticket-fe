@@ -41,6 +41,8 @@ export function RoomFormDialog({
     cinemaId:   room?.cinemas?.cinemaId ?? defaultCinemaId ?? 0,
     roomType:   (room?.roomType         ?? "STANDARD") as RoomType,
     roomStatus: (room?.roomStatus       ?? "OPERATIONAL") as RoomStatus,
+    rowCount:   8,
+    columnCount: 10,
   };
 
   return (
@@ -101,21 +103,56 @@ export function RoomFormDialog({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="room-capacity">
-              Sức chứa (ghế) <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="room-capacity"
-              type="number"
-              min={1}
-              {...form.register("capacity", { valueAsNumber: true })}
-              placeholder="VD: 120"
-            />
-            {form.formState.errors.capacity && (
-              <p className="text-xs text-destructive">{form.formState.errors.capacity.message}</p>
-            )}
-          </div>
+          {isCreateMode ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="room-row-count">
+                  Kích thước: Số hàng <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="room-row-count"
+                  type="number"
+                  min={1}
+                  max={30}
+                  {...form.register("rowCount", { valueAsNumber: true })}
+                  placeholder="VD: 8"
+                />
+                {form.formState.errors.rowCount && (
+                  <p className="text-xs text-destructive">{form.formState.errors.rowCount.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="room-col-count">
+                  Số cột (Ghế/hàng) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="room-col-count"
+                  type="number"
+                  min={1}
+                  max={30}
+                  {...form.register("columnCount", { valueAsNumber: true })}
+                  placeholder="VD: 10"
+                />
+                {form.formState.errors.columnCount && (
+                  <p className="text-xs text-destructive">{form.formState.errors.columnCount.message}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="room-capacity">
+                Sức chứa hiện tại (ghế)
+              </Label>
+              <Input
+                id="room-capacity"
+                type="number"
+                disabled
+                value={form.watch("capacity")}
+                className="bg-muted text-muted-foreground cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">Sức chứa được tính toán tự động dựa trên Sơ đồ ghế hợp lệ.</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

@@ -64,12 +64,21 @@ export interface CinemaCreatePayload {
   cinemaStatus: CinemaStatus;
 }
 
+export interface AdminRoomRequest {
+  roomId: number | null;
+  name: string;
+  capacity: number;
+  roomType: RoomType;
+  roomStatus: RoomStatus;
+}
+
 export interface CinemaUpdatePayload {
   name?: string;
   address?: string;
   phoneNumber?: string;
   email?: string;
   cinemaStatus?: CinemaStatus;
+  rooms?: AdminRoomRequest[];
 }
 
 export interface RoomCreatePayload {
@@ -106,5 +115,12 @@ export interface AdminSeatStatusUpdateRequest {
 
 export interface CinemaListQuery extends AdminListQuery {
   cinemaStatus?: CinemaStatus;
+  entityStatus?: EntityStatus;
+}
+
+export interface RoomListQuery extends AdminListQuery {
+  cinemaId?: number;
+  roomType?: RoomType;
+  roomStatus?: RoomStatus;
   entityStatus?: EntityStatus;
 }

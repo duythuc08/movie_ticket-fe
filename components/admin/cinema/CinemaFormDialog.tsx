@@ -13,6 +13,7 @@ import {
 import { cinemaFormSchema, type CinemaFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminCinema, CinemaStatus } from "@/types/admin.type";
 import { CINEMA_STATUS_OPTIONS } from "./CinemaColumns";
+import { MapPin, Phone, Mail, Building2 } from "lucide-react";
 
 interface CinemaFormDialogProps {
   open: boolean;
@@ -54,7 +55,8 @@ export function CinemaFormDialog({
       {(form) => (
         <>
           <div className="space-y-2">
-            <Label htmlFor="cinema-name">
+            <Label htmlFor="cinema-name" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-muted-foreground" />
               Tên rạp <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -68,7 +70,8 @@ export function CinemaFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cinema-address">
+            <Label htmlFor="cinema-address" className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               Địa chỉ <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -83,7 +86,8 @@ export function CinemaFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cinema-phone">
+              <Label htmlFor="cinema-phone" className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-muted-foreground" />
                 Điện thoại <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -96,7 +100,8 @@ export function CinemaFormDialog({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cinema-email">
+              <Label htmlFor="cinema-email" className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-muted-foreground" />
                 Email <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -112,7 +117,8 @@ export function CinemaFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-muted-foreground" />
               Trạng thái vận hành <span className="text-destructive">*</span>
             </Label>
             <Select

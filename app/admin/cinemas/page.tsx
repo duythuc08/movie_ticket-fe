@@ -8,6 +8,7 @@ import type { AdminCinema } from "@/types/admin.type";
 import type { CinemaFormSchema } from "@/lib/validations/admin.schemas";
 import {
   fetchAdminCinemas,
+  fetchAdminCinemaById,
   createAdminCinema,
   updateAdminCinema,
   toggleCinemaEntityStatus,
@@ -63,12 +64,29 @@ export default function AdminCinemasPage() {
     setIsFormOpen(true);
   }
 
+  function handleEditFromDetail(detail: any) {
+    setIsDetailOpen(false);
+    setSelectedCinema(detail);
+    setIsFormOpen(true);
+  }
+
   async function handleFormSubmit(data: CinemaFormSchema) {
     if (!token) return;
     setIsSubmitting(true);
     try {
       if (selectedCinema) {
-        await updateAdminCinema(token, selectedCinema.cinemaId, data);
+        const currentDetail = await fetchAdminCinemaById(token, selectedCinema.cinemaId);
+        const mappedRooms = currentDetail.rooms.map((r) => ({
+          roomId: r.roomId,
+          name: r.name,
+          capacity: r.capacity,
+          roomType: r.roomType,
+          roomStatus: r.roomStatus,
+        }));
+        await updateAdminCinema(token, selectedCinema.cinemaId, {
+          ...data,
+          rooms: mappedRooms,
+        });
         toast.success(`Đã cập nhật rạp "${data.name}"`);
       } else {
         await createAdminCinema(token, data);
@@ -149,6 +167,7 @@ export default function AdminCinemasPage() {
           if (!isOpen) setSelectedCinema(null);
         }}
         cinemaId={selectedCinema?.cinemaId ?? null}
+        onEdit={handleEditFromDetail}
       />
     </div>
   );
