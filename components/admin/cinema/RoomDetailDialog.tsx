@@ -96,7 +96,7 @@ export function RoomDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        <DialogContent data-admin="" className="max-w-3xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết phòng chiếu</DialogTitle>
           </DialogHeader>

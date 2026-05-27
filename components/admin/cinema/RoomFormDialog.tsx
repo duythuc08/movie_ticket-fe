@@ -71,7 +71,7 @@ export function RoomFormDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn rạp chiếu" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent data-admin="">
                   {cinemas.map((c) => (
                     <SelectItem key={c.cinemaId} value={String(c.cinemaId)}>
                       {c.name}
@@ -129,7 +129,7 @@ export function RoomFormDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent data-admin="">
                   {ROOM_TYPE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -149,7 +149,7 @@ export function RoomFormDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent data-admin="">
                   {ROOM_STATUS_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}

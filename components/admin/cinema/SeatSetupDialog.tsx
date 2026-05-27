@@ -89,7 +89,7 @@ export function SeatSetupDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0 [&>button]:hidden">
+      <DialogContent data-admin="" className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0 [&>button]:hidden">
         <DialogHeader className="border-b px-6 py-4 shrink-0">
           <DialogTitle className="text-base">
             Thiết lập sơ đồ ghế — {roomName}
