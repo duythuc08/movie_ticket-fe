@@ -15,54 +15,54 @@
  */
 
 :root {
-  --admin-bg:          oklch(0.255 0.022 255);
-  --admin-surface:     oklch(0.285 0.022 255);
-  --admin-surface-2:   oklch(0.315 0.022 255);
-  --admin-surface-3:   oklch(0.350 0.022 255);
-  --admin-surface-4:   oklch(0.385 0.022 255);
+  --admin-bg:          oklch(0.985 0.002 264); /* Nền tổng thể: xám rất nhạt */
+  --admin-surface:     oklch(0.995 0.001 264);
+  --admin-surface-2:   oklch(1.000 0     0);   /* Form/Card: Trắng tinh */
+  --admin-surface-3:   oklch(0.965 0.003 264); /* Input, Muted */
+  --admin-surface-4:   oklch(0.930 0.005 264); /* Hover bg */
 
-  --admin-border:      oklch(0.395 0.024 255);
-  --admin-border-2:    oklch(0.490 0.026 255);
-  --admin-border-3:    oklch(0.620 0.026 255);
+  --admin-border:      oklch(0.920 0.005 264);
+  --admin-border-2:    oklch(0.870 0.008 264);
+  --admin-border-3:    oklch(0.780 0.010 264); /* Ring / border đậm */
 
-  --admin-text:        oklch(0.960 0.004 264);
-  --admin-text-2:      oklch(0.720 0.008 264);
-  --admin-text-3:      oklch(0.520 0.010 264);
-  --admin-text-4:      oklch(0.380 0.008 264);
+  --admin-text:        oklch(0.200 0.015 264); /* Text chính: Xám đen */
+  --admin-text-2:      oklch(0.350 0.010 264);
+  --admin-text-3:      oklch(0.500 0.008 264); /* Text phụ, placeholder */
+  --admin-text-4:      oklch(0.650 0.006 264);
 
-  --admin-accent:      oklch(0.5705 0.2228 27.21);
-  --admin-accent-h:    oklch(0.640  0.220  27.21);
-  --admin-accent-a:    oklch(0.510  0.225  27.21);
-  --admin-accent-sub:  oklch(0.5705 0.2228 27.21 / 0.14);
-  --admin-accent-fg:   oklch(0.985  0      0    );
+  --admin-accent:      oklch(0.570 0.223 27.2);
+  --admin-accent-h:    oklch(0.520 0.220 27.2);
+  --admin-accent-a:    oklch(0.480 0.225 27.2);
+  --admin-accent-sub:  oklch(0.570 0.223 27.2 / 0.10);
+  --admin-accent-fg:   oklch(1.000 0     0);
 
-  --admin-nav-active-bg:   oklch(0.5705 0.2228 27.21 / 0.16);
-  --admin-nav-active-text: oklch(0.860  0.140  27.21);
-  --admin-nav-hover-bg:    oklch(0.310  0.008  264);
+  --admin-nav-active-bg:   oklch(0.570 0.223 27.2 / 0.08);
+  --admin-nav-active-text: oklch(0.570 0.223 27.2);
+  --admin-nav-hover-bg:    oklch(0.965 0.003 264);
 
-  --admin-success:     oklch(0.740 0.160 145);
-  --admin-success-sub: oklch(0.740 0.160 145 / 0.14);
-  --admin-warning:     oklch(0.805 0.168 75);
-  --admin-warning-sub: oklch(0.805 0.168 75 / 0.14);
-  --admin-danger:      oklch(0.668 0.222 25);
-  --admin-danger-sub:  oklch(0.668 0.222 25 / 0.14);
-  --admin-info:        oklch(0.705 0.162 232);
-  --admin-info-sub:    oklch(0.705 0.162 232 / 0.14);
+  --admin-success:     oklch(0.600 0.150 145);
+  --admin-success-sub: oklch(0.600 0.150 145 / 0.12);
+  --admin-warning:     oklch(0.650 0.160 75);
+  --admin-warning-sub: oklch(0.650 0.160 75 / 0.12);
+  --admin-danger:      oklch(0.550 0.200 25);
+  --admin-danger-sub:  oklch(0.550 0.200 25 / 0.12);
+  --admin-info:        oklch(0.550 0.150 232);
+  --admin-info-sub:    oklch(0.550 0.150 232 / 0.12);
 
-  --admin-scrollbar-thumb: oklch(0.430 0.022 255);
-  --admin-scrollbar-hover: oklch(0.550 0.024 255);
+  --admin-scrollbar-thumb: oklch(0.850 0.005 264);
+  --admin-scrollbar-hover: oklch(0.700 0.010 264);
 }
 
 [data-admin] {
-  --background:            var(--admin-surface-2);
+  --background:            var(--admin-bg);
   --foreground:            var(--admin-text);
   --card:                  var(--admin-surface-2);
   --card-foreground:       var(--admin-text);
-  --popover:               var(--admin-surface-3);
+  --popover:               var(--admin-surface-2);
   --popover-foreground:    var(--admin-text);
 
   --border:                var(--admin-border);
-  --input:                 var(--admin-surface-3);
+  --input:                 var(--admin-border-2);
   --ring:                  var(--admin-border-3);
 
   --muted:                 var(--admin-surface-3);
@@ -76,6 +76,23 @@
   --primary-foreground:    var(--admin-accent-fg);
 
   --destructive:           var(--admin-danger);
+  --destructive-foreground: oklch(1 0 0);
+
+  --sidebar:               var(--admin-surface-2);
+  --sidebar-foreground:    var(--admin-text);
+  --sidebar-primary:       var(--admin-accent);
+  --sidebar-primary-foreground: var(--admin-accent-fg);
+  --sidebar-accent:        var(--admin-surface-4);
+  --sidebar-accent-foreground: var(--admin-text);
+  --sidebar-border:        var(--admin-border);
+  --sidebar-ring:          var(--admin-border-3);
+
+  --badge-warning-bg:      var(--admin-warning-sub);
+  --badge-warning-text:    var(--admin-warning);
+  --badge-success-bg:      var(--admin-success-sub);
+  --badge-success-text:    var(--admin-success);
+  --badge-danger-bg:       var(--admin-danger-sub);
+  --badge-danger-text:     var(--admin-danger);
 }
 
 [data-admin] ::-webkit-scrollbar-thumb {

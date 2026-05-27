@@ -50,7 +50,7 @@ export interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement>
 export function DialogContent({ className = "", children, ...props }: DialogContentProps) {
   return (
     <div
-      className={`relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden ${className}`}
+      className={`relative bg-card text-card-foreground border border-border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden ${className}`}
       onClick={(e) => e.stopPropagation()}
       {...props}
     >

@@ -21,11 +21,11 @@ const badgeVariantClasses: Record<BadgeVariant, string> = {
   secondary: "bg-secondary text-secondary-foreground border-transparent",
   outline: "border border-input bg-transparent text-foreground",
   destructive: "bg-destructive text-destructive-foreground border-transparent",
-  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-transparent",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-transparent",
-  paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-transparent",
-  success: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-transparent",
-  warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-transparent",
+  pending: "bg-[var(--badge-warning-bg)] text-[var(--badge-warning-text)] border-transparent",
+  cancelled: "bg-[var(--badge-danger-bg)] text-[var(--badge-danger-text)] border-transparent",
+  paid: "bg-[var(--badge-success-bg)] text-[var(--badge-success-text)] border-transparent",
+  success: "bg-[var(--badge-success-bg)] text-[var(--badge-success-text)] border-transparent",
+  warning: "bg-[var(--badge-warning-bg)] text-[var(--badge-warning-text)] border-transparent",
 };
 
 export function Badge({ className, variant = "default", ...props }: BadgeProps) {
