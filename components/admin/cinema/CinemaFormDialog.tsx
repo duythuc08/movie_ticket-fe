@@ -202,7 +202,7 @@ export function CinemaFormDialog({
                       onValueChange={(val) => form.setValue(`rooms.${index}.roomType`, val as RoomType)}
                     >
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent data-admin="">
                         <SelectItem value="STANDARD">Thường</SelectItem>
                         <SelectItem value="VIP">VIP</SelectItem>
                         <SelectItem value="IMAX">IMAX</SelectItem>
@@ -216,7 +216,7 @@ export function CinemaFormDialog({
                       onValueChange={(val) => form.setValue(`rooms.${index}.roomStatus`, val as RoomStatus)}
                     >
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent data-admin="">
                         <SelectItem value="OPERATIONAL">Hoạt động</SelectItem>
                         <SelectItem value="MAINTENANCE">Bảo trì</SelectItem>
                         <SelectItem value="CLEANING">Dọn dẹp</SelectItem>

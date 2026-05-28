@@ -162,7 +162,7 @@ export function DataTable<TData>({
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={filter.label} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent data-admin="">
               <SelectItem value="__all__">Tất cả</SelectItem>
               {filter.options.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>

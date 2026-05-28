@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
+
 import { cn } from "@/lib/utils";
 import type { AdminSeat, SeatType, SeatStatus } from "@/types/admin.type";
 
@@ -17,11 +30,11 @@ const SEAT_STATUS_CLASSES: Record<SeatStatus, string> = {
 
 interface SeatGridProps {
   seats: AdminSeat[];
-  onSeatClick?: (seat: AdminSeat) => void;
+  onSeatAction?: (seat: AdminSeat, actionType: "CHANGE_STATUS" | "TOGGLE_ENTITY", newStatus?: SeatStatus) => void;
   isLoading?: boolean;
 }
 
-export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
+export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
@@ -95,12 +108,11 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
                   }
                 }
 
-                return (
+                const seatElement = (
                   <button
                     key={seat.seatId}
                     type="button"
                     title={`${seat.seatRow}${seat.seatNumber} — ${seat.seatType}${isInactive ? " (Vô hiệu)" : ""}${seat.seatStatus !== "NORMAL" ? ` — ${seat.seatStatus}` : ""}\nSCORE: ${seat.viewQuanlityScore}`}
-                    onClick={() => onSeatClick?.(seat)}
                     style={{ gridColumn: seat.seatNumber }}
                     className={cn(
                       "h-8 w-8 border text-[10px] font-semibold transition-all flex items-center justify-center",
@@ -108,11 +120,45 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
                         ? "bg-slate-300/60 border-dashed border-slate-400/60 opacity-60 text-muted-foreground/60"
                         : statusClass || typeClass,
                       coupleClass,
-                      onSeatClick ? "cursor-pointer" : "cursor-default"
+                      onSeatAction ? "cursor-pointer" : "cursor-default"
                     )}
                   >
                     {seat.seatRow}{seat.seatNumber}
                   </button>
+                );
+
+                if (!onSeatAction) return seatElement;
+
+                return (
+                  <DropdownMenu key={seat.seatId}>
+                    <DropdownMenuTrigger asChild>
+                      {seatElement}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="center" data-admin="">
+                      <DropdownMenuLabel>Ghế {seat.seatRow}{seat.seatNumber}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>({seat.seatStatus})</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent data-admin="">
+                            <DropdownMenuItem onClick={() => onSeatAction(seat, "CHANGE_STATUS", "NORMAL")} disabled={seat.seatStatus === "NORMAL"}>
+                              Bình thường
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onSeatAction(seat, "CHANGE_STATUS", "BROKEN")} disabled={seat.seatStatus === "BROKEN"}>
+                              Hỏng
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onSeatAction(seat, "CHANGE_STATUS", "MAINTENANCE")} disabled={seat.seatStatus === "MAINTENANCE"}>
+                              Bảo trì
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onSeatAction(seat, "TOGGLE_ENTITY")}>
+                        {isInactive ? "Kích hoạt" : "Vô hiệu hóa"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 );
               })}
             </div>

@@ -52,7 +52,7 @@ export function ActionMenu({ actions }: ActionMenuProps) {
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" data-admin="">
         {defaultActions.map((action) => (
           <ActionMenuItem key={action.label} action={action} />
         ))}

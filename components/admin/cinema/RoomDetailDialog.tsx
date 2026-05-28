@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,10 @@ import {
   fetchSeatsByRoom,
   setupSeatsForRoom,
   toggleSeatEntityStatus,
+  fetchBlockedShowTimesForSeat,
+  updateSeatStatus,
 } from "@/services/admin/adminSeatService";
+import type { BlockedShowTime, SeatStatus } from "@/types/admin.type";
 import { updateAdminRoom } from "@/services/admin/adminRoomService";
 import { SeatGrid } from "./SeatGrid";
 import { ROOM_TYPE_LABELS, ROOM_TYPE_BADGE_CLASSES } from "./RoomColumns";
@@ -76,6 +80,12 @@ export function RoomDetailDialog({
   const [dragMode, setDragMode] = useState<"PAINT" | "ERASE" | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
+  const [chainUnlockOpen, setChainUnlockOpen] = useState(false);
+  const [chainUnlockSeat, setChainUnlockSeat] = useState<AdminSeat | null>(null);
+  const [blockedShowtimes, setBlockedShowtimes] = useState<BlockedShowTime[]>([]);
+  const [selectedShowtimes, setSelectedShowtimes] = useState<number[]>([]);
+  const [isUpdatingSeat, setIsUpdatingSeat] = useState(false);
+
   const loadSeats = useCallback(async () => {
     if (!token || !room) return;
     setIsLoadingSeats(true);
@@ -108,30 +118,91 @@ export function RoomDetailDialog({
     }
   }, [open, loadSeats]);
 
-  async function handleSeatClick(seat: AdminSeat) {
+  async function handleSeatAction(seat: AdminSeat, actionType: "CHANGE_STATUS" | "TOGGLE_ENTITY", newStatus?: SeatStatus) {
     if (!token || isEditMode) return;
-    const action = seat.entityStatus === "ACTIVE" ? "vô hiệu hóa" : "kích hoạt";
-    try {
-      if (seat.seatType === "COUPLE") {
-        const partner = seats.find(s => 
+    
+    if (actionType === "TOGGLE_ENTITY") {
+      const action = seat.entityStatus === "ACTIVE" ? "vô hiệu hóa" : "kích hoạt";
+      try {
+        if (seat.seatType === "COUPLE") {
+          const partner = seats.find(s => 
+            s.seatRow === seat.seatRow && 
+            s.seatType === "COUPLE" && 
+            (s.seatNumber === seat.seatNumber - 1 || s.seatNumber === seat.seatNumber + 1)
+          );
+          
+          await toggleSeatEntityStatus(token, seat.seatId, seat.entityStatus);
+          if (partner) {
+            await toggleSeatEntityStatus(token, partner.seatId, partner.entityStatus);
+          }
+          toast.success(`Đã ${action} ghế đôi ${seat.seatRow}${Math.min(seat.seatNumber, partner?.seatNumber || seat.seatNumber)}-${Math.max(seat.seatNumber, partner?.seatNumber || seat.seatNumber)}`);
+        } else {
+          await toggleSeatEntityStatus(token, seat.seatId, seat.entityStatus);
+          toast.success(`Đã ${action} ghế ${seat.seatRow}${seat.seatNumber}`);
+        }
+        
+        loadSeats();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : `Không thể ${action} ghế`);
+      }
+    } else if (actionType === "CHANGE_STATUS" && newStatus) {
+      if (newStatus === "NORMAL" && (seat.seatStatus === "BROKEN" || seat.seatStatus === "MAINTENANCE")) {
+        try {
+          setIsUpdatingSeat(true);
+          const blocked = await fetchBlockedShowTimesForSeat(token, seat.seatId);
+          if (blocked && blocked.length > 0) {
+            setBlockedShowtimes(blocked);
+            setSelectedShowtimes(blocked.map(s => s.showTimeId));
+            setChainUnlockSeat(seat);
+            setChainUnlockOpen(true);
+          } else {
+            await updateSeatStatusPair(seat, "NORMAL", []);
+          }
+        } catch (err) {
+          toast.error("Không thể kiểm tra suất chiếu bị ảnh hưởng");
+        } finally {
+          setIsUpdatingSeat(false);
+        }
+      } else {
+        try {
+          setIsUpdatingSeat(true);
+          await updateSeatStatusPair(seat, newStatus, []);
+        } catch (err) {
+          toast.error("Lỗi khi cập nhật trạng thái");
+        } finally {
+          setIsUpdatingSeat(false);
+        }
+      }
+    }
+  }
+
+  async function updateSeatStatusPair(seat: AdminSeat, status: SeatStatus, unlockShowTimeIds: number[]) {
+    if (!token) return;
+    await updateSeatStatus(token, seat.seatId, { seatStatus: status, unlockShowTimeIds });
+    if (seat.seatType === "COUPLE") {
+      const partner = seats.find(s => 
           s.seatRow === seat.seatRow && 
           s.seatType === "COUPLE" && 
           (s.seatNumber === seat.seatNumber - 1 || s.seatNumber === seat.seatNumber + 1)
         );
-        
-        await toggleSeatEntityStatus(token, seat.seatId, seat.entityStatus);
-        if (partner) {
-          await toggleSeatEntityStatus(token, partner.seatId, partner.entityStatus);
-        }
-        toast.success(`Đã ${action} ghế đôi ${seat.seatRow}${Math.min(seat.seatNumber, partner?.seatNumber || seat.seatNumber)}-${Math.max(seat.seatNumber, partner?.seatNumber || seat.seatNumber)}`);
-      } else {
-        await toggleSeatEntityStatus(token, seat.seatId, seat.entityStatus);
-        toast.success(`Đã ${action} ghế ${seat.seatRow}${seat.seatNumber}`);
+      if (partner) {
+        await updateSeatStatus(token, partner.seatId, { seatStatus: status, unlockShowTimeIds });
       }
-      
-      loadSeats();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : `Không thể ${action} ghế`);
+    }
+    toast.success("Cập nhật trạng thái ghế thành công");
+    loadSeats();
+  }
+
+  async function handleConfirmChainUnlock() {
+    if (!chainUnlockSeat) return;
+    try {
+      setIsUpdatingSeat(true);
+      await updateSeatStatusPair(chainUnlockSeat, "NORMAL", selectedShowtimes);
+      setChainUnlockOpen(false);
+    } catch (err) {
+      toast.error("Lỗi khi mở khóa ghế");
+    } finally {
+      setIsUpdatingSeat(false);
     }
   }
 
@@ -316,7 +387,7 @@ export function RoomDetailDialog({
                 Thuộc rạp: <span className="text-foreground">{room.cinemas.name}</span>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex items-end gap-2">
               <Badge variant="outline" className={`text-xs uppercase tracking-wider font-bold ${ROOM_TYPE_BADGE_CLASSES[room.roomType]}`}>
                 {ROOM_TYPE_LABELS[room.roomType]}
               </Badge>
@@ -361,7 +432,7 @@ export function RoomDetailDialog({
                 <p className="text-sm text-muted-foreground mt-1">
                   {isEditMode 
                     ? "Kéo thả hoặc click để vẽ ghế. Trống để làm lối đi."
-                    : "Click vào ghế để kích hoạt hoặc vô hiệu hóa ghế hỏng"}
+                    : "Click vào ghế để mở menu trạng thái (hoặc vô hiệu hóa)"}
                 </p>
               </div>
               {!isEditMode ? (
@@ -476,7 +547,7 @@ export function RoomDetailDialog({
               </div>
             ) : (
               <div className="bg-muted/10 border rounded-xl p-4 md:p-6 overflow-hidden">
-                <SeatGrid seats={seats} onSeatClick={handleSeatClick} isLoading={isLoadingSeats} />
+                <SeatGrid seats={seats} onSeatAction={handleSeatAction} isLoading={isLoadingSeats} />
               </div>
             )}
           </div>
@@ -500,6 +571,48 @@ export function RoomDetailDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <Dialog open={chainUnlockOpen} onOpenChange={setChainUnlockOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mở bán ghế tự động</DialogTitle>
+        </DialogHeader>
+        <div className="py-4 space-y-4">
+          <p className="text-sm">
+            Ghế <strong>{chainUnlockSeat?.seatRow}{chainUnlockSeat?.seatNumber}</strong> đang bị khóa ở <strong>{blockedShowtimes.length}</strong> suất chiếu sắp tới. Bạn có muốn tự động mở bán ghế này không?
+          </p>
+          <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded p-3">
+            {blockedShowtimes.map(st => (
+              <div key={st.showTimeId} className="flex items-center space-x-2">
+                <input 
+                  type="checkbox"
+                  id={`st-${st.showTimeId}`} 
+                  checked={selectedShowtimes.includes(st.showTimeId)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedShowtimes([...selectedShowtimes, st.showTimeId]);
+                    } else {
+                      setSelectedShowtimes(selectedShowtimes.filter(id => id !== st.showTimeId));
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                />
+                <label htmlFor={`st-${st.showTimeId}`} className="text-sm cursor-pointer select-none">
+                  Suất {st.startTime} - {st.endTime} <span className="text-muted-foreground ml-1">({st.roomName})</span>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setChainUnlockOpen(false)} disabled={isUpdatingSeat}>Hủy</Button>
+          <Button onClick={handleConfirmChainUnlock} disabled={isUpdatingSeat}>
+            {isUpdatingSeat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Xác nhận mở bán
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
