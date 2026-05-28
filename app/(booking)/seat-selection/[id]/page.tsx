@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
-import { fetchSeatShowTimes, fetchSeatPrices } from "@/components/booking/service/booking.service";
-import type { SeatShowTime, SeatDetail } from "@/types";
+import { fetchSeatSelection } from "@/components/booking/service/booking.service";
+import type { SeatShowTime, SeatDetail, SuggestedSeat } from "@/types";
 
 import { SeatMap } from "@/components/booking/components/SeatMap";
 import { SeatLegend } from "@/components/booking/components/SeatLegend";
@@ -24,6 +24,8 @@ export default function SeatSelectionPage() {
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const [seatData, setSeatData] = useState<Record<string, SeatShowTime[]>>({});
   const [seatPrices, setSeatPrices] = useState<Record<string, number>>({});
+  const [suggestedSeats, setSuggestedSeats] = useState<SuggestedSeat[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const processSeatData = (data: SeatShowTime[]) => {
@@ -58,12 +60,10 @@ export default function SeatSelectionPage() {
         return;
       }
       try {
-        const [seats, prices] = await Promise.all([
-          fetchSeatShowTimes(showTimeId, token),
-          fetchSeatPrices(showTimeId, token),
-        ]);
-        processSeatData(seats);
-        setSeatPrices(prices);
+        const res = await fetchSeatSelection(showTimeId, token);
+        processSeatData(res.seats || []);
+        setSeatPrices(res.pricingMap || {});
+        setSuggestedSeats(res.suggested || []);
       } catch {
         toast.error("Không thể tải thông tin ghế. Vui lòng thử lại.");
       } finally {
@@ -88,6 +88,12 @@ export default function SeatSelectionPage() {
       seatsToToggle.push(seat.partnerId);
     }
     const isSelected = isSeatSelected(seat.seatId);
+    const isSuggested = suggestedSeats.some(
+      (s) => s.seatShowTimeId === seat.seatShowTimeId || (s.seatRow === seat.seatRow && s.seatNumber === seat.seatNumber)
+    );
+    if (!isSelected && !isSuggested) {
+      setShowSuggestions(false);
+    }
     setSelectedSeats((prev) =>
       isSelected
         ? prev.filter((id) => !seatsToToggle.includes(id))
@@ -154,12 +160,24 @@ export default function SeatSelectionPage() {
     <div className="min-h-screen pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 pb-36 bg-background">
       <div className="max-w-6xl mx-auto">
 
-        {/* Title */}
-        <div className="mb-8">
-          <h1 className="mb-1 text-2xl font-bold text-foreground">Chọn ghế của bạn</h1>
-          <p className="text-sm text-muted-foreground">
-            {bookingInfo.movie || "Tên phim"} • {bookingInfo.roomName || "Phòng chiếu"}
-          </p>
+        {/* Title & Actions */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="mb-1 text-2xl font-bold text-foreground">Chọn ghế của bạn</h1>
+            <p className="text-sm text-muted-foreground">
+              {bookingInfo.movie || "Tên phim"} • {bookingInfo.roomName || "Phòng chiếu"}
+            </p>
+          </div>
+          {suggestedSeats.length > 0 && !showSuggestions && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSuggestions(true)}
+              className="w-fit text-amber-600 border-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-400 dark:hover:bg-amber-950/30 gap-2"
+            >
+              ✨ Hiện ghế gợi ý
+            </Button>
+          )}
         </div>
 
         {/* Screen */}
@@ -181,6 +199,8 @@ export default function SeatSelectionPage() {
           seatData={seatData}
           seatPrices={seatPrices}
           selectedSeats={selectedSeats}
+          suggestedSeats={suggestedSeats}
+          showSuggestions={showSuggestions}
           onToggleSeat={toggleSeat}
           isSeatOccupied={isSeatOccupied}
         />

@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeProvider } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft, Film } from "lucide-react";
 import Link from "next/link";
@@ -26,12 +25,6 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
     pathname.includes("/payment-success") || pathname.includes("/payment-fail");
 
   return (
-    <ThemeProvider
-      attribute="data-theme"
-      defaultTheme="dark"
-      enableSystem={false}
-      disableTransitionOnChange
-    >
     <div className="min-h-screen flex flex-col bg-background">
       {!isSuccessOrFail && (
         <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
@@ -105,6 +98,5 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
 
       <main className="flex-grow">{children}</main>
     </div>
-    </ThemeProvider>
   );
 }

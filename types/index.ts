@@ -137,6 +137,20 @@ export interface SeatShowTime {
   partnerId?: number;
 }
 
+export interface SuggestedSeat {
+  seatShowTimeId: number;
+  seatRow: string;
+  seatNumber: number;
+  seatType: string;
+  viewQuanlityScore: number;
+}
+
+export interface SelectionResponse {
+  seats: SeatShowTime[];
+  pricingMap: Record<string, number>;
+  suggested: SuggestedSeat[];
+}
+
 // ─── Order ────────────────────────────────────────────────
 export interface OrderTicket {
   orderTicketId: number;

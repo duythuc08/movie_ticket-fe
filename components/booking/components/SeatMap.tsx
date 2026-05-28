@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { SEAT_STYLES } from "@/components/booking/constants/booking.constants";
 import { formatCurrency, seatLabel } from "@/components/booking/utils/booking.utils";
-import type { SeatShowTime } from "@/types";
+import type { SeatShowTime, SuggestedSeat } from "@/types";
 
 interface SeatMapProps {
   seatData: Record<string, SeatShowTime[]>;
   seatPrices: Record<string, number>;
   selectedSeats: number[];
+  suggestedSeats?: SuggestedSeat[];
+  showSuggestions?: boolean;
   onToggleSeat: (seat: SeatShowTime) => void;
   isSeatOccupied: (seat: SeatShowTime) => boolean;
 }
@@ -14,54 +17,116 @@ export function SeatMap({
   seatData,
   seatPrices,
   selectedSeats,
+  suggestedSeats = [],
+  showSuggestions = false,
   onToggleSeat,
   isSeatOccupied,
 }: SeatMapProps) {
+  const [hoveredCoupleId, setHoveredCoupleId] = useState<number | null>(null);
+
   const isSeatSelected = (seatId: number) => selectedSeats.includes(seatId);
-  const rows = Object.keys(seatData).sort();
+  
+  const isSuggested = (seat: SeatShowTime) =>
+    showSuggestions &&
+    suggestedSeats.some(
+      (s) =>
+        s.seatShowTimeId === seat.seatShowTimeId ||
+        (s.seatRow === seat.seatRow && s.seatNumber === seat.seatNumber)
+    );
+
+  const rows = Object.keys(seatData).sort((a, b) => a.localeCompare(b));
+
+  let maxCol = 0;
+  for (const row of rows) {
+    for (const seat of seatData[row]) {
+      if (seat.seatNumber > maxCol) maxCol = seat.seatNumber;
+    }
+  }
 
   return (
-    <div className="mb-8 overflow-x-auto pb-2">
-      <div className="w-fit mx-auto">
-        <div className="flex flex-col gap-1.5">
-          {rows.map((row) => (
-            <div key={row} className="flex items-center gap-1.5 sm:gap-2">
-              <span className="w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">
-                {row}
+    <div className="mb-8 overflow-x-auto pb-6 pt-2 px-2">
+      <div className="w-fit mx-auto relative flex flex-col gap-1.5 sm:gap-2">
+        {rows.map((rowLabel) => {
+          const rowSeats = seatData[rowLabel];
+          return (
+            <div key={rowLabel} className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-6 sm:w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">
+                {rowLabel}
               </span>
 
-              <div className="flex gap-1 sm:gap-1.5">
-                {seatData[row].map((seat) => {
+              <div
+                className="grid gap-1 sm:gap-1.5"
+                style={{ gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))` }}
+              >
+                {rowSeats.map((seat, index) => {
                   const occupied = isSeatOccupied(seat);
                   const selected = isSeatSelected(seat.seatId);
+                  const suggested = isSuggested(seat);
                   const style = SEAT_STYLES[seat.seatType] ?? SEAT_STYLES.DEFAULT;
                   const price = seatPrices[seat.seatType] || 0;
                   const isCouple = seat.seatType === "COUPLE";
                   const label = seatLabel(seat.seatRow, seat.seatNumber);
 
+                  let coupleClass = "";
+                  if (isCouple) {
+                    let countBefore = 0;
+                    for (let k = index - 1; k >= 0; k--) {
+                      if (
+                        rowSeats[k].seatType === "COUPLE" &&
+                        rowSeats[k].seatNumber === rowSeats[k + 1].seatNumber - 1
+                      ) {
+                        countBefore++;
+                      } else {
+                        break;
+                      }
+                    }
+                    const isLeftCouple = countBefore % 2 === 0;
+
+                    if (isLeftCouple) {
+                      coupleClass =
+                        "rounded-tl-lg rounded-tr-none border-r-0 mr-[-4px] sm:mr-[-6px] z-10 w-[calc(100%+4px)] sm:w-[calc(100%+6px)]";
+                    } else {
+                      coupleClass =
+                        "rounded-tr-lg rounded-tl-none border-l-0 ml-[-4px] sm:ml-[-6px] z-10 w-[calc(100%+4px)] sm:w-[calc(100%+6px)]";
+                    }
+                  } else {
+                    coupleClass = "rounded-t-lg";
+                  }
+
+                  const isHoveredCouple = isCouple && hoveredCoupleId && (hoveredCoupleId === seat.seatId || hoveredCoupleId === seat.partnerId);
+
                   let seatClass = "";
                   if (occupied) {
                     seatClass =
-                      "bg-slate-300/60 dark:bg-slate-700/50 border border-dashed border-slate-400/60 dark:border-slate-600/60 cursor-not-allowed opacity-60";
+                      "bg-slate-300/60 border border-dashed border-slate-400/60 cursor-not-allowed opacity-60";
                   } else if (selected) {
                     seatClass =
-                      "bg-primary border-2 border-primary/80 -translate-y-1 z-10 shadow-lg shadow-primary/40 cursor-pointer";
+                      "bg-primary border border-primary/80 -translate-y-1 z-20 shadow-lg shadow-primary/40 cursor-pointer";
+                  } else if (suggested) {
+                    seatClass = `${style.idle} ${style.suggested} cursor-pointer z-10 ${isHoveredCouple ? '-translate-y-1 shadow-md z-20' : 'hover:-translate-y-1 hover:shadow-md hover:z-20'}`;
                   } else {
-                    seatClass = `${style.idle} cursor-pointer hover:-translate-y-1 hover:shadow-md hover:z-10`;
+                    seatClass = `${style.idle} cursor-pointer ${isHoveredCouple ? '-translate-y-1 shadow-md z-20' : 'hover:-translate-y-1 hover:shadow-md hover:z-20'}`;
                   }
 
                   return (
                     <button
                       key={seat.seatId}
                       type="button"
+                      style={{ gridColumn: seat.seatNumber }}
                       onClick={() => onToggleSeat(seat)}
+                      onMouseEnter={() => {
+                        if (isCouple) setHoveredCoupleId(seat.seatId);
+                      }}
+                      onMouseLeave={() => {
+                        if (isCouple) setHoveredCoupleId(null);
+                      }}
                       disabled={occupied}
                       title={`${label} – ${style.label}${price > 0 ? ` (${formatCurrency(price)})` : ""}`}
                       className={[
-                        "relative flex flex-col items-center justify-center rounded-t-lg transition-all duration-150 select-none",
-                        isCouple ? "w-11 sm:w-12 h-11 sm:h-12" : "w-10 sm:w-11 h-10 sm:h-11",
+                        "relative flex flex-col items-center justify-center transition-all duration-150 select-none",
+                        "w-10 sm:w-11 h-10 sm:h-11",
                         seatClass,
-                        isCouple ? "rounded-none first:rounded-tl-lg last:rounded-tr-lg" : "",
+                        coupleClass,
                       ]
                         .filter(Boolean)
                         .join(" ")}
@@ -72,7 +137,7 @@ export function SeatMap({
                             ? "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-muted-foreground/60"
                             : selected
                             ? "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-primary-foreground"
-                            : "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-[#663399] dark:text-violet-200"
+                            : "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-[#663399]"
                         }
                       >
                         {label}
@@ -83,7 +148,7 @@ export function SeatMap({
                           className={
                             selected
                               ? "text-[7px] leading-none mt-0.5 opacity-70 text-primary-foreground"
-                              : "text-[7px] leading-none mt-0.5 opacity-60 text-[#663399] dark:text-violet-500"
+                              : "text-[7px] leading-none mt-0.5 opacity-60 text-[#663399]"
                           }
                         >
                           ♥
@@ -95,17 +160,23 @@ export function SeatMap({
                           ✕
                         </span>
                       )}
+
+                      {suggested && !occupied && !selected && (
+                        <span className="absolute -top-2 -left-2 text-xs text-yellow-400 animate-bounce drop-shadow-md">
+                          ✨
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
 
-              <span className="w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">
-                {row}
+              <span className="w-6 sm:w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">
+                {rowLabel}
               </span>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );

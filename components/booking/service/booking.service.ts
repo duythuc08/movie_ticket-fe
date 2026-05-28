@@ -1,4 +1,4 @@
-import type { SeatShowTime, FoodProduct } from "@/types";
+import type { SeatShowTime, FoodProduct, SelectionResponse } from "@/types";
 
 const BASE_URL = "/api-proxy";
 
@@ -9,32 +9,14 @@ function authHeaders(token: string) {
   };
 }
 
-export async function fetchSeatShowTimes(showTimeId: number, token: string): Promise<SeatShowTime[]> {
+export async function fetchSeatSelection(showTimeId: number, token: string): Promise<SelectionResponse> {
   const res = await fetch(
-    `${BASE_URL}/seatShowTimes/getSeatShowTimes/by-showTime/${showTimeId}`,
+    `${BASE_URL}/seatShowTimes/selection/${showTimeId}`,
     { headers: authHeaders(token) }
   );
-  if (!res.ok) throw new Error("Lỗi kết nối API seatShowTimes");
+  if (!res.ok) throw new Error("Lỗi kết nối API selection");
   const data = await res.json();
-  if (Array.isArray(data)) return data as SeatShowTime[];
-  return (data.result ?? []) as SeatShowTime[];
-}
-
-export async function fetchSeatPrices(showTimeId: number, token: string): Promise<Record<string, number>> {
-  const res = await fetch(
-    `${BASE_URL}/showTimePrice/getPrice/by-showtime/${showTimeId}`,
-    { headers: authHeaders(token) }
-  );
-  if (!res.ok) throw new Error("Lỗi kết nối API showTimePrice");
-  const data = await res.json();
-
-  const priceMap: Record<string, number> = {};
-  if (data.result && Array.isArray(data.result)) {
-    (data.result as { seatType: string; price: number }[]).forEach((item) => {
-      priceMap[item.seatType] = item.price;
-    });
-  }
-  return priceMap;
+  return data.result as SelectionResponse;
 }
 
 export async function getFoods(token: string): Promise<FoodProduct[]> {

@@ -342,7 +342,7 @@ export function RoomDetailDialog({
             <div className="flex items-center gap-2">
               {onEdit && !isEditMode && (
                 <Button size="sm" variant="outline" className="gap-1.5 shadow-sm bg-background" onClick={() => { onOpenChange(false); onEdit(room); }}>
-                  <Pencil className="h-3.5 w-3.5" /> Chỉnh sửa Info
+                  <Pencil className="h-3.5 w-3.5" /> Chỉnh sửa thông tin
                 </Button>
               )}
             </div>

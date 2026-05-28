@@ -4,15 +4,15 @@ import { cn } from "@/lib/utils";
 import type { AdminSeat, SeatType, SeatStatus } from "@/types/admin.type";
 
 const SEAT_TYPE_CLASSES: Record<SeatType, string> = {
-  STANDARD: "bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200",
-  VIP:      "bg-purple-100 border-purple-300 text-purple-800 hover:bg-purple-200",
-  COUPLE:   "bg-pink-100 border-pink-300 text-pink-800 hover:bg-pink-200",
+  STANDARD: "bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-700",
+  VIP: "bg-amber-200 hover:bg-amber-300 border border-amber-300 text-amber-800",
+  COUPLE: "bg-rose-200 hover:bg-rose-300 border border-rose-300 text-rose-800",
 };
 
 const SEAT_STATUS_CLASSES: Record<SeatStatus, string> = {
-  NORMAL:      "",
-  BROKEN:      "bg-red-100 border-red-300 text-red-700 hover:bg-red-200",
-  MAINTENANCE: "bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-200",
+  NORMAL: "",
+  BROKEN: "bg-slate-300/60 border-dashed border-slate-400/60 opacity-60 text-muted-foreground/60",
+  MAINTENANCE: "bg-slate-300/60 border-dashed border-slate-400/60 opacity-60 text-muted-foreground/60",
 };
 
 interface SeatGridProps {
@@ -63,7 +63,7 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
             <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground">
               {rowLabel}
             </span>
-            <div 
+            <div
               className="grid gap-1"
               style={{ gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))` }}
             >
@@ -83,7 +83,7 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
                       break;
                     }
                   }
-                  
+
                   const isLeftCouple = countBefore % 2 === 0;
                   const nextSeat = rowSeats[index + 1];
                   const prevSeat = rowSeats[index - 1];
@@ -99,13 +99,13 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
                   <button
                     key={seat.seatId}
                     type="button"
-                    title={`${seat.seatRow}${seat.seatNumber} — ${seat.seatType}${isInactive ? " (Vô hiệu)" : ""}${seat.seatStatus !== "NORMAL" ? ` — ${seat.seatStatus}` : ""}`}
+                    title={`${seat.seatRow}${seat.seatNumber} — ${seat.seatType}${isInactive ? " (Vô hiệu)" : ""}${seat.seatStatus !== "NORMAL" ? ` — ${seat.seatStatus}` : ""}\nSCORE: ${seat.viewQuanlityScore}`}
                     onClick={() => onSeatClick?.(seat)}
                     style={{ gridColumn: seat.seatNumber }}
                     className={cn(
                       "h-8 w-8 border text-[10px] font-semibold transition-all flex items-center justify-center",
                       isInactive
-                        ? "bg-muted border-border text-muted-foreground opacity-50 hover:opacity-70"
+                        ? "bg-slate-300/60 border-dashed border-slate-400/60 opacity-60 text-muted-foreground/60"
                         : statusClass || typeClass,
                       coupleClass,
                       onSeatClick ? "cursor-pointer" : "cursor-default"
@@ -120,20 +120,19 @@ export function SeatGrid({ seats, onSeatClick, isLoading }: SeatGridProps) {
           </div>
         ))}
 
-        <div className="mt-3 flex flex-wrap gap-3 border-t pt-3">
-          {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((type) => (
-            <span key={type} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className={cn("h-4 w-4 border", SEAT_TYPE_CLASSES[type].split(" ").slice(0, 2).join(" "))} />
-              {type === "STANDARD" ? "Thường" : type === "VIP" ? "VIP" : "Đôi"}
-            </span>
-          ))}
+        <div className="mt-3 flex flex-wrap justify-center gap-4 border-t pt-4">
+          {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((type) => {
+            const classes = SEAT_TYPE_CLASSES[type];
+            return (
+              <span key={type} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={cn("h-4 w-4", classes.split(" ").filter(c => c.startsWith("bg-") || c.startsWith("border-")).slice(0, 2).join(" "))} />
+                {type === "STANDARD" ? "Thường" : type === "VIP" ? "VIP" : "Đôi"}
+              </span>
+            );
+          })}
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-4 w-4 border bg-muted opacity-50" />
-            Vô hiệu
-          </span>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-4 w-4 border bg-red-100 border-red-300" />
-            Hỏng
+            <span className="h-4 w-4 bg-slate-300/60 border border-dashed border-slate-400/60 opacity-60 flex items-center justify-center text-[8px] text-muted-foreground/60">✕</span>
+            Vô hiệu/Hỏng
           </span>
         </div>
       </div>
