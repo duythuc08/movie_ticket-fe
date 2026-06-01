@@ -19,8 +19,8 @@ export async function fetchSeatSelection(showTimeId: number, token: string): Pro
   return data.result as SelectionResponse;
 }
 
-export async function getFoods(token: string): Promise<FoodProduct[]> {
-  const res = await fetch(`${BASE_URL}/foods/getFoods`, { headers: authHeaders(token) });
+export async function getFoods(token: string, cinemaId: number): Promise<FoodProduct[]> {
+  const res = await fetch(`${BASE_URL}/foods?cinemaId=${cinemaId}`, { headers: authHeaders(token) });
   const data = await res.json();
   return ((data.result ?? []) as Record<string, unknown>[]).map((item) => ({
     id: item.foodId as number,

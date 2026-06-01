@@ -8,6 +8,7 @@ interface ShowtimesProps {
   selectedDate: number;
   onSelectDate: (index: number) => void;
   onSelect: (info: {
+    cinemaId: number;
     cinema: string;
     location: string;
     time: string;
@@ -41,10 +42,11 @@ function filterValidTimes(
 
 export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: ShowtimesProps) {
   const handleSelectTime = (
-    cinema: { name: string; location: string },
+    cinema: { cinemaId: number; name: string; location: string },
     timeObj: { id: number; time: string; roomName: string }
   ) => {
     onSelect({
+      cinemaId: cinema.cinemaId,
       cinema: cinema.name,
       location: cinema.location,
       time: timeObj.time,

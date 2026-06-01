@@ -27,7 +27,14 @@ export default function FoodSelectionPage() {
   // Fetch foods
   useEffect(() => {
     const token = localStorage.getItem("token") ?? "";
-    getFoods(token)
+    const cinemaId = bookingInfo?.cinemaId;
+    
+    if (!cinemaId) {
+      setLoadingProducts(false);
+      return;
+    }
+
+    getFoods(token, cinemaId)
       .then((data) => {
         setProducts(data);
         setLoadingProducts(false);

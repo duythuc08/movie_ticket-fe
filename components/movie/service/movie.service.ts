@@ -121,14 +121,10 @@ export async function fetchShowtimesByDate(
 
     if (data.code !== 0) return { date: dateLabel, cinemas: [] };
 
-    const grouped: Record<string, { name: string; location: string; times: { id: number; time: string; roomName: string }[] }> = {};
+    const grouped: Record<string, { cinemaId: number; name: string; location: string; times: { id: number; time: string; roomName: string }[] }> = {};
 
     (data.result as Record<string, unknown>[]).forEach((show) => {
-      const rooms = show.rooms as Record<string, unknown>;
-      if (rooms.roomStatus !== "OPERATIONAL") return;
-
-      const cinema = rooms.cinemas as Record<string, unknown>;
-      const cinemaKey = cinema.cinemaId as string;
+      const cinemaKey = String(show.cinemaId);
       const timeString = new Date(show.startTime as string).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
@@ -137,8 +133,9 @@ export async function fetchShowtimesByDate(
 
       if (!grouped[cinemaKey]) {
         grouped[cinemaKey] = {
-          name: cinema.name as string,
-          location: cinema.address as string,
+          cinemaId: show.cinemaId as number,
+          name: (show.cinemaName as string) || "Unknown Cinema",
+          location: (show.cinemaAddress as string) || "",
           times: [],
         };
       }
@@ -146,7 +143,7 @@ export async function fetchShowtimesByDate(
       grouped[cinemaKey].times.push({
         id: show.showTimeId as number,
         time: timeString,
-        roomName: rooms.name as string,
+        roomName: (show.roomName as string) || "Unknown Room",
       });
     });
 

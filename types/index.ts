@@ -62,6 +62,7 @@ export interface ShowtimeEntry {
 }
 
 export interface CinemaShowtime {
+  cinemaId: number;
   name: string;
   location: string;
   times: ShowtimeEntry[];
@@ -100,6 +101,7 @@ export interface BookingState {
   movie?: string;
   movieDuration?: string;
   moviePoster?: string;
+  cinemaId?: number;
   cinema?: string;
   location?: string;
   time?: string;
