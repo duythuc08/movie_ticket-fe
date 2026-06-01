@@ -4,3 +4,4 @@ export * from "./admin/person";
 export * from "./admin/movie";
 export * from "./admin/banner";
 export * from "./admin/cinema";
+export * from "./admin/food";
