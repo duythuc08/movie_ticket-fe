@@ -29,6 +29,7 @@ interface BannerFormDialogProps {
   onSubmit: (data: BannerFormSchema) => Promise<void>;
   isSubmitting: boolean;
   readOnly?: boolean;
+  onEdit?: () => void;
 }
 
 function BannerFormContent({
@@ -240,6 +241,7 @@ export function BannerFormDialog({
   onSubmit,
   isSubmitting,
   readOnly = false,
+  onEdit,
 }: BannerFormDialogProps) {
   const { token } = useAuth();
   const isEditMode = !!banner;
@@ -321,6 +323,7 @@ export function BannerFormDialog({
       isSubmitting={isSubmitting}
       submitLabel={isEditMode ? "Lưu thay đổi" : "Thêm mới"}
       readOnly={readOnly}
+      onEdit={onEdit}
       maxWidth="max-w-xl"
     >
       {(form) => (

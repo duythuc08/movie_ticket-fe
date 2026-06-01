@@ -26,6 +26,7 @@ interface AdminFormDialogProps<TSchema extends FieldValues> {
   isSubmitting?: boolean;
   submitLabel?: string;
   readOnly?: boolean;
+  onEdit?: () => void;
   maxWidth?: string;
   children: (form: UseFormReturn<TSchema>) => React.ReactNode;
 }
@@ -42,6 +43,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
   isSubmitting = false,
   submitLabel = "Lưu",
   readOnly = false,
+  onEdit,
   maxWidth = "max-w-lg",
   children,
 }: AdminFormDialogProps<TSchema>) {
@@ -67,66 +69,75 @@ export function AdminFormDialog<TSchema extends FieldValues>({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent data-admin="" className={`${maxWidth} max-h-[88vh] overflow-hidden gap-0 p-0 [&>button]:hidden`}>
+      <DialogContent data-admin="" className={`${maxWidth} max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden`}>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex max-h-[88vh] flex-col">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
 
-          <DialogHeader className="z-10 flex shrink-0 flex-row items-start justify-between border-b border-border bg-card px-6 py-4 space-y-0">
-            <div className="space-y-0.5 min-w-0 flex-1">
-              <DialogTitle className="text-base font-semibold leading-tight text-foreground">
+          <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1 min-w-0 flex-1">
+              <DialogTitle className="text-base font-bold tracking-tight text-foreground">
                 {title}
               </DialogTitle>
               {subtitle && (
-                <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
+                <p className="text-xs text-muted-foreground truncate max-w-xl">{subtitle}</p>
               )}
             </div>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="shrink-0 h-8 w-8 -mt-1 -mr-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border transition-all"
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              <X size={15} />
+              <X size={16} />
             </Button>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-6 bg-background">
             <fieldset
               disabled={isSubmitting || readOnly}
-              className={`m-0 border-none p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
+              className={`border-none m-0 p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
             >
-              <div className="px-6 py-5 space-y-4">
+              <div className="space-y-4">
                 {children(form)}
               </div>
             </fieldset>
           </div>
 
-          <div className="z-10 flex shrink-0 items-center justify-between gap-4 border-t border-border bg-card px-6 py-3">
+          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
             <div className="text-xs text-muted-foreground">
               {updatedAtLabel ? (
-                <span className="flex items-center gap-1.5">
-                  <Clock size={12} />
+                <span className="flex items-center gap-1.5 font-medium text-muted-foreground/80">
+                  <Clock size={13} className="text-muted-foreground/60" />
                   Cập nhật lần cuối: {updatedAtLabel}
                 </span>
               ) : !readOnly ? (
-                <span>Trường có dấu <span className="text-destructive">*</span> là bắt buộc</span>
+                <span className="font-medium">
+                  Lưu ý: Các trường đánh dấu <span className="text-destructive">*</span> không được bỏ trống.
+                </span>
               ) : null}
             </div>
 
             <div className="flex items-center gap-2">
               {readOnly ? (
-                <Button type="button" variant="outline" onClick={handleClose}>
-                  Đóng
-                </Button>
+                <>
+                  <Button type="button" variant="outline" onClick={handleClose} className="h-9 text-xs font-semibold">
+                    Đóng
+                  </Button>
+                  {onEdit && (
+                    <Button type="button" onClick={onEdit} className="min-w-[120px] h-9 text-xs font-semibold">
+                      Chỉnh sửa
+                    </Button>
+                  )}
+                </>
               ) : (
                 <>
-                  <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                    Hủy
+                  <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="h-9 text-xs font-semibold">
+                    Hủy bỏ
                   </Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-24">
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
+                    {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
                     {submitLabel}
                   </Button>
                 </>

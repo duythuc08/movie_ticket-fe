@@ -366,191 +366,216 @@ export function RoomDetailDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-admin="" className="max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        <DialogHeader className="px-6 py-5 border-b bg-muted/20 flex flex-row items-center justify-between">
-          <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <MonitorPlay className="w-5 h-5 text-primary" />
-            Chi tiết phòng chiếu
-          </DialogTitle>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 -mr-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => onOpenChange(false)}>
-            <X className="w-4 h-4" />
-          </Button>
-        </DialogHeader>
+      <DialogContent data-admin="" className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
+        
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1 min-w-0 flex-1">
+              <DialogTitle className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
+                <MonitorPlay className="w-5 h-5 text-primary" />
+                Chi tiết phòng chiếu
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground truncate max-w-xl">Đang xem: {room.name}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border transition-all"
+              onClick={() => onOpenChange(false)}
+            >
+              <X size={16} />
+            </Button>
+          </DialogHeader>
 
-        <div className="p-6 space-y-8 bg-background">
-          {/* Header Section */}
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">{room.name}</h2>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                <Building2 className="w-4 h-4 text-primary/70" />
-                Thuộc rạp: <span className="text-foreground">{room.cinemas.name}</span>
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background">
+            {/* Header Section */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">{room.name}</h2>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                  <Building2 className="w-4 h-4 text-primary/70" />
+                  Thuộc rạp: <span className="text-foreground">{room.cinemas.name}</span>
+                </div>
+              </div>
+              <div className="flex items-end gap-2">
+                <Badge variant="outline" className={`text-xs uppercase tracking-wider font-bold ${ROOM_TYPE_BADGE_CLASSES[room.roomType]}`}>
+                  {ROOM_TYPE_LABELS[room.roomType]}
+                </Badge>
+                <Badge
+                  variant={room.roomStatus === "OPERATIONAL" ? "success" : room.roomStatus === "MAINTENANCE" ? "warning" : "secondary"}
+                  className="text-[10px] uppercase tracking-wider"
+                >
+                  {room.roomStatus === "OPERATIONAL" ? "Hoạt động" : room.roomStatus === "MAINTENANCE" ? "Bảo trì" : "Vệ sinh"}
+                </Badge>
               </div>
             </div>
-            <div className="flex items-end gap-2">
-              <Badge variant="outline" className={`text-xs uppercase tracking-wider font-bold ${ROOM_TYPE_BADGE_CLASSES[room.roomType]}`}>
-                {ROOM_TYPE_LABELS[room.roomType]}
-              </Badge>
-              <Badge
-                variant={room.roomStatus === "OPERATIONAL" ? "success" : room.roomStatus === "MAINTENANCE" ? "warning" : "secondary"}
-                className="text-[10px] uppercase tracking-wider"
-              >
-                {room.roomStatus === "OPERATIONAL" ? "Hoạt động" : room.roomStatus === "MAINTENANCE" ? "Bảo trì" : "Vệ sinh"}
-              </Badge>
+
+            <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-background rounded-lg shadow-sm border text-primary">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Sức chứa hợp lệ</p>
+                  <p className="text-lg font-bold text-foreground">{room.capacity} <span className="text-sm font-medium text-muted-foreground">ghế</span></p>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="opacity-50" />
+
+            {/* Seat Grid Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-lg font-bold flex items-center gap-2">
+                    {isEditMode ? "Chế độ Vẽ Sơ đồ" : "Sơ đồ ghế hiện tại"}
+                    {!isEditMode && seats.length > 0 && <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">{seats.length}</Badge>}
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {isEditMode 
+                      ? "Kéo thả hoặc click để vẽ ghế. Trống để làm lối đi."
+                      : "Click vào ghế để mở menu trạng thái (hoặc vô hiệu hóa)"}
+                  </p>
+                </div>
+                {!isEditMode ? (
+                  <Button size="sm" className="gap-1.5 shadow-sm" onClick={handleEnterEditMode}>
+                    <LayoutGrid className="h-3.5 w-3.5" /> Cập nhật Sơ đồ
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditMode(false)} disabled={isSettingUp}>
+                      Hủy
+                    </Button>
+                    <Button size="sm" className="gap-1.5 shadow-sm" onClick={handleSaveGrid} disabled={isSettingUp}>
+                      {isSettingUp && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Lưu sơ đồ
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {isEditMode ? (
+                <div className="space-y-4 border rounded-xl p-4 md:p-6 bg-muted/10">
+                  <div className="flex items-end gap-3 mb-6 flex-wrap">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Số hàng</Label>
+                      <Input type="number" min={1} max={30} value={inputRows} onChange={(e) => setInputRows(Number(e.target.value))} className="w-20 h-9" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Số cột</Label>
+                      <Input type="number" min={1} max={30} value={inputCols} onChange={(e) => setInputCols(Number(e.target.value))} className="w-20 h-9" />
+                    </div>
+                    <Button size="sm" variant="outline" className="h-9 mb-[1px]" onClick={handleApplyDims} disabled={inputRows === dims.rows && inputCols === dims.cols}>
+                      Áp dụng
+                    </Button>
+                    
+                    <div className="flex-1" />
+                    
+                    <div className="flex bg-background p-1 shadow-sm border shrink-0 h-9 mb-[1px]">
+                      {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((t) => {
+                        const isActive = activeTool === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setActiveTool(t)}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all border",
+                              isActive 
+                                ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
+                                : "border-transparent hover:bg-muted text-muted-foreground"
+                            )}
+                          >
+                            <span className={cn("h-4 w-4 border block", SETUP_CELL_CLASSES[t])} />
+                            {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : "Đôi"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto p-4 bg-background rounded-xl border shadow-sm touch-none w-full" onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
+                    <div className="w-max mx-auto flex flex-col items-center gap-1.5 select-none">
+                      <div className="mb-8 w-full max-w-xl mx-auto border-t-[6px] border-primary/40 rounded-t-[50%] text-center pt-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                          Màn hình
+                        </span>
+                      </div>
+
+                      {grid.map((row, rowIdx) => (
+                        <div key={rowIdx} className="flex items-center gap-1">
+                          <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground mr-1">
+                            {rowLabels[rowIdx] || rowIdx}
+                          </span>
+                          <div className="flex gap-1">
+                            {row.map((cellType, colIdx) => {
+                              let coupleClass = "";
+                              if (cellType === "COUPLE") {
+                                let countBefore = 0;
+                                for (let k = colIdx - 1; k >= 0; k--) {
+                                  if (row[k] === "COUPLE") countBefore++;
+                                  else break;
+                                }
+                                const isLeft = countBefore % 2 === 0;
+                                
+                                if (isLeft && colIdx < dims.cols - 1 && row[colIdx + 1] === "COUPLE") {
+                                  coupleClass = "!w-[36px] border-r-0 mr-[-4px] z-10";
+                                } else if (!isLeft && colIdx > 0 && row[colIdx - 1] === "COUPLE") {
+                                  coupleClass = "!w-[36px] border-l-0 ml-[-4px] z-10";
+                                }
+                              }
+
+                              return (
+                                <div
+                                  key={colIdx}
+                                  onPointerDown={() => handlePointerDown(rowIdx, colIdx)}
+                                  onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
+                                  className={cn(
+                                    "h-8 w-8 border transition-all flex items-center justify-center cursor-pointer",
+                                    cellType ? SETUP_CELL_CLASSES[cellType] : "border-dashed border-muted-foreground/30 hover:border-primary/50",
+                                    coupleClass
+                                  )}
+                                >
+                                  {cellType && <span className="text-[10px] font-bold opacity-70">{rowLabels[rowIdx] || rowIdx}{colIdx + 1}</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <span className="w-6 shrink-0 ml-1 opacity-0 pointer-events-none" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-muted/10 border rounded-xl p-4 md:p-6 overflow-hidden">
+                  <SeatGrid seats={seats} onSeatAction={handleSeatAction} isLoading={isLoadingSeats} />
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-background rounded-lg shadow-sm border text-primary">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Sức chứa hợp lệ</p>
-                <p className="text-lg font-bold text-foreground">{room.capacity} <span className="text-sm font-medium text-muted-foreground">ghế</span></p>
-              </div>
+          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
+            <div className="text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 font-medium text-muted-foreground/80">
+                Mã phòng: {room.roomId}
+              </span>
             </div>
             <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-9 text-xs font-semibold">
+                Đóng
+              </Button>
               {onEdit && !isEditMode && (
-                <Button size="sm" variant="outline" className="gap-1.5 shadow-sm bg-background" onClick={() => { onOpenChange(false); onEdit(room); }}>
-                  <Pencil className="h-3.5 w-3.5" /> Chỉnh sửa thông tin
+                <Button type="button" onClick={() => onEdit(room)} className="min-w-[120px] h-9 text-xs font-semibold">
+                  <Pencil className="w-3.5 h-3.5 mr-2" />
+                  Chỉnh sửa phòng
                 </Button>
               )}
             </div>
           </div>
 
-          <Separator className="opacity-50" />
-
-          {/* Seat Grid Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-lg font-bold flex items-center gap-2">
-                  {isEditMode ? "Chế độ Vẽ Sơ đồ" : "Sơ đồ ghế hiện tại"}
-                  {!isEditMode && seats.length > 0 && <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">{seats.length}</Badge>}
-                </h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isEditMode 
-                    ? "Kéo thả hoặc click để vẽ ghế. Trống để làm lối đi."
-                    : "Click vào ghế để mở menu trạng thái (hoặc vô hiệu hóa)"}
-                </p>
-              </div>
-              {!isEditMode ? (
-                <Button size="sm" className="gap-1.5 shadow-sm" onClick={handleEnterEditMode}>
-                  <LayoutGrid className="h-3.5 w-3.5" /> Cập nhật Sơ đồ
-                </Button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditMode(false)} disabled={isSettingUp}>
-                    Hủy
-                  </Button>
-                  <Button size="sm" className="gap-1.5 shadow-sm" onClick={handleSaveGrid} disabled={isSettingUp}>
-                    {isSettingUp && <Loader2 className="w-3 h-3 animate-spin" />}
-                    Lưu sơ đồ
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {isEditMode ? (
-              <div className="space-y-4 border rounded-xl p-4 md:p-6 bg-muted/10">
-                <div className="flex items-end gap-3 mb-6 flex-wrap">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Số hàng</Label>
-                    <Input type="number" min={1} max={30} value={inputRows} onChange={(e) => setInputRows(Number(e.target.value))} className="w-20 h-9" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Số cột</Label>
-                    <Input type="number" min={1} max={30} value={inputCols} onChange={(e) => setInputCols(Number(e.target.value))} className="w-20 h-9" />
-                  </div>
-                  <Button size="sm" variant="outline" className="h-9 mb-[1px]" onClick={handleApplyDims} disabled={inputRows === dims.rows && inputCols === dims.cols}>
-                    Áp dụng
-                  </Button>
-                  
-                  <div className="flex-1" />
-                  
-                  <div className="flex bg-background p-1 shadow-sm border shrink-0 h-9 mb-[1px]">
-                    {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((t) => {
-                      const isActive = activeTool === t;
-                      return (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setActiveTool(t)}
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all border",
-                            isActive 
-                              ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
-                              : "border-transparent hover:bg-muted text-muted-foreground"
-                          )}
-                        >
-                          <span className={cn("h-4 w-4 border block", SETUP_CELL_CLASSES[t])} />
-                          {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : "Đôi"}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto p-4 bg-background rounded-xl border shadow-sm touch-none w-full" onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
-                  <div className="w-max mx-auto flex flex-col items-center gap-1.5 select-none">
-                    <div className="mb-8 w-full max-w-xl mx-auto border-t-[6px] border-primary/40 rounded-t-[50%] text-center pt-2">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                        Màn hình
-                      </span>
-                    </div>
-
-                    {grid.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex items-center gap-1">
-                        <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground mr-1">
-                          {rowLabels[rowIdx] || rowIdx}
-                        </span>
-                        <div className="flex gap-1">
-                          {row.map((cellType, colIdx) => {
-                            let coupleClass = "";
-                            if (cellType === "COUPLE") {
-                              let countBefore = 0;
-                              for (let k = colIdx - 1; k >= 0; k--) {
-                                if (row[k] === "COUPLE") countBefore++;
-                                else break;
-                              }
-                              const isLeft = countBefore % 2 === 0;
-                              
-                              if (isLeft && colIdx < dims.cols - 1 && row[colIdx + 1] === "COUPLE") {
-                                coupleClass = "!w-[36px] border-r-0 mr-[-4px] z-10";
-                              } else if (!isLeft && colIdx > 0 && row[colIdx - 1] === "COUPLE") {
-                                coupleClass = "!w-[36px] border-l-0 ml-[-4px] z-10";
-                              }
-                            }
-
-                            return (
-                              <div
-                                key={colIdx}
-                                onPointerDown={() => handlePointerDown(rowIdx, colIdx)}
-                                onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
-                                className={cn(
-                                  "h-8 w-8 border transition-all flex items-center justify-center cursor-pointer",
-                                  cellType ? SETUP_CELL_CLASSES[cellType] : "border-dashed border-muted-foreground/30 hover:border-primary/50",
-                                  coupleClass
-                                )}
-                              >
-                                {cellType && <span className="text-[10px] font-bold opacity-70">{rowLabels[rowIdx] || rowIdx}{colIdx + 1}</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <span className="w-6 shrink-0 ml-1 opacity-0 pointer-events-none" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-muted/10 border rounded-xl p-4 md:p-6 overflow-hidden">
-                <SeatGrid seats={seats} onSeatAction={handleSeatAction} isLoading={isLoadingSeats} />
-              </div>
-            )}
-          </div>
         </div>
       </DialogContent>
     </Dialog>

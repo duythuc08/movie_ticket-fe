@@ -195,6 +195,10 @@ export default function AdminBannersPage() {
         onSubmit={async () => {}}
         isSubmitting={false}
         readOnly
+        onEdit={() => {
+          setIsDetailOpen(false);
+          setIsFormOpen(true);
+        }}
       />
 
       {/* Dialog xác nhận xóa */}
