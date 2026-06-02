@@ -15,7 +15,7 @@ export async function fetchAdminRooms(
   const { page = 0, size = 10, cinemaId, roomType, roomStatus, entityStatus } = query;
 
   const filterString = buildFilterString({
-    "cinemas.cinemaId": cinemaId,
+    "cinemas.cinemaId": cinemaId != null ? `${cinemaId}` : undefined,
     roomType,
     roomStatus,
     entityStatus,
