@@ -1,4 +1,5 @@
 import type { SeatShowTime, FoodProduct, SelectionResponse } from "@/types";
+import { getErrorMessage } from "@/lib/errors";
 
 const BASE_URL = "/api-proxy";
 
@@ -14,8 +15,8 @@ export async function fetchSeatSelection(showTimeId: number, token: string): Pro
     `${BASE_URL}/seatShowTimes/selection/${showTimeId}`,
     { headers: authHeaders(token) }
   );
-  if (!res.ok) throw new Error("Lỗi kết nối API selection");
   const data = await res.json();
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Lỗi kết nối API selection"));
   return data.result as SelectionResponse;
 }
 
@@ -51,6 +52,6 @@ export async function createPayment(
   });
 
   const data = await res.json();
-  if (data.code !== 1000) throw new Error(data.message || "Tạo thanh toán VNPAY thất bại");
+  if (data.code !== 1000) throw new Error(getErrorMessage(data?.code, data?.message || "Tạo thanh toán VNPAY thất bại"));
   return data.result;
 }

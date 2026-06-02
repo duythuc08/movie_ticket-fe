@@ -163,13 +163,13 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Bắt đầu</p>
                             <p className="font-medium text-emerald-600 dark:text-emerald-400">
-                              {new Date(detail.startTime).toLocaleString("vi-VN")}
+                              {new Date(detail.startTime).toLocaleString("vi-VN", { hour12: false })}
                             </p>
                           </div>
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Kết thúc</p>
                             <p className="font-medium text-rose-600 dark:text-rose-400">
-                              {new Date(detail.endTime).toLocaleString("vi-VN")}
+                              {new Date(detail.endTime).toLocaleString("vi-VN", { hour12: false })}
                             </p>
                           </div>
                         </div>

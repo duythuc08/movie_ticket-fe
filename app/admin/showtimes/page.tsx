@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-const CinemaGanttSection = ({ cinema, selectedDate, keyword, token, onAddClick, onUpdateShowtimeTime, isExpanded, onViewDetail, onEdit }: any) => {
+const CinemaGanttSection = ({ cinema, selectedDate, keyword, token, onAddClick, onUpdateShowtimeTime, isExpanded, onViewDetail, onEdit, refreshKey }: any) => {
   const [isOpen, setIsOpen] = useState(isExpanded);
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
@@ -40,7 +40,7 @@ const CinemaGanttSection = ({ cinema, selectedDate, keyword, token, onAddClick, 
         try {
           const dateStr = selectedDate || new Date().toISOString().split("T")[0];
           const data = await adminShowtimeService.getShowtimesForGantt(token, cinema.cinemaId, dateStr);
-          
+
           let filtered = data;
           if (keyword) {
             filtered = data.filter(st => st.movieTitle.toLowerCase().includes(keyword.toLowerCase()));
@@ -57,7 +57,7 @@ const CinemaGanttSection = ({ cinema, selectedDate, keyword, token, onAddClick, 
       };
       loadData();
     }
-  }, [isOpen, selectedDate, keyword, token, cinema.cinemaId, cinema.name]);
+  }, [isOpen, selectedDate, keyword, token, cinema.cinemaId, cinema.name, refreshKey]);
 
   return (
     <div className="border rounded-xl overflow-hidden bg-card shadow-sm transition-all">
@@ -123,6 +123,7 @@ export default function AdminShowtimesPage() {
   const [formInitialTime, setFormInitialTime] = useState<string | undefined>();
 
   const [filters, setFilters] = useState<{ cinemaId?: string; status?: string; date?: string; keyword?: string }>({});
+  const [ganttRefreshKey, setGanttRefreshKey] = useState(0);
 
   const loadCinemas = useCallback(async () => {
     if (!token) return;
@@ -211,22 +212,15 @@ export default function AdminShowtimesPage() {
     if (!token) return;
     try {
       const detail = await adminShowtimeService.getShowtimeDetail(token, showTimeId);
-      
-      const payload = {
-        roomId: roomId,
-        movieId: detail.movies?.movieId,
-        prices: detail.prices?.map(p => ({
-          price: p.price,
-          seatTypeId: (p as any).seatTypeId || 1, 
-          dayTypeId: (p as any).dayTypeId || 1, 
-          timeTypeId: (p as any).timeTypeId || 1
-        })) || [],
-        startTimes: [newStartTime]
-      };
+      await adminShowtimeService.updateShowtime(token, showTimeId, {
+        movieId: detail.movies.movieId,
+        roomId,
+        startTime: newStartTime,
+      });
       toast.success("Cập nhật lịch chiếu thành công");
-      loadShowtimes();
-    } catch {
-      toast.error("Không thể cập nhật lịch chiếu. Hãy thử lại.");
+      setGanttRefreshKey(k => k + 1);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật lịch chiếu. Hãy thử lại.");
     }
   };
 
@@ -321,6 +315,7 @@ export default function AdminShowtimesPage() {
               onUpdateShowtimeTime={handleGanttUpdateShowtime}
               onViewDetail={handleGanttViewDetail}
               onEdit={handleGanttEditShowtime}
+              refreshKey={ganttRefreshKey}
             />
           ))}
           {cinemas.length === 0 && (
@@ -332,7 +327,7 @@ export default function AdminShowtimesPage() {
       <ShowtimeFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSuccess={loadShowtimes}
+        onSuccess={() => { loadShowtimes(); setGanttRefreshKey(k => k + 1); }}
         initialRoomId={formInitialRoom}
         initialStartTime={formInitialTime}
       />
@@ -351,7 +346,7 @@ export default function AdminShowtimesPage() {
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
         showtime={editShowtime}
-        onSuccess={loadShowtimes}
+        onSuccess={() => { loadShowtimes(); setGanttRefreshKey(k => k + 1); }}
       />
 
       <Dialog open={isInitialAddOpen} onOpenChange={setIsInitialAddOpen}>

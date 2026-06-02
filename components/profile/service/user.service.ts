@@ -1,4 +1,5 @@
 import type { UserInfo, MembershipTier, Order } from "@/types";
+import { getErrorMessage } from "@/lib/errors";
 
 const BASE_URL = "/api-proxy";
 
@@ -12,7 +13,7 @@ function authHeaders(token: string) {
 export async function fetchMyInfo(token: string): Promise<UserInfo> {
   const res = await fetch(`${BASE_URL}/users/myInfo`, { headers: authHeaders(token) });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Không lấy được thông tin người dùng");
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được thông tin người dùng"));
   return data.result as UserInfo;
 }
 
@@ -36,7 +37,7 @@ export async function updateMyInfo(
     body: JSON.stringify(body),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Cập nhật thông tin thất bại");
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Cập nhật thông tin thất bại"));
   return data.result as UserInfo;
 }
 
@@ -67,7 +68,7 @@ export async function fetchMembershipTierByName(token: string, tierName: string)
 export async function fetchOrdersByUser(token: string, userId: string): Promise<Order[]> {
   const res = await fetch(`${BASE_URL}/orders/user/${userId}`, { headers: authHeaders(token) });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Không lấy được danh sách đơn hàng");
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được danh sách đơn hàng"));
   return data.result as Order[];
 }
 
@@ -76,6 +77,6 @@ export async function createVnpayRepaymentUrl(token: string, orderId: string): P
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
-  if (!res.ok || !data.result) throw new Error(data.message || "Không thể lấy link thanh toán");
+  if (!res.ok || !data.result) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể lấy link thanh toán"));
   return data.result as string;
 }

@@ -141,16 +141,7 @@ export default function PaymentPage() {
         window.location.href = result.paymentUrl;
       } catch (err) {
         const error = err as Error;
-        if (error.message?.includes("401") || error.message?.includes("403")) {
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          router.push("/login");
-        } else if (error.message?.includes("500")) {
-          toast.error("Hệ thống đang bận, vui lòng thử lại sau.");
-        } else {
-          toast.error(
-            error.message || "Tạo thanh toán thất bại. Vui lòng thử lại.",
-          );
-        }
+        toast.error(error.message || "Tạo thanh toán thất bại. Vui lòng thử lại.");
         setLoading(false);
       }
     }

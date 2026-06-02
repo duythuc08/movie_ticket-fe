@@ -1,4 +1,5 @@
 import type { LoginResult, RegisterPayload } from "../types";
+import { getErrorMessage } from "@/lib/errors";
 
 const BASE_URL = "/api-proxy";
 
@@ -9,14 +10,12 @@ export async function loginUser(username: string, password: string): Promise<Log
     body: JSON.stringify({ username, password }),
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    if (res.status === 401 || res.status === 400) {
-      throw Object.assign(new Error("Sai tên đăng nhập hoặc mật khẩu!"), { status: res.status });
-    }
-    throw new Error(`Server trả lỗi ${res.status}`);
+    throw new Error(getErrorMessage(data?.code, data?.message || "Sai tên đăng nhập hoặc mật khẩu!"));
   }
 
-  const data = await res.json();
   return data.result as LoginResult;
 }
 
@@ -29,8 +28,7 @@ export async function registerUser(payload: RegisterPayload): Promise<void> {
 
   const data = await res.json();
   if (!res.ok) {
-    const err = Object.assign(new Error(data.message || "Đăng ký thất bại"), { code: data.code as number });
-    throw err;
+    throw new Error(getErrorMessage(data?.code, data?.message || "Đăng ký thất bại"));
   }
 }
 
@@ -40,7 +38,10 @@ export async function resendOTP(email: string): Promise<void> {
 
 export async function verifyOTP(email: string, otp: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/auth/verify?otp=${otp}&email=${email}`, { method: "POST" });
-  if (!res.ok) throw new Error(`Lỗi: ${res.status}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(getErrorMessage(data?.code, data?.message || "Xác thực OTP thất bại"));
+  }
 }
 
 export async function sendForgotPassword(username: string): Promise<void> {
@@ -49,7 +50,10 @@ export async function sendForgotPassword(username: string): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username }),
   });
-  if (!res.ok) throw new Error(`Lỗi: ${res.status}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(getErrorMessage(data?.code, data?.message || "Gửi yêu cầu quên mật khẩu thất bại"));
+  }
 }
 
 export async function resetPassword(email: string, newPassword: string): Promise<void> {
@@ -58,5 +62,8 @@ export async function resetPassword(email: string, newPassword: string): Promise
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ newPassword }),
   });
-  if (!res.ok) throw new Error(`Lỗi: ${res.status}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(getErrorMessage(data?.code, data?.message || "Đặt lại mật khẩu thất bại"));
+  }
 }

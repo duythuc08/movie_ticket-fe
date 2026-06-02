@@ -28,7 +28,7 @@ const calculateExpectedEndTime = (startStr: string, dur: number) => {
     startDate.setMinutes(m + (5 - remainder));
   }
   
-  return startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " (Đã cộng " + dur + "p phim + 15p dọn rạp)";
+  return startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) + " (Đã cộng " + dur + "p phim + 15p dọn rạp)";
 };
 
 const parseDateTimeToDateAndTime = (isoString: string) => {

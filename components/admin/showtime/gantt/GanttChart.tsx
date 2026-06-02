@@ -26,8 +26,14 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
     const isNextDay = hour >= 24;
     const displayHour = isNextDay ? hour - 24 : hour;
     const minute = i % 2 === 0 ? "00" : "30";
-    return `${displayHour.toString().padStart(2, "0")}:${minute}`;
+    return {
+      label: `${displayHour.toString().padStart(2, "0")}:${minute}`,
+      isNextDay,
+    };
   });
+
+  // Slot index 30 = 00:00 (next day), slots 30-35 are next-day
+  const MIDNIGHT_IDX = 30;
 
   const [dragOverCell, setDragOverCell] = useState<{ roomId: number, cellIndex: number } | null>(null);
 
@@ -121,14 +127,38 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
             Phòng
           </div>
           <div className="flex-1 flex relative h-10">
+            {/* Next-day background overlay */}
+            <div
+              className="absolute top-0 bottom-0 bg-amber-50/60 dark:bg-amber-950/20 pointer-events-none"
+              style={{ left: `${(MIDNIGHT_IDX / 36) * 100}%`, right: 0 }}
+            />
             {times.map((time, idx) => {
+              const isMidnight = idx === MIDNIGHT_IDX;
               return (
-                <div 
-                  key={idx} 
-                  className="absolute top-0 bottom-0 flex items-center justify-start border-l border-border/50 transition-colors pl-1"
+                <div
+                  key={idx}
+                  className={cn(
+                    "absolute top-0 bottom-0 flex items-end justify-start pl-1 pb-1 border-l transition-colors",
+                    isMidnight
+                      ? "border-amber-500 border-l-2"
+                      : time.isNextDay
+                      ? "border-amber-300/50 dark:border-amber-700/50"
+                      : "border-border/50",
+                  )}
                   style={{ left: `${(idx / 36) * 100}%`, width: `${(1 / 36) * 100}%` }}
                 >
-                  {idx < 36 && time}
+                  {idx < 36 && (
+                    <div className="flex flex-col items-start leading-none gap-0.5">
+                      {isMidnight && (
+                        <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide whitespace-nowrap">
+                          Hôm sau
+                        </span>
+                      )}
+                      <span className={cn(time.isNextDay ? "text-amber-600 dark:text-amber-400 font-medium" : "")}>
+                        {time.label}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -140,21 +170,33 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
             <div className="w-32 flex-shrink-0 border-r p-2 font-medium text-sm flex items-center justify-center bg-muted/20">
               {room.name}
             </div>
-            <div 
+            <div
               className="flex-1 relative cursor-pointer hover:bg-accent/30 transition-colors"
               onClick={(e) => getStartTimeFromClick(e, room.roomId)}
               onDragOver={(e) => handleDragOver(e, room.roomId)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, room.roomId)}
             >
+              {/* Next-day background */}
+              <div
+                className="absolute top-0 bottom-0 bg-amber-50/40 dark:bg-amber-950/10 pointer-events-none"
+                style={{ left: `${(MIDNIGHT_IDX / 36) * 100}%`, right: 0 }}
+              />
               {Array.from({ length: 36 }).map((_, idx) => {
                 const isDragOver = dragOverCell?.roomId === room.roomId && dragOverCell?.cellIndex === idx;
+                const isMidnight = idx === MIDNIGHT_IDX;
                 return (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className={cn(
-                      "absolute top-0 bottom-0 border-l border-dashed pointer-events-none transition-colors",
-                      isDragOver ? "bg-primary/20 border-primary border-solid z-0" : "border-border/50"
+                      "absolute top-0 bottom-0 border-l pointer-events-none transition-colors",
+                      isDragOver
+                        ? "bg-primary/20 border-primary border-solid z-10"
+                        : isMidnight
+                        ? "border-amber-500 border-l-2 border-solid"
+                        : idx > MIDNIGHT_IDX
+                        ? "border-amber-300/40 dark:border-amber-700/40 border-dashed"
+                        : "border-border/50 border-dashed",
                     )}
                     style={{ left: `${(idx / 36) * 100}%`, width: `${(1 / 36) * 100}%` }}
                   />
