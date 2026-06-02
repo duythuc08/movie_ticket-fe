@@ -1,4 +1,5 @@
 import type { ApiResponse, ApiPagedResult } from "@/types/admin.type";
+import { getErrorMessage } from "@/lib/errors";
 
 const ADMIN_BASE = "/api-proxy";
 
@@ -31,12 +32,16 @@ export async function adminGet<T>(
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: buildAuthHeaders(token),
+    cache: "no-store",
   });
 
   const data: ApiResponse<T> = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 
   return data.result;
@@ -56,7 +61,10 @@ export async function adminPost<T>(
   const data: ApiResponse<T> = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 
   return data.result;
@@ -76,7 +84,10 @@ export async function adminPut<T>(
   const data: ApiResponse<T> = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 
   return data.result;
@@ -93,7 +104,10 @@ export async function adminPutEmpty(
 
   if (!response.ok) {
     const data: ApiResponse<null> = await response.json();
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 }
 
@@ -111,7 +125,10 @@ export async function adminPostFormData<T>(
   const data: ApiResponse<T> = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 
   return data.result;
@@ -127,8 +144,11 @@ export async function adminDelete(
   });
 
   if (!response.ok) {
-    const data: ApiResponse<null> = await response.json().catch(() => ({ message: `Lỗi ${response.status}` }));
-    throw new Error(data.message || `Lỗi ${response.status}: ${path}`);
+    const data: ApiResponse<null> = await response.json().catch(() => ({ message: `Lỗi ${response.status}` }) as any);
+    const errorMsg = getErrorMessage(data?.code, data?.message || `Lỗi ${response.status}: ${path}`);
+    const error: any = new Error(errorMsg);
+    error.code = data?.code;
+    throw error;
   }
 }
 

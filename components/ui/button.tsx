@@ -4,11 +4,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "ghost" | "destructive";
+  variant?: "default" | "outline" | "ghost" | "destructive" | "secondary";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
   outline: "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
   ghost: "text-foreground hover:bg-accent hover:text-accent-foreground",

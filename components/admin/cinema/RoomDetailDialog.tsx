@@ -159,7 +159,7 @@ export function RoomDetailDialog({
             await updateSeatStatusPair(seat, "NORMAL", []);
           }
         } catch (err) {
-          toast.error("Không thể kiểm tra suất chiếu bị ảnh hưởng");
+          toast.error(err instanceof Error ? err.message : "Không thể kiểm tra suất chiếu bị ảnh hưởng");
         } finally {
           setIsUpdatingSeat(false);
         }
@@ -168,7 +168,7 @@ export function RoomDetailDialog({
           setIsUpdatingSeat(true);
           await updateSeatStatusPair(seat, newStatus, []);
         } catch (err) {
-          toast.error("Lỗi khi cập nhật trạng thái");
+          toast.error(err instanceof Error ? err.message : "Lỗi khi cập nhật trạng thái");
         } finally {
           setIsUpdatingSeat(false);
         }
@@ -200,7 +200,7 @@ export function RoomDetailDialog({
       await updateSeatStatusPair(chainUnlockSeat, "NORMAL", selectedShowtimes);
       setChainUnlockOpen(false);
     } catch (err) {
-      toast.error("Lỗi khi mở khóa ghế");
+      toast.error(err instanceof Error ? err.message : "Lỗi khi mở khóa ghế");
     } finally {
       setIsUpdatingSeat(false);
     }
@@ -641,3 +641,4 @@ export function RoomDetailDialog({
     </>
   );
 }
+
