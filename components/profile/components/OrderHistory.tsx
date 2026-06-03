@@ -131,13 +131,13 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                       <td className="py-3.5 pr-3">
                         <div className="min-w-0">
                           <p className="text-foreground font-medium truncate max-w-[180px]">
-                            {order.movieTitle || order.tickets?.[0]?.movieName || `Đặt vé (${ticketCount} vé)`}
+                            {order.showTimeInfo?.movieName || `Đặt vé (${ticketCount} vé)`}
                           </p>
                         </div>
                       </td>
                       <td className="py-3.5 pr-3 hidden sm:table-cell">
                         <span className="text-muted-foreground text-xs truncate max-w-[140px] block">
-                          {order.cinemaName || "---"}
+                          {order.showTimeInfo?.cinemaName || "---"}
                         </span>
                       </td>
                       <td className="py-3.5 pr-3">

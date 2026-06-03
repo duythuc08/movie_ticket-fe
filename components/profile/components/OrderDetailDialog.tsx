@@ -86,9 +86,9 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
   const foods = groupFoods(order.foods);
   const hasFoods = foods.length > 0;
 
-  const movieName = order.movieTitle || order.tickets?.[0]?.movieName;
-  const roomName = order.roomName || order.tickets?.[0]?.roomName || "---";
-  const showTime = order.showTime || order.tickets?.[0]?.showTime;
+  const movieName = order.showTimeInfo?.movieName;
+  const roomName = order.showTimeInfo?.roomName || "---";
+  const showTime = order.showTimeInfo?.showTime;
 
   const totalDiscount = (order.discountAmount || 0) + (order.memberDiscountAmount || 0);
 
@@ -135,7 +135,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
               <span className="font-medium text-foreground">{roomName}</span>
-              {order.cinemaName && <span className="text-muted-foreground">– {order.cinemaName} </span>}
+              {order.showTimeInfo?.cinemaName && <span className="text-muted-foreground">– {order.showTimeInfo.cinemaName} </span>}
             </div>
           </div>
         </div>
@@ -236,23 +236,30 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
               <Film className="w-3.5 h-3.5 shrink-0" />
               <span>Đặt lúc: <span className="text-foreground font-medium">{fdt(order.bookingTime)}</span></span>
+              <div className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
+                <span>Vé: <span className="text-foreground font-semibold tabular-nums">{fc(order.totalTicketPrice)}</span></span>
+                {(order.totalFoodPrice || 0) > 0 && (
+                  <span>Đồ ăn: <span className="text-foreground font-semibold tabular-nums">{fc(order.totalFoodPrice)}</span></span>
+                )}
+                {totalDiscount > 0 && (
+                  <span>Giảm: <span className="text-emerald-500 font-semibold tabular-nums">−{fc(totalDiscount)}</span></span>
+                )}
+                {(order.pointsEarned || 0) > 0 && (
+                  <span>Điểm: <span className="text-primary font-semibold">+{order.pointsEarned.toLocaleString("vi-VN")}</span></span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
-              <span>Vé: <span className="text-foreground font-semibold tabular-nums">{fc(order.totalTicketPrice)}</span></span>
-              {(order.totalFoodPrice || 0) > 0 && (
-                <span>Đồ ăn: <span className="text-foreground font-semibold tabular-nums">{fc(order.totalFoodPrice)}</span></span>
-              )}
-              {totalDiscount > 0 && (
-                <span>Giảm: <span className="text-emerald-500 font-semibold tabular-nums">−{fc(totalDiscount)}</span></span>
-              )}
-              {(order.pointsEarned || 0) > 0 && (
-                <span>Điểm: <span className="text-primary font-semibold">+{order.pointsEarned.toLocaleString("vi-VN")}</span></span>
-              )}
-            </div>
+
             <div className="flex items-baseline gap-1.5 mt-1">
               <span className="text-xs text-muted-foreground">Tổng cộng:</span>
               <span className="text-xl font-black text-primary tabular-nums">{fc(order.finalPrice)}</span>
             </div>
+            {order.payment && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                <Badge variant="outline" className="text-[10px] uppercase font-bold">{order.payment.paymentType}</Badge>
+                {order.payment.transactionId && <span>MGD: {order.payment.transactionId}</span>}
+              </div>
+            )}
           </div>
 
           {order.orderStatus === "PENDING" && (

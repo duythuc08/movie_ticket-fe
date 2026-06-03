@@ -70,7 +70,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   { label: "Suất chiếu",         href: "/admin/showtimes",  icon: <Clock size={18} /> },
-  { label: "Đặt vé & Đơn hàng", href: "/admin/bookings",   icon: <Ticket size={18} />,  developing: true },
+  { label: "Đặt vé & Đơn hàng", href: "/admin/bookings",   icon: <Ticket size={18} /> },
   { label: "Khuyến mãi & Sự kiện", href: "/admin/promotions", icon: <Gift size={18} />, developing: true },
   { label: "Quản lý Người dùng", href: "/admin/users",      icon: <UserCog size={18} />, developing: true },
 ];

@@ -90,6 +90,7 @@ interface DataTableProps<TData> {
   onRowClick?: (row: TData) => void;
   isLoading?: boolean;
   emptyText?: string;
+  onResetFilters?: () => void;
   /** Slot bên phải toolbar — ví dụ nút "Thêm mới" */
   children?: React.ReactNode;
 }
@@ -105,6 +106,7 @@ export function DataTable<TData>({
   onRowClick,
   isLoading = false,
   emptyText = "Không có dữ liệu.",
+  onResetFilters,
   children,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -136,6 +138,14 @@ export function DataTable<TData>({
     } else {
       table.getColumn(key)?.setFilterValue(value);
     }
+  };
+
+  const isFiltered = columnFilters.length > 0 || globalFilter !== "";
+
+  const handleReset = () => {
+    table.resetColumnFilters();
+    setGlobalFilter("");
+    if (onResetFilters) onResetFilters();
   };
 
   return (
@@ -173,7 +183,17 @@ export function DataTable<TData>({
           </Select>
         ))}
 
-        <div className="ml-auto">{children}</div>
+        {children}
+
+        {(isFiltered || onResetFilters) && (
+          <Button
+            variant="ghost"
+            onClick={handleReset}
+            className="h-9 px-3 text-muted-foreground hover:text-foreground"
+          >
+            Xóa lọc
+          </Button>
+        )}
       </div>
 
       {/* Table */}

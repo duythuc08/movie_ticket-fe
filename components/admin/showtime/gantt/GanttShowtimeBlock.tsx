@@ -122,12 +122,12 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
     {isMenuOpen && menuPos && typeof document !== "undefined" && createPortal(
       <div
         ref={menuRef}
-        style={{ position: "fixed", top: menuPos.top, left: menuPos.left, transform: "translateY(-100%)", zIndex: 9999 }}
-        className="mb-1 bg-white border border-gray-200 rounded-lg shadow-xl min-w-[160px] overflow-hidden"
+        style={{ position: "fixed", top: menuPos.top, left: menuPos.left, transform: "translateY(-100%)", zIndex: 10 }}
+        className="mb-1 bg-popover border border-border rounded-lg shadow-xl min-w-[160px] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
           onClick={(e) => {
             e.stopPropagation();
             setIsMenuOpen(false);
@@ -139,7 +139,7 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
         </button>
         {showtime.showTimeStatus === "SCHEDULED" && (
           <button
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
             onClick={(e) => {
               e.stopPropagation();
               setIsMenuOpen(false);

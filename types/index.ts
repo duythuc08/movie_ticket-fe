@@ -159,9 +159,6 @@ export interface OrderTicket {
   seatName: string;
   seatType: string;
   price: number;
-  roomName: string | null;
-  movieName: string | null;
-  showTime: string | null;
 }
 
 export interface OrderFood {
@@ -170,6 +167,45 @@ export interface OrderFood {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+}
+
+export interface ShowTimeInfo {
+  movieName: string | null;
+  roomName: string | null;
+  showTime: string | null;
+  cinemaName: string | null;
+  cinemaAddress: string | null;
+}
+
+export interface PaymentResponse {
+  paymentId: number;
+  transactionId: string;
+  amount: number;
+  paymentDate: string;
+  paymentType: string;
+  paymentStatus: string;
+}
+
+export interface AdminOrderSummaryResponse {
+  orderId: number;
+  fullName: string;
+  movieName: string | null;
+  cinemaName: string | null;
+  showTime: string | null;
+  ticketCount: number;
+  finalPrice: number;
+  orderStatus: string;
+  bookingTime: string;
+}
+
+export interface AdminOrderStatsResponse {
+  totalRevenue: number;
+  totalOrders: number;
+  paidOrders: number;
+  cancelledOrders: number;
+  pendingOrders: number;
+  expiredOrders: number;
+  usedOrders: number;
 }
 
 export interface Order {
@@ -191,12 +227,8 @@ export interface Order {
   pointsEarned: number;
   tickets: OrderTicket[];
   foods: OrderFood[];
-  // Trích xuất từ vé đầu tiên (populated by @AfterMapping)
-  movieTitle: string | null;
-  cinemaName: string | null;
-  cinemaAddress: string | null;
-  showTime: string | null;
-  roomName: string | null;
+  showTimeInfo: ShowTimeInfo | null;
+  payment: PaymentResponse | null;
 }
 
 // ─── Pagination ────────────────────────────────────────────

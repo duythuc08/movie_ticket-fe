@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AdminBookingStats } from "@/components/admin/bookings/components/AdminBookingStats";
 
 const MOCK_STATS = {
   totalMovies: 42,
@@ -78,6 +79,12 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-white">Dashboard</h1>
 
+      <AdminBookingStats />
+
+      <h2 className="text-lg font-semibold text-white mt-8 flex items-center gap-2">
+        <Film className="w-5 h-5 text-indigo-400" />
+        Thống kê Hệ thống phim
+      </h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Tổng số phim"
