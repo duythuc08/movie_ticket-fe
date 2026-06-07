@@ -1,4 +1,4 @@
-import type { SeatShowTime, FoodProduct, SelectionResponse } from "@/types";
+import type { SeatShowTime, FoodProduct, SelectionResponse, UserVoucher } from "@/types";
 import { getErrorMessage } from "@/lib/errors";
 
 const BASE_URL = "/api-proxy";
@@ -39,6 +39,23 @@ export interface VnpayBookingPayload {
   seatShowTimeIds: (number | undefined)[];
   foods: { foodId: number; quantity: number }[];
   promotionCode?: string;
+}
+
+export async function getApplicableVouchers(
+  token: string,
+  totalAmount: number,
+  movieId?: number,
+): Promise<UserVoucher[]> {
+  const params = new URLSearchParams();
+  if (totalAmount) params.set("totalAmount", String(totalAmount));
+  if (movieId)     params.set("movieId",     String(movieId));
+
+  const res = await fetch(`${BASE_URL}/users/vouchers/applicable?${params}`, {
+    headers: authHeaders(token),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể tải voucher"));
+  return data.result ?? [];
 }
 
 export async function createPayment(

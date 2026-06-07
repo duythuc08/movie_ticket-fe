@@ -73,6 +73,27 @@ export interface ShowtimeData {
   cinemas: CinemaShowtime[];
 }
 
+// ─── Voucher (user-facing) ───────────────────────────────
+export type PromotionType = "PERCENTAGE" | "FIXED_AMOUNT";
+
+export interface UserVoucher {
+  voucherId: number;
+  promotionId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  type: PromotionType;
+  discountValue: number;
+  minOrderValue: number | null;
+  maxDiscountAmount: number | null;
+  startTime: string;
+  endTime: string;
+  dayOfWeek: string[];
+  applicableMovieIds: number[];
+  claimedAt?: string;
+  eligible: boolean | null;
+}
+
 // ─── Booking ──────────────────────────────────────────────
 export interface SeatDetail {
   seatId: number;

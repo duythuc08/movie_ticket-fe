@@ -21,6 +21,8 @@ import {
   Clapperboard,
   LogOut,
   Home,
+  Percent,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -71,8 +73,15 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   },
   { label: "Suất chiếu",         href: "/admin/showtimes",  icon: <Clock size={18} /> },
   { label: "Đặt vé & Đơn hàng", href: "/admin/bookings",   icon: <Ticket size={18} /> },
-  { label: "Khuyến mãi & Sự kiện", href: "/admin/promotions", icon: <Gift size={18} />, developing: true },
-  { label: "Quản lý Người dùng", href: "/admin/users",      icon: <UserCog size={18} />, developing: true },
+  {
+    label: "Khuyến mãi & Sự kiện",
+    icon: <Gift size={18} />,
+    children: [
+      { label: "Khuyến mãi", href: "/admin/promotions", icon: <Percent size={16} /> },
+      { label: "Sự kiện",    href: "/admin/events",     icon: <CalendarDays size={16} /> },
+    ],
+  },
+  { label: "Quản lý Người dùng", href: "/admin/users", icon: <UserCog size={18} /> },
 ];
 
 function SidebarLeaf({ item, isActive }: { item: SidebarLeafItem; isActive: boolean }) {

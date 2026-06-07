@@ -175,7 +175,7 @@ export default function SeatSelectionPage() {
               onClick={() => setShowSuggestions(true)}
               className="w-fit text-amber-600 border-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-400 dark:hover:bg-amber-950/30 gap-2"
             >
-              ✨ Hiện ghế gợi ý
+              ✨ Ghế tốt nhất hiện tại
             </Button>
           )}
         </div>

@@ -5,14 +5,21 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Ticket, X } from "lucide-react";
 import {
   getBookingState,
   clearBookingState,
+  mergeBookingState,
 } from "@/components/booking/utils/bookingStorage";
 import { createPayment } from "@/components/booking/service/booking.service";
+import {
+  VoucherSelectDialog,
+  estimateVoucherDiscount,
+} from "@/components/booking/VoucherSelectDialog";
 import { fetchMembershipTierByName } from "@/components/profile/service/user.service";
 import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
-import type { BookingState, MembershipTier } from "@/types";
+import type { BookingState, MembershipTier, UserVoucher } from "@/types";
 import { formatCurrency } from "@/components/booking/utils/booking.utils";
 
 export default function PaymentPage() {
@@ -29,6 +36,11 @@ export default function PaymentPage() {
   );
   const [isTierLoading, setIsTierLoading] = useState(true);
 
+  // Voucher state
+  const [appliedVoucher, setAppliedVoucher] = useState<UserVoucher | null>(null);
+  const [manualCode, setManualCode] = useState("");
+  const [isVoucherOpen, setIsVoucherOpen] = useState(false);
+
   useEffect(() => {
     const state = getBookingState();
     if (!state) {
@@ -37,6 +49,8 @@ export default function PaymentPage() {
       return;
     }
     setBookingInfo(state);
+    // Khôi phục mã đã áp dụng trước đó (nếu có)
+    if (state.promotionCode) setManualCode(state.promotionCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,7 +97,36 @@ export default function PaymentPage() {
     return { amount, label };
   }, [membershipData, bookingInfo]);
 
-  const finalPrice = (bookingInfo?.total || 0) - discountInfo.amount;
+  // Ước tính giảm giá từ voucher (chỉ có khi chọn từ dialog, không có khi nhập tay)
+  const voucherDiscount = appliedVoucher
+    ? estimateVoucherDiscount(appliedVoucher, bookingInfo?.total || 0)
+    : 0;
+
+  const finalPrice = (bookingInfo?.total || 0) - discountInfo.amount - voucherDiscount;
+
+  // ─── Voucher handlers ────────────────────────────────────────────────────────
+
+  const handleSelectVoucher = (voucher: UserVoucher | null) => {
+    setAppliedVoucher(voucher);
+    const code = voucher?.code ?? "";
+    setManualCode(code);
+    mergeBookingState({ promotionCode: code || undefined });
+  };
+
+  const handleApplyManual = () => {
+    const code = manualCode.trim().toUpperCase();
+    if (!code) return;
+    setAppliedVoucher(null); // nhập tay không có data voucher để estimate
+    mergeBookingState({ promotionCode: code });
+    setManualCode(code);
+    toast.success(`Đã áp mã "${code}"`);
+  };
+
+  const handleRemoveCode = () => {
+    setAppliedVoucher(null);
+    setManualCode("");
+    mergeBookingState({ promotionCode: undefined });
+  };
 
   const getUserId = () => {
     const token = localStorage.getItem("token");
@@ -227,6 +270,73 @@ export default function PaymentPage() {
                 </label>
               </RadioGroup>
             </div>
+
+            {/* ── Mã giảm giá ── */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg shadow-black/5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-1 h-6 bg-primary rounded-full" />
+                <h2 className="text-base font-bold">Mã giảm giá</h2>
+              </div>
+
+              {manualCode ? (
+                <div className="flex items-center justify-between rounded-xl border border-primary/50 bg-primary/5 px-4 py-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Đã áp dụng</p>
+                    <code className="font-bold font-mono text-primary text-sm">{manualCode}</code>
+                    {voucherDiscount > 0 && (
+                      <p className="text-xs text-emerald-500 mt-0.5">
+                        Tiết kiệm ~{formatCurrency(voucherDiscount)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsVoucherOpen(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Đổi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCode}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      value={manualCode}
+                      onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleApplyManual())}
+                      placeholder="Nhập mã giảm giá..."
+                      className="bg-background"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleApplyManual}
+                      disabled={!manualCode.trim()}
+                      className="shrink-0"
+                    >
+                      Áp dụng
+                    </Button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsVoucherOpen(true)}
+                    className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    Chọn từ voucher của tôi
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="lg:col-span-1">
@@ -316,6 +426,18 @@ export default function PaymentPage() {
                   </span>
                   <span>−{formatCurrency(discountInfo.amount)}</span>
                 </div>
+                {manualCode && (
+                  <div className="flex justify-between text-sm text-emerald-500">
+                    <span className="truncate max-w-[60%]">
+                      Mã KM ({manualCode})
+                    </span>
+                    <span>
+                      {voucherDiscount > 0
+                        ? `−~${formatCurrency(voucherDiscount)}`
+                        : "−..."}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
                   <span>Tổng cộng</span>
                   <span className="text-primary">
@@ -347,6 +469,15 @@ export default function PaymentPage() {
             </div>
           </div>
         </form>
+
+        <VoucherSelectDialog
+          open={isVoucherOpen}
+          onOpenChange={setIsVoucherOpen}
+          token={typeof window !== "undefined" ? (localStorage.getItem("token") ?? "") : ""}
+          totalAmount={bookingInfo?.total ?? 0}
+          selectedCode={manualCode || null}
+          onSelect={handleSelectVoucher}
+        />
       </div>
     </div>
   );
