@@ -13,9 +13,10 @@ import {
   deleteBanner,
   toggleBannerActive,
 } from "@/services/admin/adminBannerService";
+import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 import { DataTable, PageHeader, DeleteDialog } from "@/components/shared";
-import { BannerFormDialog } from "@/components/admin/layout/banner/BannerFormDialog";
-import { createBannerColumns } from "@/components/admin/layout/banner/BannerColumns";
+import { BannerFormDialog } from "@/components/admin/banner/BannerFormDialog";
+import { createBannerColumns } from "@/components/admin/banner/BannerColumns";
 import { Button } from "@/components/ui/button";
 
 const BANNER_TYPE_FILTER = [
@@ -79,8 +80,13 @@ export default function AdminBannersPage() {
     if (!token) return;
     setIsSubmitting(true);
     try {
+      let finalImageUrl = typeof data.imageUrl === "string" ? data.imageUrl : "";
+      if (data.imageUrl instanceof File) {
+        finalImageUrl = await uploadFileAndGetUrl(token, data.imageUrl);
+      }
+
       const payload = {
-        imageUrl:    data.imageUrl,
+        imageUrl:    finalImageUrl,
         title:       data.title,
         description: data.description || undefined,
         linkUrl:     data.linkUrl     || undefined,
@@ -151,7 +157,7 @@ export default function AdminBannersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Banner quảng cáo"
+        title="Quản lý Banner"
         description="Quản lý banner hiển thị trên trang chủ hệ thống"
       >
         <Button onClick={handleOpenCreate} className="gap-2">

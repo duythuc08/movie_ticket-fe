@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const bannerFormSchema = z.object({
-  imageUrl: z.string().min(1, "URL ảnh không được để trống"),
+  imageUrl: z.any().refine((val) => val !== undefined && val !== null && val !== "", "URL ảnh không được để trống"),
 
   title: z
     .string()

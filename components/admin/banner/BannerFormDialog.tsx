@@ -21,6 +21,8 @@ import type { AdminBanner, AdminMovie } from "@/types/admin.type";
 import { Image as ImageIcon, Link as LinkIcon, Hash, Settings2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import { adminEventService } from "@/services/admin/adminEventService";
+import type { AdminEvent } from "@/types/admin/promotion";
 
 interface BannerFormDialogProps {
   open: boolean;
@@ -41,6 +43,12 @@ function BannerFormContent({
   onLoadMore,
   currentImageUrl,
   linkedMovie,
+  events,
+  linkedEvent,
+  isLoadingEvents,
+  hasMoreEvents,
+  isLoadingMoreEvents,
+  onLoadMoreEvents,
 }: {
   form: UseFormReturn<BannerFormSchema>;
   movies: AdminMovie[];
@@ -50,14 +58,14 @@ function BannerFormContent({
   onLoadMore: () => void;
   currentImageUrl?: string | null;
   linkedMovie?: { movieId: number; title: string } | null;
+  events: AdminEvent[];
+  linkedEvent?: { id: number; title: string } | null;
+  isLoadingEvents: boolean;
+  hasMoreEvents: boolean;
+  isLoadingMoreEvents: boolean;
+  onLoadMoreEvents: () => void;
 }) {
   const watchedType = form.watch("bannerType");
-
-  useEffect(() => {
-    if (watchedType === "EVENT") {
-      toast.info("Chức năng liên kết sự kiện đang được phát triển");
-    }
-  }, [watchedType]);
 
   return (
     <div className="space-y-6 py-2">
@@ -80,8 +88,8 @@ function BannerFormContent({
           )}
         />
         {form.formState.errors.imageUrl && (
-          <p className="text-xs font-medium text-destructive mt-1">
-            {form.formState.errors.imageUrl.message}
+          <p className="text-xs text-destructive mt-1">
+            {String(form.formState.errors.imageUrl.message)}
           </p>
         )}
       </div>
@@ -202,9 +210,30 @@ function BannerFormContent({
             <Label className="text-xs font-bold text-emerald-600">
               Sự kiện liên kết
             </Label>
-            <div className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 flex items-center text-xs text-emerald-600 font-medium">
-              Chức năng đang được phát triển...
-            </div>
+            <Controller
+              control={form.control}
+              name="eventId"
+              render={({ field }) => {
+                const safeEvents = Array.isArray(events) ? events : [];
+                const base = safeEvents.map((e) => ({ value: String(e?.eventId), label: e?.title }));
+                if (linkedEvent && !base.some((o) => o.value === String(linkedEvent.id))) {
+                  base.unshift({ value: String(linkedEvent.id), label: linkedEvent.title });
+                }
+                return (
+                  <SingleSelectWithSearch
+                    options={base}
+                    value={field.value != null ? String(field.value) : ""}
+                    onChange={(val) => field.onChange(val ? Number(val) : null)}
+                    placeholder="Chọn sự kiện liên kết..."
+                    searchPlaceholder="Tìm tên sự kiện..."
+                    isLoading={isLoadingEvents}
+                    hasMore={hasMoreEvents}
+                    isLoadingMore={isLoadingMoreEvents}
+                    onLoadMore={onLoadMoreEvents}
+                  />
+                );
+              }}
+            />
           </div>
         )}
       </div>
@@ -253,12 +282,21 @@ export function BannerFormDialog({
   const [isLoadingMovies, setIsLoadingMovies] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [eventPage, setEventPage] = useState(0);
+  const [hasMoreEvents, setHasMoreEvents] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isLoadingMoreEvents, setIsLoadingMoreEvents] = useState(false);
+
   useEffect(() => {
     if (!open || !token) return;
     let cancelled = false;
     setMovies([]);
+    setEvents([]);
     setMoviePage(0);
+    setEventPage(0);
     setHasMore(false);
+    setHasMoreEvents(false);
 
     async function load() {
       setIsLoadingMovies(true);
@@ -273,6 +311,20 @@ export function BannerFormDialog({
         if (!cancelled) toast.error("Không thể tải danh sách phim");
       } finally {
         if (!cancelled) setIsLoadingMovies(false);
+      }
+
+      setIsLoadingEvents(true);
+      try {
+        const evtResult = await adminEventService.getEvents(token!, 0, PAGE_SIZE);
+        if (!cancelled) {
+          setEvents(evtResult.content);
+          setHasMoreEvents(!evtResult.last);
+          setEventPage(1);
+        }
+      } catch {
+        if (!cancelled) toast.error("Không thể tải danh sách sự kiện");
+      } finally {
+        if (!cancelled) setIsLoadingEvents(false);
       }
     }
 
@@ -295,6 +347,21 @@ export function BannerFormDialog({
     }
   }
 
+  async function handleLoadMoreEvents() {
+    if (!token || isLoadingMoreEvents || !hasMoreEvents) return;
+    setIsLoadingMoreEvents(true);
+    try {
+      const result = await adminEventService.getEvents(token, eventPage, PAGE_SIZE);
+      setEvents((prev) => [...prev, ...result.content]);
+      setHasMoreEvents(!result.last);
+      setEventPage((p) => p + 1);
+    } catch {
+      toast.error("Không thể tải thêm sự kiện");
+    } finally {
+      setIsLoadingMoreEvents(false);
+    }
+  }
+
   return (
     <AdminFormDialog
       open={open}
@@ -303,21 +370,21 @@ export function BannerFormDialog({
         readOnly
           ? "Chi tiết Banner"
           : isEditMode
-          ? "Chỉnh sửa Banner"
-          : "Thêm Banner mới"
+            ? "Chỉnh sửa Banner"
+            : "Thêm Banner mới"
       }
       subtitle={banner?.title || "Cấu hình hình ảnh quảng bá trên trang chủ"}
       schema={bannerFormSchema}
       defaultValues={{
-        imageUrl:    banner?.imageUrl    ?? "",
-        title:       banner?.title       ?? "",
+        imageUrl: banner?.imageUrl ?? "",
+        title: banner?.title ?? "",
         description: banner?.description ?? "",
-        linkUrl:     banner?.linkUrl     ?? "",
-        priority:    banner?.priority    ?? 0,
-        active:      banner?.active      ?? true,
-        bannerType:  banner?.bannerType  ?? "MOVIE",
-        movieId:     banner?.movies?.movieId ?? null,
-        eventId:     banner?.event?.id   ?? null,
+        linkUrl: banner?.linkUrl ?? "",
+        priority: banner?.priority ?? 0,
+        active: banner?.active ?? true,
+        bannerType: banner?.bannerType ?? "MOVIE",
+        movieId: banner?.movies?.movieId ?? null,
+        eventId: banner?.event?.id ?? null,
       }}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
@@ -336,6 +403,12 @@ export function BannerFormDialog({
           onLoadMore={handleLoadMore}
           currentImageUrl={banner?.imageUrl}
           linkedMovie={banner?.movies}
+          events={events}
+          linkedEvent={banner?.event}
+          isLoadingEvents={isLoadingEvents}
+          hasMoreEvents={hasMoreEvents}
+          isLoadingMoreEvents={isLoadingMoreEvents}
+          onLoadMoreEvents={handleLoadMoreEvents}
         />
       )}
     </AdminFormDialog>
