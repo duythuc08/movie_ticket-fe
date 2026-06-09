@@ -69,7 +69,9 @@ export const ErrorCodeMap: Record<number, string> = {
     1066: "Thời gian bắt đầu hoặc kết thúc bị trùng lặp với một suất chiếu khác",
     1067: "Suất chiếu phải cách các suất chiếu khác ít nhất 15 phút",
     1068: "Đồ ăn không thuộc rạp chiếu đã chọn",
-    1069: "Đồ ăn đã hết hàng"
+    1069: "Đồ ăn đã hết hàng",
+    1073: "Bạn đã nhận voucher này rồi",
+    1074: "Voucher không khả dụng",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

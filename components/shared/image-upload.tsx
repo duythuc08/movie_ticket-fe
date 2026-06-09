@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,8 @@ export function ImageUploadPreview({
 
     const handleFileSelect = useCallback((file: File | undefined | null) => {
         if (!file) return;
-        if (!file.type.startsWith("image/")) { alert("Vui lòng chọn file ảnh"); return; }
-        if (file.size > 10 * 1024 * 1024) { alert("Kích thước tối đa 10MB"); return; }
+        if (!file.type.startsWith("image/")) { toast.error("Vui lòng chọn file ảnh"); return; }
+        if (file.size > 10 * 1024 * 1024) { toast.error("Kích thước tối đa 10MB"); return; }
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);

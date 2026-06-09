@@ -3,6 +3,8 @@ export type { FilterConfig, FilterOption } from "./data-table";
 
 export { DeleteDialog } from "./delete-dialog";
 
+export { ConfirmDialog } from "./confirm-dialog";
+
 export { FormDialog } from "./form-dialog";
 
 export { StatusBadge } from "./status-badge";
