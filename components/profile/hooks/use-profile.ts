@@ -16,7 +16,7 @@ export function useProfile() {
   const router = useRouter();
   const { user: authUser, token, isAuthenticated } = useAuth();
 
-  const [activeTab,     setActiveTab]     = useState<"info" | "orders">("info");
+  const [activeTab,     setActiveTab]     = useState<"info" | "orders" | "voucher">("info");
   const [loadingInfo,   setLoadingInfo]   = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [saving,        setSaving]        = useState(false);

@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
-import { User, Ticket, LogOut } from "lucide-react";
+import { User, Ticket, BadgePercent, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserInfo } from "@/types";
 
+type ProfileTab = "info" | "orders" | "voucher";
+
 interface Props {
-  activeTab: "info" | "orders";
-  onTabChange: (tab: "info" | "orders") => void;
+  activeTab: ProfileTab;
+  onTabChange: (tab: ProfileTab) => void;
   userInfo: UserInfo | null;
   onLogout: () => void;
   loading: boolean;
@@ -15,9 +17,10 @@ interface Props {
 
 import { TIER_COLORS } from "@/components/profile/constants/profile.constants";
 
-const TABS_CONFIG: Array<{ key: "info" | "orders"; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
-  { key: "info",   label: "Thông tin cá nhân", Icon: User },
-  { key: "orders", label: "Đơn hàng & Vé",     Icon: Ticket },
+const TABS_CONFIG: Array<{ key: ProfileTab; label: string; Icon: React.ComponentType<{ className?: string }> }> = [
+  { key: "info",    label: "Thông tin cá nhân", Icon: User },
+  { key: "orders",  label: "Đơn hàng & Vé",     Icon: Ticket },
+  { key: "voucher", label: "Voucher của tôi",    Icon: BadgePercent },
 ];
 
 export function ProfileSidebar({ activeTab, onTabChange, userInfo, onLogout, loading }: Props) {

@@ -5,6 +5,7 @@ import { PersonalInfo }      from "@/components/profile/components/PersonalInfo"
 import { OrderHistory }      from "@/components/profile/components/OrderHistory";
 import { OrderDetailDialog } from "@/components/profile/components/OrderDetailDialog";
 import { OverviewWidgets }   from "@/components/profile/components/OverviewWidgets";
+import { VoucherTab }        from "@/components/profile/components/VoucherTab";
 import { useProfile }        from "@/components/profile/hooks/use-profile";
 
 export default function ProfilePage() {
@@ -49,12 +50,14 @@ export default function ProfilePage() {
                 onFormChange={handleFormChange}
                 onSave={handleSave}
               />
-            ) : (
+            ) : activeTab === "orders" ? (
               <OrderHistory
                 orders={orders}
                 loading={loadingOrders}
                 onSelectOrder={handleSelectOrder}
               />
+            ) : (
+              <VoucherTab />
             )}
           </main>
 
