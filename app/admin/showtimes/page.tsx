@@ -6,7 +6,7 @@ import { Plus, Table, CalendarRange, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchActiveCinemasForSelect, fetchAdminCinemaById } from "@/services/admin/adminCinemaService";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
-import { DataTable, PageHeader } from "@/components/shared";
+import { DataTable, PageHeader, ConfirmDialog } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { createShowtimeColumns } from "@/components/admin/showtime/ShowtimeColumns";
 import { ShowtimeFilters } from "@/components/admin/showtime/ShowtimeFilters";
@@ -121,6 +121,8 @@ export default function AdminShowtimesPage() {
 
   const [formInitialRoom, setFormInitialRoom] = useState<number | undefined>();
   const [formInitialTime, setFormInitialTime] = useState<string | undefined>();
+  const [pendingCancel, setPendingCancel] = useState<Showtime | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const [filters, setFilters] = useState<{ cinemaId?: string; status?: string; date?: string; keyword?: string }>({});
   const [ganttRefreshKey, setGanttRefreshKey] = useState(0);
@@ -185,17 +187,8 @@ export default function AdminShowtimesPage() {
     setIsDetailOpen(true);
   };
 
-  const handleCancelShowtime = async (showtime: Showtime) => {
-    if (!token) return;
-    if (!confirm("Bạn có chắc chắn muốn huỷ suất chiếu này không?")) return;
-    
-    try {
-      await adminShowtimeService.cancelShowtime(token, showtime.showTimeId);
-      toast.success("Huỷ suất chiếu thành công");
-      loadShowtimes();
-    } catch {
-      toast.error("Lỗi khi huỷ suất chiếu");
-    }
+  const handleCancelShowtime = (showtime: Showtime) => {
+    setPendingCancel(showtime);
   };
 
   const handleGanttAddClick = (roomId: number, startTimeStr: string) => {
@@ -404,6 +397,30 @@ export default function AdminShowtimesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!pendingCancel}
+        onOpenChange={(o) => { if (!o) setPendingCancel(null); }}
+        title="Huỷ suất chiếu"
+        description="Bạn có chắc chắn muốn huỷ suất chiếu này? Hành động này không thể hoàn tác."
+        confirmLabel="Huỷ suất chiếu"
+        confirmVariant="destructive"
+        isLoading={isCancelling}
+        onConfirm={async () => {
+          if (!pendingCancel || !token) return;
+          setIsCancelling(true);
+          try {
+            await adminShowtimeService.cancelShowtime(token, pendingCancel.showTimeId);
+            toast.success("Huỷ suất chiếu thành công");
+            loadShowtimes();
+            setPendingCancel(null);
+          } catch {
+            toast.error("Lỗi khi huỷ suất chiếu");
+          } finally {
+            setIsCancelling(false);
+          }
+        }}
+      />
     </div>
   );
 }

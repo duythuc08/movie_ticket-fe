@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
@@ -26,6 +27,8 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
   const [seatData, setSeatData] = useState<SelectionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const loadDetail = useCallback(async () => {
     if (!token || !showTimeId) return;
@@ -67,19 +70,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
     }
   }, [activeTab, loadSeats, seatData]);
 
-  const handleCancelShowtime = async () => {
-    if (!token || !detail) return;
-    if (!confirm("Bạn có chắc chắn muốn huỷ suất chiếu này không?")) return;
-    
-    try {
-      await adminShowtimeService.cancelShowtime(token, detail.showTimeId);
-      toast.success("Huỷ suất chiếu thành công");
-      loadDetail();
-      onRefreshList();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Lỗi khi huỷ suất chiếu");
-    }
-  };
+  const handleCancelShowtime = () => setConfirmCancel(true);
 
   const pieData = useMemo(() => {
     return [
@@ -283,6 +274,31 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
           </div>
         </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        title="Huỷ suất chiếu"
+        description="Bạn có chắc chắn muốn huỷ suất chiếu này? Hành động này không thể hoàn tác."
+        confirmLabel="Huỷ suất chiếu"
+        confirmVariant="destructive"
+        isLoading={isCancelling}
+        onConfirm={async () => {
+          if (!token || !detail) return;
+          setIsCancelling(true);
+          try {
+            await adminShowtimeService.cancelShowtime(token, detail.showTimeId);
+            toast.success("Huỷ suất chiếu thành công");
+            setConfirmCancel(false);
+            loadDetail();
+            onRefreshList();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Lỗi khi huỷ suất chiếu");
+          } finally {
+            setIsCancelling(false);
+          }
+        }}
+      />
     </Dialog>
   );
 };

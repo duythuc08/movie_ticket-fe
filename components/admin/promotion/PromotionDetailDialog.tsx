@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { adminPromotionService } from "@/services/admin/adminPromotionService";
@@ -49,6 +50,10 @@ export const PromotionDetailDialog = ({
   const [detail, setDetail] = useState<AdminPromotion | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isActioning, setIsActioning] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    action: "submit" | "approve" | "pause" | "resume";
+    label: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!token || !promotionId) return;
@@ -68,20 +73,22 @@ export const PromotionDetailDialog = ({
     else setDetail(null);
   }, [open, promotionId, load]);
 
-  const handleAction = async (
-    action: "submit" | "approve" | "pause" | "resume",
-    label: string,
-  ) => {
-    if (!token || !detail) return;
-    if (!confirm(`Bạn có chắc chắn muốn ${label.toLowerCase()} khuyến mãi này?`)) return;
+  const handleAction = (action: "submit" | "approve" | "pause" | "resume", label: string) => {
+    setPendingAction({ action, label });
+  };
+
+  const executeAction = async () => {
+    if (!token || !detail || !pendingAction) return;
     setIsActioning(true);
     try {
+      const { action, label } = pendingAction;
       const svc = adminPromotionService;
       if (action === "submit")  await svc.submitPromotion(token, detail.promotionId);
       if (action === "approve") await svc.approvePromotion(token, detail.promotionId);
       if (action === "pause")   await svc.pausePromotion(token, detail.promotionId);
       if (action === "resume")  await svc.resumePromotion(token, detail.promotionId);
       toast.success(`${label} thành công`);
+      setPendingAction(null);
       onRefresh();
       load();
     } catch (error) {
@@ -254,6 +261,17 @@ export const PromotionDetailDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={!!pendingAction}
+        onOpenChange={(o) => { if (!o) setPendingAction(null); }}
+        title={`${pendingAction?.label ?? ""} khuyến mãi`}
+        description={`Bạn có chắc chắn muốn ${pendingAction?.label?.toLowerCase() ?? ""} khuyến mãi này?`}
+        confirmLabel={pendingAction?.label}
+        confirmVariant={pendingAction?.action === "pause" ? "destructive" : "default"}
+        isLoading={isActioning}
+        onConfirm={executeAction}
+      />
     </Dialog>
   );
 };

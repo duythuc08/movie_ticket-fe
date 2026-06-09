@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { DataTable, PageHeader } from "@/components/shared";
+import { DataTable, PageHeader, ConfirmDialog } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { adminEventService } from "@/services/admin/adminEventService";
 import { createEventColumns } from "@/components/admin/event/EventColumns";
@@ -19,6 +19,8 @@ export default function AdminEventsPage() {
   const [filters, setFilters] = useState<{ keyword?: string; eventType?: string }>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<AdminEvent | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -38,24 +40,11 @@ export default function AdminEventsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleDelete = async (event: AdminEvent) => {
-    if (!token) return;
-    if (!confirm(`Bạn có chắc chắn muốn xóa sự kiện "${event.title}"?`)) return;
-    try {
-      await adminEventService.deleteEvent(token, event.eventId);
-      toast.success("Xóa sự kiện thành công");
-      load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Lỗi khi xóa sự kiện");
-    }
-  };
-
   const columns = useMemo(
     () => createEventColumns({
       onEdit:   (e) => { setEditEvent(e); setIsFormOpen(true); },
-      onDelete: handleDelete,
+      onDelete: (e) => setPendingDelete(e),
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -76,6 +65,30 @@ export default function AdminEventsPage() {
         onOpenChange={(o) => { setIsFormOpen(o); if (!o) setEditEvent(null); }}
         onSuccess={load}
         event={editEvent}
+      />
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => { if (!o) setPendingDelete(null); }}
+        title="Xóa sự kiện"
+        description={`Bạn có chắc chắn muốn xóa sự kiện "${pendingDelete?.title}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa"
+        confirmVariant="destructive"
+        isLoading={isDeleting}
+        onConfirm={async () => {
+          if (!pendingDelete || !token) return;
+          setIsDeleting(true);
+          try {
+            await adminEventService.deleteEvent(token, pendingDelete.eventId);
+            toast.success("Xóa sự kiện thành công");
+            load();
+            setPendingDelete(null);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Lỗi khi xóa sự kiện");
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
       />
     </div>
   );

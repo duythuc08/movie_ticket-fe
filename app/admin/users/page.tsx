@@ -12,7 +12,16 @@ import { adminUserService } from "@/services/admin/adminUserService";
 import { createUserColumns } from "@/components/admin/user/UserColumns";
 import { UserFormDialog } from "@/components/admin/user/UserFormDialog";
 import { UserDetailDialog } from "@/components/admin/user/UserDetailDialog";
+import { ConfirmDialog } from "@/components/shared";
 import type { AdminUser } from "@/types/admin/user";
+
+type PendingConfirm = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  confirmVariant: "default" | "destructive";
+  action: () => Promise<void>;
+};
 
 export default function AdminUsersPage() {
   const { token } = useAuth();
@@ -24,6 +33,8 @@ export default function AdminUsersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const [isActioning, setIsActioning] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -46,30 +57,36 @@ export default function AdminUsersPage() {
     return () => clearTimeout(t);
   }, [load]);
 
-  const handleToggleStatus = async (u: AdminUser) => {
-    if (!token) return;
+  const handleToggleStatus = (u: AdminUser) => {
     const isActive = u.entityStatus === "ACTIVE";
-    if (!confirm(`Bạn có chắc chắn muốn ${isActive ? "vô hiệu hóa" : "kích hoạt"} tài khoản ${u.username}?`)) return;
-    try {
-      if (isActive) await adminUserService.inactivateUser(token, u.userId);
-      else          await adminUserService.activateUser(token, u.userId);
-      toast.success(`${isActive ? "Vô hiệu hóa" : "Kích hoạt"} thành công`);
-      load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Lỗi thao tác");
-    }
+    setPending({
+      title: isActive ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản",
+      description: `Bạn có chắc chắn muốn ${isActive ? "vô hiệu hóa" : "kích hoạt"} tài khoản "${u.username}"?`,
+      confirmLabel: isActive ? "Vô hiệu hóa" : "Kích hoạt",
+      confirmVariant: isActive ? "destructive" : "default",
+      action: async () => {
+        if (!token) return;
+        if (isActive) await adminUserService.inactivateUser(token, u.userId);
+        else          await adminUserService.activateUser(token, u.userId);
+        toast.success(`${isActive ? "Vô hiệu hóa" : "Kích hoạt"} thành công`);
+        load();
+      },
+    });
   };
 
-  const handleBan = async (u: AdminUser) => {
-    if (!token) return;
-    if (!confirm(`Bạn có chắc chắn muốn KHÓA tài khoản ${u.username}?`)) return;
-    try {
-      await adminUserService.banUser(token, u.userId);
-      toast.success("Khóa tài khoản thành công");
-      load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Lỗi khi khóa tài khoản");
-    }
+  const handleBan = (u: AdminUser) => {
+    setPending({
+      title: "Khóa tài khoản",
+      description: `Bạn có chắc chắn muốn khóa tài khoản "${u.username}"? Tài khoản sẽ không thể đăng nhập.`,
+      confirmLabel: "Khóa tài khoản",
+      confirmVariant: "destructive",
+      action: async () => {
+        if (!token) return;
+        await adminUserService.banUser(token, u.userId);
+        toast.success("Khóa tài khoản thành công");
+        load();
+      },
+    });
   };
 
   const columns = useMemo(() => createUserColumns({
@@ -135,6 +152,23 @@ export default function AdminUsersPage() {
         open={!!detailUserId}
         onOpenChange={(o) => { if (!o) setDetailUserId(null); }}
         userId={detailUserId}
+      />
+
+      <ConfirmDialog
+        open={!!pending}
+        onOpenChange={(o) => { if (!o) setPending(null); }}
+        title={pending?.title ?? ""}
+        description={pending?.description ?? ""}
+        confirmLabel={pending?.confirmLabel}
+        confirmVariant={pending?.confirmVariant}
+        isLoading={isActioning}
+        onConfirm={async () => {
+          if (!pending) return;
+          setIsActioning(true);
+          try { await pending.action(); }
+          catch (error) { toast.error(error instanceof Error ? error.message : "Lỗi thao tác"); }
+          finally { setIsActioning(false); setPending(null); }
+        }}
       />
     </div>
   );
