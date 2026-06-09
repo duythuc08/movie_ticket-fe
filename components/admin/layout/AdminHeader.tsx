@@ -13,7 +13,7 @@ const PATH_LABELS: Record<string, string> = {
   "/admin/bookings": "Đặt vé & Đơn hàng",
   "/admin/promotions": "Khuyến mãi & Sự kiện",
   "/admin/users": "Quản lý người dùng",
-  "/admin/banners": "Banner quảng cáo",
+  "/admin/banners": "Quản lý Banner",
   "/admin/reviews": "Đánh giá phim",
 };
 
