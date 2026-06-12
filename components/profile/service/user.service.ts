@@ -1,5 +1,6 @@
 import type { UserInfo, MembershipTier, Order } from "@/types";
 import { getErrorMessage } from "@/lib/errors";
+import { apiFetch } from "@/lib/fetchApi";
 
 const BASE_URL = "/api-proxy";
 
@@ -11,7 +12,7 @@ function authHeaders(token: string) {
 }
 
 export async function fetchMyInfo(token: string): Promise<UserInfo> {
-  const res = await fetch(`${BASE_URL}/users/myInfo`, { headers: authHeaders(token) });
+  const res = await apiFetch(`${BASE_URL}/users/myInfo`, { headers: authHeaders(token) });
   const data = await res.json();
   if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được thông tin người dùng"));
   return data.result as UserInfo;
@@ -31,7 +32,7 @@ export async function updateMyInfo(
     body.birthday = payload.birthday;
   }
 
-  const res = await fetch(`${BASE_URL}/users/myInfo`, {
+  const res = await apiFetch(`${BASE_URL}/users/myInfo`, {
     method: "PUT",
     headers: authHeaders(token),
     body: JSON.stringify(body),
@@ -42,7 +43,7 @@ export async function updateMyInfo(
 }
 
 export async function fetchAllMembershipTiers(token: string): Promise<MembershipTier[]> {
-  const res = await fetch(`${BASE_URL}/membership-tiers/getAllMembershipTiers`, {
+  const res = await apiFetch(`${BASE_URL}/membership-tiers/getAllMembershipTiers`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
@@ -54,7 +55,7 @@ export async function fetchAllMembershipTiers(token: string): Promise<Membership
 
 export async function fetchMembershipTierByName(token: string, tierName: string): Promise<MembershipTier | null> {
   try {
-    const res = await fetch(`${BASE_URL}/membership-tiers/getMembershipTier/${tierName}`, {
+    const res = await apiFetch(`${BASE_URL}/membership-tiers/getMembershipTier/${tierName}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -66,14 +67,14 @@ export async function fetchMembershipTierByName(token: string, tierName: string)
 }
 
 export async function fetchOrdersByUser(token: string, userId: string): Promise<Order[]> {
-  const res = await fetch(`${BASE_URL}/orders/user/${userId}`, { headers: authHeaders(token) });
+  const res = await apiFetch(`${BASE_URL}/orders/user/${userId}`, { headers: authHeaders(token) });
   const data = await res.json();
   if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được danh sách đơn hàng"));
   return data.result as Order[];
 }
 
 export async function createVnpayRepaymentUrl(token: string, orderId: string): Promise<string> {
-  const res = await fetch(`${BASE_URL}/payment/create-vnpay-url?orderId=${orderId}`, {
+  const res = await apiFetch(`${BASE_URL}/payment/create-vnpay-url?orderId=${orderId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();

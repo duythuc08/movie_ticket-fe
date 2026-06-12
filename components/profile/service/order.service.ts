@@ -1,9 +1,10 @@
 import type { OrderData } from "@/components/profile/types";
+import { apiFetch } from "@/lib/fetchApi";
 
 const BASE_URL = "/api-proxy";
 
 export async function fetchOrderById(orderId: string, token: string): Promise<OrderData> {
-  const res = await fetch(`${BASE_URL}/orders/${orderId}`, {
+  const res = await apiFetch(`${BASE_URL}/orders/${orderId}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,

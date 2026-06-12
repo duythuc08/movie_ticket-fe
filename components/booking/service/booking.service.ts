@@ -1,5 +1,6 @@
 import type { SeatShowTime, FoodProduct, SelectionResponse, UserVoucher } from "@/types";
 import { getErrorMessage } from "@/lib/errors";
+import { apiFetch } from "@/lib/fetchApi";
 
 const BASE_URL = "/api-proxy";
 
@@ -11,7 +12,7 @@ function authHeaders(token: string) {
 }
 
 export async function fetchSeatSelection(showTimeId: number, token: string): Promise<SelectionResponse> {
-  const res = await fetch(
+  const res = await apiFetch(
     `${BASE_URL}/seatShowTimes/selection/${showTimeId}`,
     { headers: authHeaders(token) }
   );
@@ -21,7 +22,7 @@ export async function fetchSeatSelection(showTimeId: number, token: string): Pro
 }
 
 export async function getFoods(token: string, cinemaId: number): Promise<FoodProduct[]> {
-  const res = await fetch(`${BASE_URL}/foods?cinemaId=${cinemaId}`, { headers: authHeaders(token) });
+  const res = await apiFetch(`${BASE_URL}/foods?cinemaId=${cinemaId}`, { headers: authHeaders(token) });
   const data = await res.json();
   return ((data.result ?? []) as Record<string, unknown>[]).map((item) => ({
     id: item.foodId as number,
@@ -50,7 +51,7 @@ export async function getApplicableVouchers(
   if (totalAmount) params.set("totalAmount", String(totalAmount));
   if (movieId)     params.set("movieId",     String(movieId));
 
-  const res = await fetch(`${BASE_URL}/users/vouchers/applicable?${params}`, {
+  const res = await apiFetch(`${BASE_URL}/users/vouchers/applicable?${params}`, {
     headers: authHeaders(token),
   });
   const data = await res.json();
@@ -62,7 +63,7 @@ export async function createPayment(
   token: string,
   payload: VnpayBookingPayload
 ): Promise<{ orderId: string; paymentUrl: string; finalPrice: number; discountAmount: number; [key: string]: unknown }> {
-  const res = await fetch(`${BASE_URL}/payment/create-vnpay-booking`, {
+  const res = await apiFetch(`${BASE_URL}/payment/create-vnpay-booking`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(payload),

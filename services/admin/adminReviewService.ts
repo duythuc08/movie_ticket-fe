@@ -1,4 +1,4 @@
-import axios from "@/lib/axios";
+import { apiFetch } from "@/lib/fetchApi";
 import type { ApiPagedResult } from "@/types/admin.type";
 import type { AdminReview, AdminReviewInteraction } from "@/types/admin.type";
 
@@ -21,56 +21,64 @@ export async function fetchAdminReviews(
     url += `&filter=movies.movieId:${params.movieId}`; // Using spring-filter syntax
   }
 
-  const response = await axios.get(url, {
+  const response = await apiFetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  const data = await response.json();
 
-  if (response.data.code !== 0) {
-    throw new Error(response.data.message || "Không thể tải danh sách đánh giá");
+  if (data.code !== 0) {
+    throw new Error(data.message || "Không thể tải danh sách đánh giá");
   }
 
-  return response.data.result;
+  return data.result;
 }
 
 export async function approveReview(token: string, reviewId: number): Promise<AdminReview> {
-  const response = await axios.patch(`${BASE_URL}/${reviewId}/approve`, null, {
+  const response = await apiFetch(`${BASE_URL}/${reviewId}/approve`, {
+    method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (response.data.code !== 0) {
-    throw new Error(response.data.message || "Không thể duyệt đánh giá");
+  const data = await response.json();
+  if (data.code !== 0) {
+    throw new Error(data.message || "Không thể duyệt đánh giá");
   }
-  return response.data.result;
+  return data.result;
 }
 
 export async function rejectReview(token: string, reviewId: number): Promise<AdminReview> {
-  const response = await axios.patch(`${BASE_URL}/${reviewId}/reject`, null, {
+  const response = await apiFetch(`${BASE_URL}/${reviewId}/reject`, {
+    method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (response.data.code !== 0) {
-    throw new Error(response.data.message || "Không thể từ chối đánh giá");
+  const data = await response.json();
+  if (data.code !== 0) {
+    throw new Error(data.message || "Không thể từ chối đánh giá");
   }
-  return response.data.result;
+  return data.result;
 }
 
 export async function hideReview(token: string, reviewId: number): Promise<AdminReview> {
-  const response = await axios.patch(`${BASE_URL}/${reviewId}/hide`, null, {
+  const response = await apiFetch(`${BASE_URL}/${reviewId}/hide`, {
+    method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (response.data.code !== 0) {
-    throw new Error(response.data.message || "Không thể ẩn đánh giá");
+  const data = await response.json();
+  if (data.code !== 0) {
+    throw new Error(data.message || "Không thể ẩn đánh giá");
   }
-  return response.data.result;
+  return data.result;
 }
 
 export async function fetchReviewInteractions(
   token: string,
   reviewId: number
 ): Promise<AdminReviewInteraction[]> {
-  const response = await axios.get(`${BASE_URL}/${reviewId}/interactions`, {
+  const response = await apiFetch(`${BASE_URL}/${reviewId}/interactions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (response.data.code !== 0) {
-    throw new Error(response.data.message || "Không thể lấy lượt tương tác");
+  const data = await response.json();
+  if (data.code !== 0) {
+    throw new Error(data.message || "Không thể lấy lượt tương tác");
   }
-  return response.data.result;
+  return data.result;
 }

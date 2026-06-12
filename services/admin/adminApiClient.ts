@@ -14,6 +14,8 @@ export function buildAuthHeadersMultipart(token: string): HeadersInit {
   };
 }
 
+import { apiFetch } from "@/lib/fetchApi";
+
 export async function adminGet<T>(
   token: string,
   path: string,
@@ -29,7 +31,7 @@ export async function adminGet<T>(
     });
   }
 
-  const response = await fetch(url.toString(), {
+  const response = await apiFetch(url.toString(), {
     method: "GET",
     headers: buildAuthHeaders(token),
     cache: "no-store",
@@ -52,7 +54,7 @@ export async function adminPost<T>(
   path: string,
   body: unknown,
 ): Promise<T> {
-  const response = await fetch(`${ADMIN_BASE}${path}`, {
+  const response = await apiFetch(`${ADMIN_BASE}${path}`, {
     method: "POST",
     headers: buildAuthHeaders(token),
     body: JSON.stringify(body),
@@ -75,7 +77,7 @@ export async function adminPut<T>(
   path: string,
   body: unknown,
 ): Promise<T> {
-  const response = await fetch(`${ADMIN_BASE}${path}`, {
+  const response = await apiFetch(`${ADMIN_BASE}${path}`, {
     method: "PUT",
     headers: buildAuthHeaders(token),
     body: JSON.stringify(body),
@@ -97,7 +99,7 @@ export async function adminPutEmpty(
   token: string,
   path: string
 ): Promise<void> {
-  const response = await fetch(`${ADMIN_BASE}${path}`, {
+  const response = await apiFetch(`${ADMIN_BASE}${path}`, {
     method: "PUT",
     headers: buildAuthHeaders(token),
   });
@@ -116,7 +118,7 @@ export async function adminPostFormData<T>(
   path: string,
   formData: FormData
 ): Promise<T> {
-  const response = await fetch(`${ADMIN_BASE}${path}`, {
+  const response = await apiFetch(`${ADMIN_BASE}${path}`, {
     method: "POST",
     headers: buildAuthHeadersMultipart(token),
     body: formData,
@@ -138,7 +140,7 @@ export async function adminDelete(
   token: string,
   path: string
 ): Promise<void> {
-  const response = await fetch(`${ADMIN_BASE}${path}`, {
+  const response = await apiFetch(`${ADMIN_BASE}${path}`, {
     method: "DELETE",
     headers: buildAuthHeaders(token),
   });

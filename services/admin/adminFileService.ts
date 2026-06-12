@@ -1,4 +1,5 @@
 import { buildAuthHeadersMultipart } from "./adminApiClient";
+import { apiFetch } from "@/lib/fetchApi";
 
 export async function uploadFileAndGetUrl(
   token: string,
@@ -7,7 +8,7 @@ export async function uploadFileAndGetUrl(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch("/api-proxy/api/files/upload", {
+  const response = await apiFetch("/api-proxy/api/files/upload", {
     method: "POST",
     headers: buildAuthHeadersMultipart(token),
     body: formData,

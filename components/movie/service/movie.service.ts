@@ -1,4 +1,4 @@
-
+import { apiFetch } from "@/lib/fetchApi";
 import type { Movie, MovieDetail, PagedMovieResult, ShowtimeDate, ShowtimeData } from "@/types";
 
 const BASE_URL = "/api-proxy";
@@ -34,7 +34,7 @@ export async function fetchMoviesPaged(
   page: number,
   size = 4
 ): Promise<PagedMovieResult> {
-  const res = await fetch(`${BASE_URL}/movies/${status}/paged?page=${page}&size=${size}`);
+  const res = await apiFetch(`${BASE_URL}/movies/${status}/paged?page=${page}&size=${size}`);
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     console.error(`[fetchMoviesPaged] HTTP ${res.status} — status=${status} page=${page}`, body);
@@ -53,7 +53,7 @@ export async function fetchMoviesPaged(
 
 export async function fetchMovieBanner(movieId: string): Promise<string> {
   try {
-    const res = await fetch(`${BASE_URL}/banners/getBannerByMovieId/${movieId}`);
+    const res = await apiFetch(`${BASE_URL}/banners/getBannerByMovieId/${movieId}`);
     const data = await res.json();
     if (data.code === 0 && data.result) return data.result.imageUrl as string;
     return "";
@@ -63,7 +63,7 @@ export async function fetchMovieBanner(movieId: string): Promise<string> {
 }
 
 export async function fetchMovieDetail(movieId: string): Promise<MovieDetail> {
-  const res = await fetch(`${BASE_URL}/movies/${movieId}`);
+  const res = await apiFetch(`${BASE_URL}/movies/${movieId}`);
   const data = await res.json();
   if (data.code !== 0) throw new Error("Movie not found");
 
@@ -115,7 +115,7 @@ export async function fetchShowtimesByDate(
   dateLabel: string
 ): Promise<ShowtimeData> {
   try {
-    const res = await fetch(
+    const res = await apiFetch(
       `${BASE_URL}/showtimes/getShowTimes/by-movie-time/${movieId}?start=${start}&end=${end}`
     );
     const data = await res.json();

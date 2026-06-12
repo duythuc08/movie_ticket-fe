@@ -1,9 +1,10 @@
 import type { Cinema, Movie, QuickBookingSlot } from "@/types";
+import { apiFetch } from "@/lib/fetchApi";
 
 const BASE = "/api-proxy";
 
 async function safeFetch(url: string, label: string): Promise<Response> {
-  const res = await fetch(url);
+  const res = await apiFetch(url);
   if (!res.ok) {
     const body = await res.text().catch(() => "(empty body)");
     console.error(`[QuickBooking] ${label} failed — HTTP ${res.status} ${res.statusText}\nURL: ${url}\nBody: ${body}`);
