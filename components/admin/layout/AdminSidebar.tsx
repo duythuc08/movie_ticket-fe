@@ -59,7 +59,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
       { label: "Danh sách Phim",       href: "/admin/movies",  icon: <Clapperboard size={16} /> },
       { label: "Thể loại (Genre)",      href: "/admin/genres",  icon: <Tag size={16} /> },
       { label: "Diễn viên & Đạo diễn", href: "/admin/persons", icon: <Users size={16} /> },
-      { label: "Đánh giá (Review)",     href: "/admin/reviews", icon: <Star size={16} />, developing: true },
+      { label: "Đánh giá (Review)",     href: "/admin/reviews", icon: <Star size={16} /> },
     ],
   },
   { label: "Quản lý Banner", href: "/admin/banners", icon: <Image size={18} /> },

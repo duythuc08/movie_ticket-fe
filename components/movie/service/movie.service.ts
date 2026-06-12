@@ -87,6 +87,7 @@ export async function fetchMovieDetail(movieId: string): Promise<MovieDetail> {
     subTitle: m.subTitle as string,
     ageRating: m.ageRating as string,
     status: m.movieStatus as string,
+    hasReviewed: m.hasReviewed as boolean,
   };
 }
 

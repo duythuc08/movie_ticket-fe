@@ -80,7 +80,7 @@ export function CinemaDetailDialog({
                 Chi tiết cụm rạp
               </DialogTitle>
               {cinema && (
-                <p className="text-xs text-muted-foreground truncate max-w-xl">Đang xem: {cinema.name}</p>
+                <p className="text-smchi text-muted-foreground truncate max-w-xl">{cinema.name}</p>
               )}
             </div>
             <Button

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Play, Share2 } from "lucide-react";
+import { MessageSquare, Play, Share2 } from "lucide-react";
 import { Showtimes } from "@/components/movie/components/MovieShowTime";
 import { saveBookingState } from "@/components/booking/utils/bookingStorage";
 import { fetchMovieBanner } from "@/components/movie/service/movie.service";
 import { useMovieDetail } from "@/components/movie/hooks/use-movie-detail";
 import { getRatingColor, formatReleaseDate } from "@/components/movie/utils/movie.utils";
 import { AGE_RATING_LABELS } from "@/components/movie/constants/movie.constants";
+import { MovieReview } from "@/components/movie/components/MovieReview";
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +33,7 @@ export default function MovieDetailsPage() {
     : "";
 
   useEffect(() => {
-    fetchMovieBanner(id).then(setBannerUrl).catch(() => {});
+    fetchMovieBanner(id).then(setBannerUrl).catch(() => { });
   }, [id]);
 
   const handleWatchTrailer = () => {
@@ -118,9 +119,8 @@ export default function MovieDetailsPage() {
 
               <div className="mb-4 sm:mb-6">
                 <p
-                  className={`text-sm sm:text-base lg:text-lg text-white/90 transition-all duration-300 ${
-                    !isExpanded ? "line-clamp-2" : ""
-                  }`}
+                  className={`text-sm sm:text-base lg:text-lg text-white/90 transition-all duration-300 ${!isExpanded ? "line-clamp-2" : ""
+                    }`}
                 >
                   {movie.synopsis}
                 </p>
@@ -214,21 +214,31 @@ export default function MovieDetailsPage() {
       </div>
 
       {/* Showtimes */}
-      <Showtimes
-        data={currentShowtimes}
-        days={showtimeDates}
-        selectedDate={selectedDateIndex}
-        onSelectDate={selectDate}
-        onSelect={(bookingInfo) => {
-          saveBookingState({
-            movie: movie.title,
-            movieDuration: movie.duration,
-            moviePoster: movie.poster,
-            ...bookingInfo,
-          });
-          router.push(`/seat-selection/${movie.id}`);
-        }}
-      />
+      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
+        <Showtimes
+          data={currentShowtimes}
+          days={showtimeDates}
+          selectedDate={selectedDateIndex}
+          onSelectDate={selectDate}
+          onSelect={(bookingInfo) => {
+            saveBookingState({
+              movie: movie.title,
+              movieDuration: movie.duration,
+              moviePoster: movie.poster,
+              ...bookingInfo,
+            });
+            router.push(`/seat-selection/${movie.id}`);
+          }}
+        />
+      </div>
+
+      {/* Reviews */}
+      <div className="px-4 sm:px-6 lg:px-8 py-12 max-w-4xl mx-auto border-t border-border/10">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white">
+          <MessageSquare className="w-5 h-5 text-yellow-400" /> Cộng đồng đánh giá
+        </h2>
+        <MovieReview movieId={movie.id} hasReviewed={movie.hasReviewed} />
+      </div>
     </div>
   );
 }

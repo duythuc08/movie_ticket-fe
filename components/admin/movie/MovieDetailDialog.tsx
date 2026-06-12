@@ -12,10 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared";
 import type { StatusMap } from "@/components/shared";
-import { Pencil, ExternalLink, X, Film, Calendar, Clock, Globe2 } from "lucide-react";
+import { Pencil, ExternalLink, X, Film, Calendar, Clock, Globe2, Star } from "lucide-react";
 import type { AdminMovie } from "@/types/admin.type";
 import { MovieFormDialog } from "./MovieFormDialog";
+import { MovieReviewsTab } from "./MovieReviewsTab";
 import type { MovieFormSchema } from "@/lib/validations/admin.schemas";
+
+type TabKey = "info" | "reviews";
 
 const MOVIE_STATUS_MAP: StatusMap = {
   NOW_SHOWING: { label: "Đang chiếu", variant: "success" },
@@ -51,12 +54,13 @@ export function MovieDetailDialog({
   onEditSubmit,
   isSubmitting,
 }: MovieDetailDialogProps) {
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode,  setIsEditMode]  = useState(false);
+  const [activeTab,   setActiveTab]   = useState<TabKey>("info");
 
   if (!movie) return null;
 
   function handleClose(isOpen: boolean) {
-    if (!isOpen) setIsEditMode(false);
+    if (!isOpen) { setIsEditMode(false); setActiveTab("info"); }
     onOpenChange(isOpen);
   }
 
@@ -84,7 +88,7 @@ export function MovieDetailDialog({
                   <Film className="w-5 h-5 text-primary" />
                   Chi tiết phim
                 </DialogTitle>
-                <p className="text-xs text-muted-foreground truncate max-w-xl">Đang xem: {movie.title}</p>
+                <p className="text-sm text-muted-foreground truncate max-w-xl">{movie.title}</p>
               </div>
               <Button
                 type="button"
@@ -97,8 +101,32 @@ export function MovieDetailDialog({
               </Button>
             </DialogHeader>
 
+            {/* Tab bar */}
+            <div className="flex border-b border-border bg-muted/30 shrink-0 px-6">
+              {([
+                { key: "info",    label: "Thông tin",  icon: <Film size={14} />  },
+                { key: "reviews", label: "Đánh giá",   icon: <Star size={14} />  },
+              ] as { key: TabKey; label: string; icon: React.ReactNode }[]).map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px
+                    ${activeTab === tab.key
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                >
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex-1 overflow-y-auto bg-background">
-              <div className="relative h-48 w-full bg-muted overflow-hidden shrink-0 select-none">
+              {activeTab === "reviews" && (
+                <div className="px-8 py-6">
+                  <MovieReviewsTab movieId={movie.movieId} />
+                </div>
+              )}
+              {activeTab === "info" && (<><div className="relative h-48 w-full bg-muted overflow-hidden shrink-0 select-none">
                 {movie.posterUrl && (
                   <div className="absolute inset-0 scale-110">
                     <Image
@@ -219,6 +247,7 @@ export function MovieDetailDialog({
 
                 </div>
               </div>
+            </>)}
             </div>
 
             <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">

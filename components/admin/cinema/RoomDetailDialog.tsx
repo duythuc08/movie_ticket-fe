@@ -375,7 +375,7 @@ export function RoomDetailDialog({
                 <MonitorPlay className="w-5 h-5 text-primary" />
                 Chi tiết phòng chiếu
               </DialogTitle>
-              <p className="text-xs text-muted-foreground truncate max-w-xl">Đang xem: {room.name}</p>
+              <p className="text-sm text-muted-foreground truncate max-w-xl">{room.name}</p>
             </div>
             <Button
               type="button"

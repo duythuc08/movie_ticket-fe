@@ -33,6 +33,7 @@ export interface MovieDetail {
   subTitle: string;
   ageRating: string;
   status: string;
+  hasReviewed?: boolean;
 }
 
 // ─── Banner ───────────────────────────────────────────────
