@@ -43,7 +43,7 @@ export default function AdminReviewsPage() {
     try {
       const result = await fetchAdminReviews(token, {
         page: 0,
-        size: 9999,
+        size: 10,
         status:  filters.status,
         movieId: filters.movieId,
       });

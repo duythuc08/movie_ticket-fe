@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X, Star } from "lucide-react";
-import axios from "@/lib/axios"; // Adjust path if necessary
+import { apiFetch } from "@/lib/fetchApi"; // Adjust path if necessary
 
 interface UnreviewedMovieResponse {
   movieId: number;
@@ -18,9 +18,10 @@ export function ReviewNotificationBanner() {
   useEffect(() => {
     const fetchUnreviewedMovie = async () => {
       try {
-        const res = await axios.get("/reviews/recent-unreviewed");
-        if (res.data?.result) {
-          const movie = res.data.result;
+        const res = await apiFetch("/reviews/recent-unreviewed");
+        const data = await res.json();
+        if (data?.result) {
+          const movie = data.result;
           const dismissedMovieId = localStorage.getItem("dismissedReviewMovieId");
           if (dismissedMovieId !== String(movie.movieId)) {
             setUnreviewedMovie(movie);

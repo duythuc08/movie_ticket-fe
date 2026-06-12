@@ -178,11 +178,11 @@ export default function MovieDetailsPage() {
                 key={actor.id || actor.name}
                 className="flex flex-col items-center text-center gap-3 group flex-none w-32 sm:w-36"
               >
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-zinc-800 border-2 border-transparent group-hover:border-primary transition-all overflow-hidden flex items-center justify-center">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-muted border-2 border-transparent group-hover:border-primary transition-all overflow-hidden flex items-center justify-center">
                   {actor.avatarUrl ? (
                     <img src={actor.avatarUrl} alt={actor.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xl font-semibold text-white/50">
+                    <span className="text-xl font-semibold text-muted-foreground">
                       {actor.name?.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -214,7 +214,7 @@ export default function MovieDetailsPage() {
       </div>
 
       {/* Showtimes */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
+      <div id="showtimes" className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
         <Showtimes
           data={currentShowtimes}
           days={showtimeDates}
@@ -233,8 +233,8 @@ export default function MovieDetailsPage() {
       </div>
 
       {/* Reviews */}
-      <div className="px-4 sm:px-6 lg:px-8 py-12 max-w-4xl mx-auto border-t border-border/10">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white">
+      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
           <MessageSquare className="w-5 h-5 text-yellow-400" /> Cộng đồng đánh giá
         </h2>
         <MovieReview movieId={movie.id} hasReviewed={movie.hasReviewed} />

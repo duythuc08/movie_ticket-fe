@@ -54,11 +54,11 @@ export function ReviewInteractionsDialog({
               {interactions.map((interaction) => (
                 <div key={interaction.interactionId} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden">
                       {interaction.avatarUrl ? (
                         <img src={interaction.avatarUrl} alt={interaction.fullName} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-semibold text-white/50">{interaction.fullName.charAt(0)}</span>
+                        <span className="font-semibold text-muted-foreground">{interaction.fullName.charAt(0)}</span>
                       )}
                     </div>
                     <div>
