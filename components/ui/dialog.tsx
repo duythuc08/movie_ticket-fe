@@ -30,12 +30,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       <div
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-10 w-full flex items-start justify-center min-h-full py-6">
+      <div className="relative z-10 w-full flex items-center justify-center min-h-full py-6">
         {children}
       </div>
     </div>,
