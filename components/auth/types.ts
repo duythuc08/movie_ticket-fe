@@ -34,6 +34,7 @@ export interface RegisterPayload {
 
 export interface LoginResult {
   token?: string;
+  refreshToken?: string;
   authenticated?: boolean;
   enabled?: boolean;
 }

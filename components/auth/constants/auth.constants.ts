@@ -17,5 +17,6 @@ export const ERROR_MESSAGES = {
 } as const;
 
 export const AUTH_TOKEN_KEY = "token";
+export const REFRESH_TOKEN_KEY = "refreshToken";
 
 export const OTP_RESEND_COOLDOWN = 30;

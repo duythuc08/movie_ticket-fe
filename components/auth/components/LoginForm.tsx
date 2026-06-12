@@ -54,7 +54,7 @@ export function LoginForm() {
 
       if (result.authenticated && result.token) {
         if (result.enabled) {
-          login(result.token);
+          login(result.token, result.refreshToken);
           const payload = decodeToken(result.token);
           const scope = String(payload?.scope ?? payload?.scope ?? "");
           const destination = scope.includes("ADMIN") ? "/admin" : from;

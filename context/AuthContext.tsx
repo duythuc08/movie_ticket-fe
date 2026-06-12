@@ -16,13 +16,17 @@ import {
   setStoredToken,
   setTokenCookie,
   removeTokenCookie,
+  getStoredRefreshToken,
+  setStoredRefreshToken,
+  removeStoredRefreshToken,
 } from "@/components/auth/utils/auth.utils";
+import { logoutUser } from "@/components/auth/service/auth.service";
 
 interface AuthContextType {
   user: UserInfo | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (token: string, refreshToken?: string) => void;
   logout: () => void;
   setUser: (user: UserInfo | null) => void;
 }
@@ -44,7 +48,7 @@ async function fetchMyInfo(token: string): Promise<UserInfo | null> {
 
 function readStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+  const stored = sessionStorage.getItem(AUTH_TOKEN_KEY);
   if (!stored || isTokenExpired(stored)) {
     if (stored) removeStoredToken();
     removeTokenCookie();
@@ -67,17 +71,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [token]);
 
-  const login = useCallback((newToken: string) => {
+  const login = useCallback((newToken: string, newRefreshToken?: string) => {
     setStoredToken(newToken);
     setTokenCookie(newToken);
+    if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
     setToken(newToken);
   }, []);
 
   const logout = useCallback(() => {
+    const currentToken = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const currentRefreshToken = getStoredRefreshToken();
     removeStoredToken();
+    removeStoredRefreshToken();
     removeTokenCookie();
     setToken(null);
     setUser(null);
+    if (currentToken) {
+      logoutUser(currentToken, currentRefreshToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleTokenRefreshed = (e: Event) => {
+      const { token: newToken, refreshToken: newRefreshToken } = (e as CustomEvent).detail;
+      setStoredToken(newToken);
+      setTokenCookie(newToken);
+      if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
+      setToken(newToken);
+    };
+
+    const handleForceLogout = () => {
+      removeStoredToken();
+      removeStoredRefreshToken();
+      removeTokenCookie();
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener("auth:token-refreshed", handleTokenRefreshed);
+    window.addEventListener("auth:logout", handleForceLogout);
+    return () => {
+      window.removeEventListener("auth:token-refreshed", handleTokenRefreshed);
+      window.removeEventListener("auth:logout", handleForceLogout);
+    };
   }, []);
 
   return (

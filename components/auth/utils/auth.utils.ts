@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_KEY } from "../constants/auth.constants";
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../constants/auth.constants";
 
 export function decodeToken(token: string): Record<string, unknown> | null {
   try {
@@ -18,24 +18,34 @@ export function isTokenExpired(token: string): boolean {
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(AUTH_TOKEN_KEY);
+  return sessionStorage.getItem(AUTH_TOKEN_KEY);
 }
 
 export function setStoredToken(token: string): void {
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  sessionStorage.setItem(AUTH_TOKEN_KEY, token);
 }
 
 export function removeStoredToken(): void {
-  localStorage.removeItem(AUTH_TOKEN_KEY);
+  sessionStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
 export function setTokenCookie(token: string): void {
-  const decoded = decodeToken(token);
-  const exp = decoded?.exp as number | undefined;
-  const maxAge = exp ? exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24;
-  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${maxAge}; SameSite=Strict`;
+  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; SameSite=Strict`;
 }
 
 export function removeTokenCookie(): void {
   document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0`;
+}
+
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setStoredRefreshToken(token: string): void {
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+}
+
+export function removeStoredRefreshToken(): void {
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
 }

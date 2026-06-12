@@ -67,3 +67,22 @@ export async function resetPassword(email: string, newPassword: string): Promise
     throw new Error(getErrorMessage(data?.code, data?.message || "Đặt lại mật khẩu thất bại"));
   }
 }
+
+export async function refreshTokenApi(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
+  const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+  if (!res.ok) throw new Error("Refresh token hết hạn");
+  const data = await res.json();
+  return data.result as { token: string; refreshToken: string };
+}
+
+export async function logoutUser(token: string, refreshToken?: string | null): Promise<void> {
+  await fetch(`${BASE_URL}/auth/logout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, refreshToken }),
+  }).catch(() => {});
+}
