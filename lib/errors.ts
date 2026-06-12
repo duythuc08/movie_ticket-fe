@@ -72,6 +72,19 @@ export const ErrorCodeMap: Record<number, string> = {
     1069: "Đồ ăn đã hết hàng",
     1073: "Bạn đã nhận voucher này rồi",
     1074: "Voucher không khả dụng",
+    1070: "Đơn hàng đã được sử dụng",
+    1071: "Mã QR không hợp lệ",
+    1072: "Trạng thái đơn hàng không cho phép check-in",
+    1075: "Voucher này đã được sử dụng",
+    1076: "Không tìm thấy voucher trong tài khoản của bạn",
+    1077: "Trạng thái khuyến mãi không hợp lệ",
+    1078: "Hạng thành viên đã tồn tại",
+    1079: "Không tìm thấy đánh giá",
+    1080: "Bạn đã đánh giá phim này rồi",
+    1081: "Bạn chỉ có thể đánh giá sau khi đã xem phim",
+    1082: "Bạn không sở hữu đánh giá này",
+    1083: "Refresh token không hợp lệ hoặc đã hết hạn",
+    1084: "Không thể tạo suất chiếu trong quá khứ",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {
