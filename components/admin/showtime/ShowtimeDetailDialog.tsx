@@ -153,13 +153,13 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                           </div>
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Bắt đầu</p>
-                            <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                            <p className="font-medium text-emerald-600">
                               {new Date(detail.startTime).toLocaleString("vi-VN", { hour12: false })}
                             </p>
                           </div>
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Kết thúc</p>
-                            <p className="font-medium text-rose-600 dark:text-rose-400">
+                            <p className="font-medium text-rose-600">
                               {new Date(detail.endTime).toLocaleString("vi-VN", { hour12: false })}
                             </p>
                           </div>
@@ -180,7 +180,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                             </thead>
                             <tbody>
                               {detail.prices?.map((price) => (
-                                <tr key={price.id} className="border-b hover:bg-muted/30 transition-colors">
+                                <tr key={price.id ?? price.seatType} className="border-b hover:bg-muted/30 transition-colors">
                                   <td className="p-2 font-medium">{price.seatType}</td>
                                   <td className="p-2 text-right">
                                     <ShowtimePriceEdit

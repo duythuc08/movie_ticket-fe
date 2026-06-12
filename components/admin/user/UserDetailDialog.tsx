@@ -215,7 +215,7 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                                   <td className="p-3">
                                     <div className={cn(
                                       "flex items-center gap-1.5 font-semibold",
-                                      h.pointsChange > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+                                      h.pointsChange > 0 ? "text-emerald-600" : "text-destructive"
                                     )}>
                                       {h.pointsChange > 0
                                         ? <TrendingUp className="w-4 h-4" />

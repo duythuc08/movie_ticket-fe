@@ -62,7 +62,7 @@ export const ShowtimeFilters = ({ cinemas, onFilterChange, initialDate, viewMode
             <SelectTrigger className="w-[200px] bg-background">
               <SelectValue placeholder="Chọn rạp" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent data-admin="">
               <SelectItem value="all">-- Tất cả rạp --</SelectItem>
               {cinemas.map(c => (
                 <SelectItem key={c.cinemaId} value={c.cinemaId.toString()}>{c.name}</SelectItem>
@@ -74,7 +74,7 @@ export const ShowtimeFilters = ({ cinemas, onFilterChange, initialDate, viewMode
             <SelectTrigger className="w-[180px] bg-background">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent data-admin="">
               <SelectItem value="all">-- Trạng thái --</SelectItem>
               <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
               <SelectItem value="ONGOING">Đang chiếu</SelectItem>

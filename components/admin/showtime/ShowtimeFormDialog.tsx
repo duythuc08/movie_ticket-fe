@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAdminRooms } from "@/services/admin/adminRoomService";
+import { fetchSeatsByRoom } from "@/services/admin/adminSeatService";
 import { useAuth } from "@/context/AuthContext";
 import { createShowtimeSchema, CreateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
@@ -143,7 +144,30 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
       {(form) => {
         const watchMovieId = form.watch("movieId");
         const watchStartTimes = form.watch("startTimes") || [];
+        const watchRoomId = form.watch("roomId");
         const dur = movieDurations[String(watchMovieId)] || 0;
+
+        useEffect(() => {
+          if (!token || !watchRoomId) return;
+          let isMounted = true;
+          
+          fetchSeatsByRoom(token, watchRoomId).then(seats => {
+            if (!isMounted) return;
+            const uniqueTypes = Array.from(new Set(seats.map(s => s.seatType)));
+            if (uniqueTypes.length > 0) {
+              const currentPrices = form.getValues("prices") || [];
+              const newPrices = uniqueTypes.map(type => {
+                const existing = currentPrices.find(p => p.seatType === type);
+                return { price: existing ? existing.price : 0, seatType: type };
+              });
+              form.setValue("prices", newPrices, { shouldValidate: true });
+            }
+          }).catch(err => {
+            console.error("Lỗi tải ghế:", err);
+          });
+
+          return () => { isMounted = false; };
+        }, [token, watchRoomId, form]);
 
         const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({
           control: form.control,
@@ -178,7 +202,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
                   value={form.watch("roomId") ? String(form.watch("roomId")) : ""}
                   onChange={(val) => form.setValue("roomId", Number(val))}
                   placeholder={isLoadingOptions ? "Đang tải..." : "Chọn phòng..."}
-                  disabled={isLoadingOptions}
+                  disabled={isLoadingOptions || !!initialRoomId}
                 />
                 {form.formState.errors.roomId && <p className="text-xs text-destructive">{form.formState.errors.roomId.message}</p>}
               </div>
@@ -197,32 +221,11 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Loại ghế</Label>
-                      <select className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" {...form.register(`prices.${index}.seatType`)}>
+                      <select disabled className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm shadow-sm opacity-100 appearance-none" {...form.register(`prices.${index}.seatType`)}>
                         <option value="STANDARD">Thường (STANDARD)</option>
                         <option value="VIP">VIP</option>
                         <option value="COUPLE">Ghế Đôi (COUPLE)</option>
                       </select>
-                    </div>
-                    <div className="pb-1 text-right flex justify-end gap-1">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => appendPrice({ price: 0, seatType: "STANDARD" })} 
-                        className="text-primary hover:bg-primary/10 hover:text-primary h-9 w-9" 
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => removePrice(index)} 
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive h-9 w-9" 
-                        disabled={priceFields.length === 1}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}

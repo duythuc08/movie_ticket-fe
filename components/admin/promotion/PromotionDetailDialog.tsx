@@ -212,14 +212,17 @@ export const PromotionDetailDialog = ({
             ) : null}
           </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
+          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-end gap-2 shrink-0">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9 text-xs font-semibold px-6">
+              Đóng
+            </Button>
             <div className="flex items-center gap-2">
               {detail?.status === "DRAFT" && (
                 <Button
                   variant="outline" size="sm"
                   onClick={() => handleAction("submit", "Gửi duyệt")}
                   disabled={isActioning}
-                  className="text-xs border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  className="text-xs border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground h-9"
                 >
                   Gửi duyệt
                 </Button>
@@ -229,7 +232,7 @@ export const PromotionDetailDialog = ({
                   size="sm"
                   onClick={() => handleAction("approve", "Phê duyệt")}
                   disabled={isActioning}
-                  className="text-xs"
+                  className="text-xs h-9"
                 >
                   Phê duyệt & Xuất bản
                 </Button>
@@ -239,7 +242,7 @@ export const PromotionDetailDialog = ({
                   variant="outline" size="sm"
                   onClick={() => handleAction("pause", "Tạm dừng")}
                   disabled={isActioning}
-                  className="text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  className="text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground h-9"
                 >
                   Tạm dừng
                 </Button>
@@ -249,15 +252,12 @@ export const PromotionDetailDialog = ({
                   variant="outline" size="sm"
                   onClick={() => handleAction("resume", "Tiếp tục")}
                   disabled={isActioning}
-                  className="text-xs border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  className="text-xs border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground h-9"
                 >
                   Tiếp tục
                 </Button>
               )}
             </div>
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9 text-xs font-semibold px-6">
-              Đóng
-            </Button>
           </div>
         </div>
       </DialogContent>

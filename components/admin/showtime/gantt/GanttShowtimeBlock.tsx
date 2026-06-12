@@ -1,8 +1,13 @@
 import { cn } from "@/lib/utils";
 import { Showtime } from "@/types/admin/showtime";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Eye, Pencil } from "lucide-react";
-import { createPortal } from "react-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GanttShowtimeBlockProps {
   showtime: Showtime;
@@ -61,29 +66,16 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
   const isCrossDay = checkIsCrossDay(showtime.startTime, showtime.endTime);
   const statusStyle = STATUS_STYLE[showtime.showTimeStatus] ?? STATUS_STYLE.SCHEDULED;
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const hasDragged = useRef<boolean>(false);
 
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      const clickedInsideBlock = blockRef.current?.contains(e.target as Node);
-      const clickedInsideMenu = menuRef.current?.contains(e.target as Node);
-      if (!clickedInsideBlock && !clickedInsideMenu) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, [isMenuOpen]);
-
   return (
-    <>
+    <DropdownMenu open={isOpen} onOpenChange={(v) => {
+      if (hasDragged.current && v) return;
+      setIsOpen(v);
+    }}>
+      <DropdownMenuTrigger asChild>
     <div
       ref={blockRef}
       draggable={showtime.showTimeStatus === 'SCHEDULED'}
@@ -98,13 +90,6 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (!hasDragged.current) {
-          if (!isMenuOpen && blockRef.current) {
-            const rect = blockRef.current.getBoundingClientRect();
-            setMenuPos({ top: rect.top, left: rect.left });
-          }
-          setIsMenuOpen(v => !v);
-        }
       }}
       className={cn(
         "absolute top-1 bottom-1 rounded-md text-xs px-2 py-1 overflow-hidden border shadow-md transition-all cursor-pointer hover:brightness-110 hover:shadow-lg",
@@ -113,46 +98,37 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
       )}
       style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
     >
-      <div className="font-semibold truncate leading-tight">{showtime.movieTitle}</div>
-      <div className="text-[10px] opacity-90 mt-0.5 truncate">
-        {formatTime(showtime.startTime)} – {formatTime(showtime.endTime)}
+        <div className="font-semibold truncate leading-tight">{showtime.movieTitle}</div>
+        <div className="text-[10px] opacity-90 mt-0.5 truncate">
+          {formatTime(showtime.startTime)} – {formatTime(showtime.endTime)}
+        </div>
       </div>
-    </div>
+      </DropdownMenuTrigger>
 
-    {isMenuOpen && menuPos && typeof document !== "undefined" && createPortal(
-      <div
-        ref={menuRef}
-        style={{ position: "fixed", top: menuPos.top, left: menuPos.left, transform: "translateY(-100%)", zIndex: 10 }}
-        className="mb-1 bg-popover border border-border rounded-lg shadow-xl min-w-[160px] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+      <DropdownMenuContent className="w-40 z-[100] bg-white border-slate-200 text-slate-800" align="start">
+        <DropdownMenuItem 
+          className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
-            setIsMenuOpen(false);
             onViewDetail?.(showtime);
           }}
         >
-          <Eye className="w-4 h-4 shrink-0" />
+          <Eye className="w-4 h-4 mr-2" />
           Xem chi tiết
-        </button>
+        </DropdownMenuItem>
         {showtime.showTimeStatus === "SCHEDULED" && (
-          <button
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+          <DropdownMenuItem 
+            className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              setIsMenuOpen(false);
               onEdit?.(showtime);
             }}
           >
-            <Pencil className="w-4 h-4 shrink-0" />
+            <Pencil className="w-4 h-4 mr-2" />
             Chỉnh sửa
-          </button>
+          </DropdownMenuItem>
         )}
-      </div>,
-      document.body
-    )}
-    </>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

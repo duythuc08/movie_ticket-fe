@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Showtime } from "@/types/admin/showtime";
 import { GanttShowtimeBlock } from "./GanttShowtimeBlock";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Room {
   roomId: number;
@@ -129,7 +130,7 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
           <div className="flex-1 flex relative h-10">
             {/* Next-day background overlay */}
             <div
-              className="absolute top-0 bottom-0 bg-amber-50/60 dark:bg-amber-950/20 pointer-events-none"
+              className="absolute top-0 bottom-0 bg-amber-50/60 pointer-events-none"
               style={{ left: `${(MIDNIGHT_IDX / 36) * 100}%`, right: 0 }}
             />
             {times.map((time, idx) => {
@@ -142,7 +143,7 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
                     isMidnight
                       ? "border-amber-500 border-l-2"
                       : time.isNextDay
-                      ? "border-amber-300/50 dark:border-amber-700/50"
+                      ? "border-amber-300/50"
                       : "border-border/50",
                   )}
                   style={{ left: `${(idx / 36) * 100}%`, width: `${(1 / 36) * 100}%` }}
@@ -150,11 +151,11 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
                   {idx < 36 && (
                     <div className="flex flex-col items-start leading-none gap-0.5">
                       {isMidnight && (
-                        <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide whitespace-nowrap">
+                        <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wide whitespace-nowrap">
                           Hôm sau
                         </span>
                       )}
-                      <span className={cn(time.isNextDay ? "text-amber-600 dark:text-amber-400 font-medium" : "")}>
+                      <span className={cn(time.isNextDay ? "text-amber-600 font-medium" : "")}>
                         {time.label}
                       </span>
                     </div>
@@ -179,26 +180,41 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
             >
               {/* Next-day background */}
               <div
-                className="absolute top-0 bottom-0 bg-amber-50/40 dark:bg-amber-950/10 pointer-events-none"
+                className="absolute top-0 bottom-0 bg-amber-50/40 pointer-events-none"
                 style={{ left: `${(MIDNIGHT_IDX / 36) * 100}%`, right: 0 }}
               />
               {Array.from({ length: 36 }).map((_, idx) => {
+                const roundedMinutes = idx * 30;
+                let hour = Math.floor(roundedMinutes / 60) + 9;
+                const clickDate = new Date(selectedDate);
+                if (hour >= 24) { hour -= 24; clickDate.setDate(clickDate.getDate() + 1); }
+                clickDate.setHours(hour, roundedMinutes % 60, 0, 0);
+                
+                const isPast = clickDate.getTime() < new Date().getTime();
+                
                 const isDragOver = dragOverCell?.roomId === room.roomId && dragOverCell?.cellIndex === idx;
                 const isMidnight = idx === MIDNIGHT_IDX;
                 return (
                   <div
                     key={idx}
                     className={cn(
-                      "absolute top-0 bottom-0 border-l pointer-events-none transition-colors",
+                      "absolute top-0 bottom-0 border-l transition-colors",
                       isDragOver
-                        ? "bg-primary/20 border-primary border-solid z-10"
+                        ? "bg-primary/20 border-primary border-solid z-10 pointer-events-none"
                         : isMidnight
-                        ? "border-amber-500 border-l-2 border-solid"
+                        ? "border-amber-500 border-l-2 border-solid pointer-events-none"
                         : idx > MIDNIGHT_IDX
-                        ? "border-amber-300/40 dark:border-amber-700/40 border-dashed"
-                        : "border-border/50 border-dashed",
+                        ? "border-amber-300/40 border-dashed pointer-events-none"
+                        : "border-border/50 border-dashed pointer-events-none",
+                      isPast ? "bg-muted/40 cursor-not-allowed pointer-events-auto" : "hover:bg-accent/10"
                     )}
                     style={{ left: `${(idx / 36) * 100}%`, width: `${(1 / 36) * 100}%` }}
+                    onClick={(e) => {
+                      if (isPast) {
+                        e.stopPropagation();
+                        toast.error("Không thể tạo suất chiếu trong quá khứ");
+                      }
+                    }}
                   />
                 );
               })}

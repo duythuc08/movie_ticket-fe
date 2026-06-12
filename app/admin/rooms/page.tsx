@@ -125,6 +125,9 @@ export default function AdminRoomsPage() {
           roomStatus: data.roomStatus,
         });
         toast.success(`Đã cập nhật phòng "${data.name}"`);
+        setIsFormOpen(false);
+        setSelectedRoom(null);
+        loadRooms();
       } else {
         const created = await createAdminRoom(token, {
           name:       data.name,

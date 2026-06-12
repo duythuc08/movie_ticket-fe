@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const showtimePriceSchema = z.object({
-    price: z.number().min(0, "Giá tiền không hợp lệ"),
+    price: z.number().min(1, "Giá tiền phải lớn hơn 0"),
     seatType: z.string().min(1, "Vui lòng chọn loại ghế")
 });
 

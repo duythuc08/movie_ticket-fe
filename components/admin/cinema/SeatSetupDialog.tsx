@@ -164,7 +164,7 @@ export function SeatSetupDialog({
           </Button>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-muted/10" onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
+        <div className="flex-1 overflow-y-auto bg-slate-50/50" onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
           <div className="px-6 py-5 min-h-full">
             {step === 1 ? (
               <form id="dims-form" onSubmit={form.handleSubmit(handleDimsSubmit)} className="space-y-4 max-w-sm">

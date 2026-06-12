@@ -1,5 +1,7 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { Loader2, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -30,9 +32,12 @@ export function ConfirmDialog({
   isLoading = false,
   onConfirm,
 }: ConfirmDialogProps) {
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith("/admin");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" {...(isAdmin ? { "data-admin": "" } : {})}>
         <DialogHeader>
           <div className="flex items-center gap-3">
             {confirmVariant === "destructive" && (

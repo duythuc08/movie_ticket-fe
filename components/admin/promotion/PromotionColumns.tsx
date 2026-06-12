@@ -47,8 +47,8 @@ export const createPromotionColumns = ({
     id: "info",
     header: "Mã / Tên",
     cell: ({ row }) => (
-      <div className="space-y-0.5">
-        <p className="font-semibold font-mono text-sm">{row.original.code}</p>
+      <div className="space-y-1">
+        <p className="font-medium text-sm">{row.original.code}</p>
         <p className="text-xs text-muted-foreground">{row.original.name}</p>
       </div>
     ),
@@ -58,7 +58,7 @@ export const createPromotionColumns = ({
     header: "Giảm giá",
     cell: ({ row }) => (
       <div className="space-y-1">
-        <Badge variant="outline" className="font-bold text-base px-2">
+        <Badge variant="outline" className="font-medium text-sm px-2">
           {formatDiscount(row.original)}
         </Badge>
         <p className="text-[10px] text-muted-foreground">
@@ -91,13 +91,17 @@ export const createPromotionColumns = ({
     },
   },
   {
-    id: "period",
-    header: "Thời gian",
+    accessorKey: "startTime",
+    header: "Bắt đầu",
     cell: ({ row }) => (
-      <div className="text-xs space-y-0.5">
-        <p className="text-muted-foreground">Từ {formatDate(row.original.startTime)}</p>
-        <p className="text-muted-foreground">Đến {formatDate(row.original.endTime)}</p>
-      </div>
+      <span className="text-sm">{formatDate(row.original.startTime)}</span>
+    ),
+  },
+  {
+    accessorKey: "endTime",
+    header: "Kết thúc",
+    cell: ({ row }) => (
+      <span className="text-sm">{formatDate(row.original.endTime)}</span>
     ),
   },
   {
