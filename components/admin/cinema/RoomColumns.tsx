@@ -22,7 +22,7 @@ export const ROOM_TYPE_BADGE_CLASSES: Record<RoomType, string> = {
 };
 
 export const ROOM_TYPE_OPTIONS: { value: RoomType; label: string }[] = [
-  { value: "STANDARD", label: "Phòng thường" },
+  { value: "STANDARD", label: "Phòng Thường" },
   { value: "VIP",      label: "Phòng VIP"    },
   { value: "IMAX",     label: "Phòng IMAX"   },
   { value: "THREE_D",  label: "Phòng 3D"     },

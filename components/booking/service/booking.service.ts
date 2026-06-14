@@ -14,7 +14,7 @@ function authHeaders(token: string) {
 export async function fetchSeatSelection(showTimeId: number, token: string): Promise<SelectionResponse> {
   const res = await apiFetch(
     `${BASE_URL}/seatShowTimes/selection/${showTimeId}`,
-    { headers: authHeaders(token) }
+    { headers: authHeaders(token), cache: "no-store" }
   );
   const data = await res.json();
   if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Lỗi kết nối API selection"));

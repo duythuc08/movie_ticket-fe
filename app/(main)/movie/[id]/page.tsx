@@ -227,7 +227,7 @@ export default function MovieDetailsPage() {
               moviePoster: movie.poster,
               ...bookingInfo,
             });
-            router.push(`/seat-selection/${movie.id}`);
+            router.push(`/seat-selection/${bookingInfo.showTimeId}`);
           }}
         />
       </div>

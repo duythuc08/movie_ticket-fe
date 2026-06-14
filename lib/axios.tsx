@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import { getStoredToken, setStoredToken, removeStoredToken, getStoredRefreshToken, setStoredRefreshToken, removeStoredRefreshToken } from "@/components/auth/utils/auth.utils";
 
 const api = axios.create({
   baseURL: "/api-proxy",
@@ -10,7 +11,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+    const token = getStoredToken();
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -49,7 +50,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken = getStoredRefreshToken();
       if (!refreshToken) throw new Error("no refresh token");
 
       const res = await fetch("/api-proxy/auth/refresh", {
@@ -63,8 +64,8 @@ api.interceptors.response.use(
       const data = await res.json();
       const { token: newToken, refreshToken: newRefreshToken } = data.result;
 
-      localStorage.setItem("token", newToken);
-      if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+      setStoredToken(newToken);
+      if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
 
       window.dispatchEvent(
         new CustomEvent("auth:token-refreshed", {
@@ -77,8 +78,8 @@ api.interceptors.response.use(
       return api(original);
     } catch {
       pendingQueue = [];
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
+      removeStoredToken();
+      removeStoredRefreshToken();
       window.dispatchEvent(new Event("auth:logout"));
       return Promise.reject(error);
     } finally {

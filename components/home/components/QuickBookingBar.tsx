@@ -42,7 +42,7 @@ export function QuickBookingBar() {
       date: selectedDate,
       roomName: selectedSlot.roomName,
     });
-    router.push(`/seat-selection/${selectedMovie.id}`);
+    router.push(`/seat-selection/${selectedSlot.showTimeId}`);
   };
 
   return (

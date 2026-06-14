@@ -61,7 +61,7 @@ export default function PaymentPage() {
         if (!userStr) return;
         const storedUser = JSON.parse(userStr);
         const tierName = storedUser.memberShipTierName;
-        const token = localStorage.getItem("token") ?? "";
+        const token = sessionStorage.getItem("token") ?? "";
         const tier = await fetchMembershipTierByName(token, tierName);
         if (tier) setMembershipData(tier);
       } catch (error) {
@@ -129,7 +129,7 @@ export default function PaymentPage() {
   };
 
   const getUserId = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
@@ -143,7 +143,7 @@ export default function PaymentPage() {
     e.preventDefault();
     setLoading(true);
 
-    const token = localStorage.getItem("token") ?? "";
+    const token = sessionStorage.getItem("token") ?? "";
     const userId = getUserId();
 
     if (!userId) {
@@ -473,7 +473,7 @@ export default function PaymentPage() {
         <VoucherSelectDialog
           open={isVoucherOpen}
           onOpenChange={setIsVoucherOpen}
-          token={typeof window !== "undefined" ? (localStorage.getItem("token") ?? "") : ""}
+          token={typeof window !== "undefined" ? (sessionStorage.getItem("token") ?? "") : ""}
           totalAmount={bookingInfo?.total ?? 0}
           selectedCode={manualCode || null}
           onSelect={handleSelectVoucher}

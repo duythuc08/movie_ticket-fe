@@ -79,8 +79,8 @@ export const ShowtimeFilters = ({ cinemas, onFilterChange, initialDate, viewMode
               <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
               <SelectItem value="ONGOING">Đang chiếu</SelectItem>
               <SelectItem value="COMPLETED">Đã chiếu xong</SelectItem>
-              <SelectItem value="CANCELLED">Đã huỷ</SelectItem>
               <SelectItem value="FULLY_BOOKED">Full ghế</SelectItem>
+              <SelectItem value="CANCELLED">Đã huỷ</SelectItem>
             </SelectContent>
           </Select>
         </>

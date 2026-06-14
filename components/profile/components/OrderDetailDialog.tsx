@@ -1,6 +1,8 @@
 "use client";
 
 import { toast } from "sonner";
+
+import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { Film, MapPin, Clock, Armchair, UtensilsCrossed, X } from "lucide-react";
 import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -94,7 +96,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
 
   const handleRePayment = async () => {
     try {
-      const token = localStorage.getItem("token") ?? "";
+      const token = getStoredToken() ?? "";
       const url = await createVnpayRepaymentUrl(token, String(order.orderId));
       window.location.href = url;
     } catch {

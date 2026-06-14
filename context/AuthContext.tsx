@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { UserInfo } from "@/types";
-import { AUTH_TOKEN_KEY } from "@/components/auth/constants/auth.constants";
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/components/auth/constants/auth.constants";
 import {
   isTokenExpired,
   removeStoredToken,
@@ -19,8 +19,10 @@ import {
   getStoredRefreshToken,
   setStoredRefreshToken,
   removeStoredRefreshToken,
+  getStoredToken,
 } from "@/components/auth/utils/auth.utils";
 import { logoutUser } from "@/components/auth/service/auth.service";
+import { apiFetch } from "@/lib/fetchApi";
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -33,11 +35,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function fetchMyInfo(token: string): Promise<UserInfo | null> {
+async function fetchMyInfo(): Promise<UserInfo | null> {
   try {
-    const res = await fetch("/api-proxy/users/myInfo", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch("/users/myInfo");
     if (!res.ok) return null;
     const data = await res.json();
     return (data.result as UserInfo) ?? null;
@@ -48,12 +48,20 @@ async function fetchMyInfo(token: string): Promise<UserInfo | null> {
 
 function readStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  const stored = sessionStorage.getItem(AUTH_TOKEN_KEY);
-  if (!stored || isTokenExpired(stored)) {
-    if (stored) removeStoredToken();
+  const stored = getStoredToken();
+  const refreshToken = getStoredRefreshToken();
+  
+  if (!stored) {
     removeTokenCookie();
     return null;
   }
+
+  if (isTokenExpired(stored) && !refreshToken) {
+    removeStoredToken();
+    removeTokenCookie();
+    return null;
+  }
+  
   setTokenCookie(stored);
   return stored;
 }
@@ -65,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    fetchMyInfo(token).then((info) => {
+    fetchMyInfo().then((info) => {
       if (!cancelled) setUser(info);
     });
     return () => { cancelled = true; };
@@ -79,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    const currentToken = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    const currentToken = getStoredToken();
     const currentRefreshToken = getStoredRefreshToken();
     removeStoredToken();
     removeStoredRefreshToken();

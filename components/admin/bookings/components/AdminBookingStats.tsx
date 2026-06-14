@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Ticket, DollarSign, CheckCircle2, XCircle, Clock, CalendarX2 } from "lucide-react";
+import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { adminBookingService } from "../../../../services/admin/admin-booking";
 import type { AdminOrderStatsResponse } from "@/types";
 
@@ -42,7 +43,7 @@ export function AdminBookingStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getStoredToken();
         if (!token) return;
         const data = await adminBookingService.getAdminOrderStats(token);
         setStats(data);

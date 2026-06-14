@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { SEAT_STYLES } from "@/components/booking/constants/booking.constants";
 import { formatCurrency, seatLabel } from "@/components/booking/utils/booking.utils";
 import type { SeatShowTime, SuggestedSeat } from "@/types";
@@ -43,20 +44,35 @@ export function SeatMap({
     }
   }
 
+  const coupleLeftIds = new Set<number>();
+  const coupleRightIds = new Set<number>();
+  
+  rows.forEach((rowLabel) => {
+    const rowSeats = seatData[rowLabel];
+    const couples = rowSeats.filter((s) => s.seatType === "COUPLE");
+    for (let i = 0; i < couples.length - 1; i++) {
+      if (couples[i + 1].seatNumber === couples[i].seatNumber + 1) {
+        coupleLeftIds.add(couples[i].seatId);
+        coupleRightIds.add(couples[i + 1].seatId);
+        i++;
+      }
+    }
+  });
+
   return (
     <div className="mb-8 overflow-x-auto pb-6 pt-2 px-2">
-      <div className="w-fit mx-auto relative flex flex-col gap-1.5 sm:gap-2">
+      <div className="w-fit mx-auto relative flex flex-col gap-1.5">
         {rows.map((rowLabel) => {
           const rowSeats = seatData[rowLabel];
           return (
-            <div key={rowLabel} className="flex items-center gap-1.5 sm:gap-2">
+            <div key={rowLabel} className="flex items-center gap-1.5">
               <span className="w-6 sm:w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">
                 {rowLabel}
               </span>
 
               <div
-                className="grid gap-1 sm:gap-1.5"
-                style={{ gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))` }}
+                className="grid gap-1"
+                style={{ gridTemplateColumns: `repeat(${maxCol}, 2.5rem)` }}
               >
                 {rowSeats.map((seat, index) => {
                   const occupied = isSeatOccupied(seat);
@@ -69,25 +85,15 @@ export function SeatMap({
 
                   let coupleClass = "";
                   if (isCouple) {
-                    let countBefore = 0;
-                    for (let k = index - 1; k >= 0; k--) {
-                      if (
-                        rowSeats[k].seatType === "COUPLE" &&
-                        rowSeats[k].seatNumber === rowSeats[k + 1].seatNumber - 1
-                      ) {
-                        countBefore++;
-                      } else {
-                        break;
-                      }
-                    }
-                    const isLeftCouple = countBefore % 2 === 0;
+                    const isLeftCouple = coupleLeftIds.has(seat.seatId);
+                    const isRightCouple = coupleRightIds.has(seat.seatId);
 
                     if (isLeftCouple) {
-                      coupleClass =
-                        "rounded-tl-lg rounded-tr-none border-r-0 mr-[-4px] sm:mr-[-6px] z-10 w-[calc(100%+4px)] sm:w-[calc(100%+6px)]";
+                      coupleClass = "rounded-tl-lg rounded-tr-none border-r-0 mr-[-4px] z-10 w-[calc(100%+4px)]";
+                    } else if (isRightCouple) {
+                      coupleClass = "rounded-tr-lg rounded-tl-none border-l-0 ml-[-4px] z-10 w-[calc(100%+4px)]";
                     } else {
-                      coupleClass =
-                        "rounded-tr-lg rounded-tl-none border-l-0 ml-[-4px] sm:ml-[-6px] z-10 w-[calc(100%+4px)] sm:w-[calc(100%+6px)]";
+                      coupleClass = "rounded-t-lg";
                     }
                   } else {
                     coupleClass = "rounded-t-lg";
@@ -122,22 +128,20 @@ export function SeatMap({
                       }}
                       disabled={occupied}
                       title={`${label} – ${style.label}${price > 0 ? ` (${formatCurrency(price)})` : ""}`}
-                      className={[
+                      className={cn(
                         "relative flex flex-col items-center justify-center transition-all duration-150 select-none",
-                        "w-10 sm:w-11 h-10 sm:h-11",
+                        "w-10 h-10",
                         seatClass,
-                        coupleClass,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
+                        coupleClass
+                      )}
                     >
                       <span
                         className={
                           occupied
-                            ? "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-muted-foreground/60"
+                            ? "text-[9px] font-bold leading-none tracking-tight text-muted-foreground/60"
                             : selected
-                            ? "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-primary-foreground"
-                            : "text-[9px] sm:text-[10px] font-bold leading-none tracking-tight text-[#663399]"
+                            ? "text-[9px] font-bold leading-none tracking-tight text-primary-foreground"
+                            : "text-[9px] font-bold leading-none tracking-tight text-[#663399]"
                         }
                       >
                         {label}

@@ -104,7 +104,7 @@ export function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-white">Email</Label>
             <Input
               id="email"
               name="email"
@@ -123,7 +123,7 @@ export function LoginForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Mật khẩu</Label>
+            <Label htmlFor="password" className="text-white">Mật khẩu</Label>
             <Input
               id="password"
               name="password"

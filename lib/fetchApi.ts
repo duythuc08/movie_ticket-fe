@@ -1,4 +1,5 @@
 "use client";
+import { getStoredToken, setStoredToken, removeStoredToken, getStoredRefreshToken, setStoredRefreshToken, removeStoredRefreshToken } from "@/components/auth/utils/auth.utils";
 
 let isRefreshing = false;
 let pendingQueue: Array<(token: string) => void> = [];
@@ -10,7 +11,7 @@ function flushQueue(token: string) {
 
 export async function apiFetch(url: string, options: RequestInit = {}) {
   const baseURL = "/api-proxy";
-  const fullUrl = url.startsWith("http") ? url : `${baseURL}${url}`;
+  const fullUrl = url.startsWith("http") || url.startsWith(baseURL) ? url : `${baseURL}${url}`;
   
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
@@ -18,7 +19,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   }
 
   if (typeof window !== "undefined") {
-    const token = sessionStorage.getItem("token");
+    const token = getStoredToken();
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
@@ -41,7 +42,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     isRefreshing = true;
 
     try {
-      const refreshToken = sessionStorage.getItem("refreshToken");
+      const refreshToken = getStoredRefreshToken();
       if (!refreshToken) throw new Error("no refresh token");
 
       const res = await fetch("/api-proxy/auth/refresh", {
@@ -55,8 +56,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
       const data = await res.json();
       const { token: newToken, refreshToken: newRefreshToken } = data.result;
 
-      sessionStorage.setItem("token", newToken);
-      if (newRefreshToken) sessionStorage.setItem("refreshToken", newRefreshToken);
+      setStoredToken(newToken);
+      if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
 
       window.dispatchEvent(
         new CustomEvent("auth:token-refreshed", {
@@ -70,8 +71,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
       response = await fetch(fullUrl, { ...options, headers });
     } catch (error) {
       pendingQueue = [];
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("refreshToken");
+      removeStoredToken();
+      removeStoredRefreshToken();
       window.dispatchEvent(new Event("auth:logout"));
       throw error;
     } finally {

@@ -53,7 +53,9 @@ export default function SeatSelectionPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
+      setLoading(true);
+      setSelectedSeats([]);
+      const token = sessionStorage.getItem("token");
       if (!token) {
         toast.error("Vui lòng đăng nhập để tiếp tục đặt vé.");
         router.push(`/login?from=/seat-selection/${showTimeId}`);

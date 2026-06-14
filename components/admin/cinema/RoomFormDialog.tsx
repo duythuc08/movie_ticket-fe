@@ -1,5 +1,7 @@
 "use client";
 
+import { Controller } from "react-hook-form";
+
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,8 +43,8 @@ export function RoomFormDialog({
     cinemaId:   room?.cinemas?.cinemaId ?? defaultCinemaId ?? 0,
     roomType:   (room?.roomType         ?? "") as RoomType,
     roomStatus: (room?.roomStatus       ?? "") as RoomStatus,
-    rowCount:   undefined,
-    columnCount: undefined,
+    rowCount:   "" as unknown as number,
+    columnCount: "" as unknown as number,
   };
 
   return (
@@ -157,41 +159,53 @@ export function RoomFormDialog({
               <Label>
                 Loại phòng <span className="text-destructive">*</span>
               </Label>
-              <Select
-                value={form.watch("roomType")}
-                onValueChange={(val) => form.setValue("roomType", val as RoomType)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn loại" />
-                </SelectTrigger>
-                <SelectContent data-admin="">
-                  {ROOM_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={form.control}
+                name="roomType"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn loại" />
+                    </SelectTrigger>
+                    <SelectContent data-admin="">
+                      {ROOM_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.roomType && (
+                <p className="text-xs text-destructive">{form.formState.errors.roomType.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>
                 Trạng thái vận hành <span className="text-destructive">*</span>
               </Label>
-              <Select
-                value={form.watch("roomStatus")}
-                onValueChange={(val) => form.setValue("roomStatus", val as RoomStatus)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent data-admin="">
-                  {ROOM_STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={form.control}
+                name="roomStatus"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent data-admin="">
+                      {ROOM_STATUS_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.roomStatus && (
+                <p className="text-xs text-destructive">{form.formState.errors.roomStatus.message}</p>
+              )}
             </div>
           </div>
 

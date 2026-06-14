@@ -24,6 +24,7 @@ interface AdminFormDialogProps<TSchema extends FieldValues> {
   defaultValues?: DefaultValues<TSchema>;
   onSubmit: (values: TSchema) => void | Promise<void>;
   isSubmitting?: boolean;
+  isLoading?: boolean;
   submitLabel?: string;
   readOnly?: boolean;
   onEdit?: () => void;
@@ -41,6 +42,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
   defaultValues,
   onSubmit,
   isSubmitting = false,
+  isLoading = false,
   submitLabel = "Lưu",
   readOnly = false,
   onEdit,
@@ -51,12 +53,15 @@ export function AdminFormDialog<TSchema extends FieldValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema as any),
     defaultValues,
+    mode: "onChange",
   });
 
   React.useEffect(() => {
-    if (open) form.reset(defaultValues);
+    if (open && !isLoading) {
+      form.reset(defaultValues);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, isLoading]);
 
   function handleClose() {
     form.reset(defaultValues);
@@ -88,62 +93,71 @@ export function AdminFormDialog<TSchema extends FieldValues>({
               size="icon"
               className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border transition-all"
               onClick={handleClose}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoading}
             >
               <X size={16} />
             </Button>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 bg-background">
-            <fieldset
-              disabled={isSubmitting || readOnly}
-              className={`border-none m-0 p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
-            >
-              <div className="space-y-4">
-                {children(form)}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center flex-1 py-16 min-h-[300px]">
+              <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Đang tải dữ liệu...</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto p-6 bg-background">
+                <fieldset
+                  disabled={isSubmitting || readOnly}
+                  className={`border-none m-0 p-0 ${readOnly ? "pointer-events-none select-none" : ""}`}
+                >
+                  <div className="space-y-4">
+                    {children(form)}
+                  </div>
+                </fieldset>
               </div>
-            </fieldset>
-          </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
-            <div className="text-xs text-muted-foreground">
-              {updatedAtLabel ? (
-                <span className="flex items-center gap-1.5 font-medium text-muted-foreground/80">
-                  <Clock size={13} className="text-muted-foreground/60" />
-                  Cập nhật lần cuối: {updatedAtLabel}
-                </span>
-              ) : !readOnly ? (
-                <span className="font-medium">
-                  Lưu ý: Các trường đánh dấu <span className="text-destructive">*</span> không được bỏ trống.
-                </span>
-              ) : null}
-            </div>
+              <div className="sticky bottom-0 z-10 border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
+                <div className="text-xs text-muted-foreground">
+                  {updatedAtLabel ? (
+                    <span className="flex items-center gap-1.5 font-medium text-muted-foreground/80">
+                      <Clock size={13} className="text-muted-foreground/60" />
+                      Cập nhật lần cuối: {updatedAtLabel}
+                    </span>
+                  ) : !readOnly ? (
+                    <span className="font-medium">
+                      Lưu ý: Các trường đánh dấu <span className="text-destructive">*</span> không được bỏ trống.
+                    </span>
+                  ) : null}
+                </div>
 
-            <div className="flex items-center gap-2">
-              {readOnly ? (
-                <>
-                  <Button type="button" variant="outline" onClick={handleClose} className="h-9 text-xs font-semibold">
-                    Đóng
-                  </Button>
-                  {onEdit && (
-                    <Button type="button" onClick={onEdit} className="min-w-[120px] h-9 text-xs font-semibold">
-                      Chỉnh sửa
-                    </Button>
+                <div className="flex items-center gap-2">
+                  {readOnly ? (
+                    <>
+                      <Button type="button" variant="outline" onClick={handleClose} className="h-9 text-xs font-semibold">
+                        Đóng
+                      </Button>
+                      {onEdit && (
+                        <Button type="button" onClick={onEdit} className="min-w-[120px] h-9 text-xs font-semibold">
+                          Chỉnh sửa
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="h-9 text-xs font-semibold">
+                        Hủy bỏ
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
+                        {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                        {submitLabel}
+                      </Button>
+                    </>
                   )}
-                </>
-              ) : (
-                <>
-                  <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="h-9 text-xs font-semibold">
-                    Hủy bỏ
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
-                    {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                    {submitLabel}
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            </>
+          )}
 
         </form>
       </DialogContent>

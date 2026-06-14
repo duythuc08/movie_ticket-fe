@@ -5,6 +5,8 @@ import { Ticket, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/shared";
 import { createAdminBookingColumns } from "@/components/admin/bookings/components/AdminBookingColumn";
+import { AdminBookingStats } from "@/components/admin/bookings/components/AdminBookingStats";
+import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { AdminBookingDetailDialog } from "@/components/admin/bookings/components/AdminBookingDetailDialog";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
@@ -35,7 +37,7 @@ export default function AdminBookingsPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token") ?? "";
+      const token = getStoredToken() ?? "";
       const res = await adminBookingService.getAdminOrders(
         token,
         0,
@@ -59,7 +61,7 @@ export default function AdminBookingsPage() {
 
   const handleViewDetail = async (orderId: number) => {
     try {
-      const token = localStorage.getItem("token") ?? "";
+      const token = getStoredToken() ?? "";
       const detail = await adminBookingService.getAdminOrderDetail(token, orderId);
       setSelectedOrder(detail);
       setIsDetailOpen(true);
@@ -74,7 +76,7 @@ export default function AdminBookingsPage() {
     }
     try {
       setIsCheckinLoading(true);
-      const token = localStorage.getItem("token") ?? "";
+      const token = getStoredToken() ?? "";
       await adminBookingService.checkinOrder(token, checkinOrderId, values.qrCode);
       toast.success("Check-in thành công!");
       setCheckinOrderId(null);

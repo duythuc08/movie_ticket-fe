@@ -4,6 +4,7 @@ import { Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {Badge, BadgeProps} from "@/components/ui/badge";
+import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createVnpayRepaymentUrl } from "@/components/profile/service/user.service";
 import type { Order } from "@/types";
@@ -50,7 +51,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
 
   const handleRepayment = async (orderId: number) => {
     try {
-      const token = localStorage.getItem("token") ?? "";
+      const token = getStoredToken() ?? "";
       const url   = await createVnpayRepaymentUrl(token, String(orderId));
       window.location.href = url;
     } catch {

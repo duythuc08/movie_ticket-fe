@@ -78,6 +78,8 @@ export function RoomDetailDialog({
   const [activeTool, setActiveTool] = useState<SeatType>("STANDARD");
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<"PAINT" | "ERASE" | null>(null);
+  const [dragStart, setDragStart] = useState<{ r: number; c: number } | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<{ r: number; c: number } | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const [chainUnlockOpen, setChainUnlockOpen] = useState(false);
@@ -310,22 +312,71 @@ export function RoomDetailDialog({
   function handlePointerDown(r: number, c: number) {
     if (!isEditMode) return;
     setIsDragging(true);
+    setDragStart({ r, c });
+    setDragCurrent({ r, c });
     const isSame = grid[r][c] === activeTool;
-    const mode = isSame ? "ERASE" : "PAINT";
-    setDragMode(mode);
-    setGrid((prev) => applyActionToCell(r, c, prev, mode));
+    setDragMode(isSame ? "ERASE" : "PAINT");
   }
 
   function handlePointerEnter(r: number, c: number) {
     if (!isEditMode) return;
-    if (isDragging && dragMode) {
-      setGrid((prev) => applyActionToCell(r, c, prev, dragMode));
+    if (isDragging) {
+      setDragCurrent({ r, c });
     }
   }
 
   function handlePointerUp() {
+    if (!isDragging || !dragStart || !dragCurrent) {
+      setIsDragging(false);
+      setDragMode(null);
+      setDragStart(null);
+      setDragCurrent(null);
+      return;
+    }
+
+    const r1 = Math.min(dragStart.r, dragCurrent.r);
+    const r2 = Math.max(dragStart.r, dragCurrent.r);
+    let c1 = Math.min(dragStart.c, dragCurrent.c);
+    let c2 = Math.max(dragStart.c, dragCurrent.c);
+
+    if (dragMode === "PAINT" && activeTool === "COUPLE") {
+      const width = c2 - c1 + 1;
+      if (width % 2 !== 0) {
+        if (c2 < dims.cols - 1) c2++;
+        else if (c1 > 0) c1--;
+      }
+    }
+
+    let nextGrid = grid.map(row => [...row]);
+
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        if (dragMode === "ERASE") {
+          nextGrid[r][c] = null;
+        } else {
+          nextGrid[r][c] = activeTool;
+        }
+      }
+    }
+
+    for (let r = 0; r < dims.rows; r++) {
+      let count = 0;
+      for (let c = 0; c < dims.cols; c++) {
+        if (nextGrid[r][c] === "COUPLE") {
+          count++;
+        } else {
+          if (count % 2 !== 0) nextGrid[r][c - 1] = null;
+          count = 0;
+        }
+      }
+      if (count % 2 !== 0) nextGrid[r][dims.cols - 1] = null;
+    }
+
+    setGrid(nextGrid);
     setIsDragging(false);
     setDragMode(null);
+    setDragStart(null);
+    setDragCurrent(null);
   }
 
   async function handleSaveGrid() {
@@ -511,6 +562,12 @@ export function RoomDetailDialog({
                           </span>
                           <div className="flex gap-1">
                             {row.map((cellType, colIdx) => {
+                              const isSelected = dragStart && dragCurrent &&
+                                rowIdx >= Math.min(dragStart.r, dragCurrent.r) &&
+                                rowIdx <= Math.max(dragStart.r, dragCurrent.r) &&
+                                colIdx >= Math.min(dragStart.c, dragCurrent.c) &&
+                                colIdx <= Math.max(dragStart.c, dragCurrent.c);
+
                               let coupleClass = "";
                               if (cellType === "COUPLE") {
                                 let countBefore = 0;
@@ -530,12 +587,13 @@ export function RoomDetailDialog({
                               return (
                                 <div
                                   key={colIdx}
-                                  onPointerDown={() => handlePointerDown(rowIdx, colIdx)}
+                                  onPointerDown={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handlePointerDown(rowIdx, colIdx); }}
                                   onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
                                   className={cn(
                                     "h-8 w-8 border transition-all flex items-center justify-center cursor-pointer",
                                     cellType ? SETUP_CELL_CLASSES[cellType] : "border-dashed border-muted-foreground/30 hover:border-primary/50",
-                                    coupleClass
+                                    coupleClass,
+                                    isSelected && "ring-2 ring-primary ring-inset opacity-80"
                                   )}
                                 >
                                   {cellType && <span className="text-[10px] font-bold opacity-70">{rowLabels[rowIdx] || rowIdx}{colIdx + 1}</span>}
@@ -570,7 +628,7 @@ export function RoomDetailDialog({
               {onEdit && !isEditMode && (
                 <Button type="button" onClick={() => onEdit(room)} className="min-w-[120px] h-9 text-xs font-semibold">
                   <Pencil className="w-3.5 h-3.5 mr-2" />
-                  Chỉnh sửa phòng
+                  Chỉnh sửa
                 </Button>
               )}
             </div>
@@ -581,7 +639,7 @@ export function RoomDetailDialog({
     </Dialog>
     
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <AlertDialogContent>
+      <AlertDialogContent data-admin="">
         <AlertDialogHeader>
           <AlertDialogTitle>Xác nhận thay đổi kích thước</AlertDialogTitle>
           <AlertDialogDescription>
@@ -590,7 +648,7 @@ export function RoomDetailDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleApplyDimsCancel}>Hủy</AlertDialogCancel>
-          <AlertDialogAction onClick={handleApplyDimsConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogAction onClick={handleApplyDimsConfirm} className="bg-destructive text-white hover:bg-destructive/90">
             Tiếp tục
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -598,7 +656,7 @@ export function RoomDetailDialog({
     </AlertDialog>
 
     <Dialog open={chainUnlockOpen} onOpenChange={setChainUnlockOpen}>
-      <DialogContent>
+      <DialogContent data-admin="">
         <DialogHeader>
           <DialogTitle>Mở bán ghế tự động</DialogTitle>
         </DialogHeader>

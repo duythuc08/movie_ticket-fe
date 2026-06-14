@@ -59,7 +59,7 @@ function PaymentSuccessContent() {
 
     const loadOrderFromAPI = async (orderId: string) => {
       try {
-        const token = localStorage.getItem("token") ?? "";
+        const token = sessionStorage.getItem("token") ?? "";
         const data = await getOrderDetail(orderId, token);
         setOrderData(data);
       } catch (err) {

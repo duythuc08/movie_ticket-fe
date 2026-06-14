@@ -158,7 +158,22 @@ export default function AdminShowtimesPage() {
         const filterString = filterParts.join(" and ");
 
         const result = await adminShowtimeService.getShowtimes(token, 0, 100, filterString || undefined);
-        setShowtimes(result.content);
+        
+        const statusOrder: Record<string, number> = {
+          "SCHEDULED": 1,
+          "ONGOING": 2,
+          "COMPLETED": 3,
+          "FULLY_BOOKED": 4,
+          "CANCELLED": 5
+        };
+        
+        const sortedData = [...result.content].sort((a, b) => {
+          const orderA = statusOrder[a.showTimeStatus] || 99;
+          const orderB = statusOrder[b.showTimeStatus] || 99;
+          return orderA - orderB;
+        });
+
+        setShowtimes(sortedData);
       }
     } catch {
       toast.error("Không thể tải danh sách suất chiếu");

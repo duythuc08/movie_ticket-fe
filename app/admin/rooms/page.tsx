@@ -22,7 +22,7 @@ import { RoomDetailDialog } from "@/components/admin/cinema/RoomDetailDialog";
 import { createRoomColumns } from "@/components/admin/cinema/RoomColumns";
 
 const ROOM_TYPE_FILTER = [
-  { label: "Phòng thường", value: "STANDARD" },
+  { label: "Phòng Thường", value: "STANDARD" },
   { label: "Phòng VIP",    value: "VIP"      },
   { label: "Phòng IMAX",   value: "IMAX"     },
   { label: "Phòng 3D",     value: "THREE_D"  },
