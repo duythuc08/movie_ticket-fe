@@ -8,21 +8,30 @@ import {
 } from "@/components/auth/utils/auth.utils";
 
 let isRefreshing = false;
-let pendingQueue: Array<(token: string) => void> = [];
+
+type QueueItem = { resolve: (token: string) => void; reject: (err: unknown) => void };
+let pendingQueue: QueueItem[] = [];
 
 function flushQueue(token: string) {
-  pendingQueue.forEach((cb) => cb(token));
+  pendingQueue.forEach(({ resolve }) => resolve(token));
+  pendingQueue = [];
+}
+
+function rejectQueue(err: unknown) {
+  pendingQueue.forEach(({ reject }) => reject(err));
   pendingQueue = [];
 }
 
 /**
- * Singleton refresh: chỉ gọi /auth/refresh một lần dù nhiều request đồng thời bị 401.
- * Các request sau sẽ chờ và nhận token mới khi refresh xong.
+ * JWT Refresh Token Rotation with Request Queueing.
+ *
+ * Singleton: dù bao nhiêu request cùng cần refresh, chỉ 1 call thật lên backend.
+ * Các request còn lại xếp hàng đợi — khi refresh xong, nhận token mới; khi thất bại, tất cả bị reject.
  */
 export async function refreshAccessToken(): Promise<string> {
   if (isRefreshing) {
-    return new Promise<string>((resolve) => {
-      pendingQueue.push((token: string) => resolve(token));
+    return new Promise<string>((resolve, reject) => {
+      pendingQueue.push({ resolve, reject });
     });
   }
 
@@ -30,7 +39,7 @@ export async function refreshAccessToken(): Promise<string> {
 
   try {
     const refreshToken = getStoredRefreshToken();
-    if (!refreshToken) throw new Error("no refresh token");
+    if (!refreshToken) throw new Error("no_refresh_token");
 
     const res = await fetch("/api-proxy/auth/refresh", {
       method: "POST",
@@ -38,7 +47,7 @@ export async function refreshAccessToken(): Promise<string> {
       body: JSON.stringify({ refreshToken }),
     });
 
-    if (!res.ok) throw new Error("refresh failed");
+    if (!res.ok) throw new Error("refresh_failed");
 
     const data = await res.json();
     const { token: newToken, refreshToken: newRefreshToken } = data.result;
@@ -57,7 +66,7 @@ export async function refreshAccessToken(): Promise<string> {
     flushQueue(newToken);
     return newToken;
   } catch (error) {
-    pendingQueue = [];
+    rejectQueue(error);
     removeStoredToken();
     removeStoredRefreshToken();
     if (typeof window !== "undefined") {
