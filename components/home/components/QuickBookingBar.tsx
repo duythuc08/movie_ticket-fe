@@ -144,7 +144,7 @@ export function QuickBookingBar() {
           >
             {slots.map((s) => (
               <option key={s.showTimeId} value={s.showTimeId}>
-                {s.startTime} — {s.roomName}
+                {s.startTime}
               </option>
             ))}
           </SelectField>

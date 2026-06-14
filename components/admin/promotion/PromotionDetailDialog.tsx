@@ -10,12 +10,12 @@ import type { AdminPromotion } from "@/types/admin/promotion";
 import { X, Percent, Users, Film, Clock } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Nháp", PENDING_APPROVAL: "Chờ duyệt",
+  DRAFT: "Nháp",
   PUBLISHED: "Đang chạy", PAUSED: "Tạm dừng", EXPIRED: "Hết hạn",
 };
 
 const STATUS_VARIANT: Record<string, BadgeVariant> = {
-  DRAFT: "secondary", PENDING_APPROVAL: "outline",
+  DRAFT: "secondary",
   PUBLISHED: "default", PAUSED: "outline", EXPIRED: "secondary",
 };
 
@@ -51,7 +51,7 @@ export const PromotionDetailDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isActioning, setIsActioning] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
-    action: "submit" | "approve" | "pause" | "resume";
+    action: "publish" | "pause" | "resume";
     label: string;
   } | null>(null);
 
@@ -73,7 +73,7 @@ export const PromotionDetailDialog = ({
     else setDetail(null);
   }, [open, promotionId, load]);
 
-  const handleAction = (action: "submit" | "approve" | "pause" | "resume", label: string) => {
+  const handleAction = (action: "publish" | "pause" | "resume", label: string) => {
     setPendingAction({ action, label });
   };
 
@@ -83,8 +83,7 @@ export const PromotionDetailDialog = ({
     try {
       const { action, label } = pendingAction;
       const svc = adminPromotionService;
-      if (action === "submit")  await svc.submitPromotion(token, detail.promotionId);
-      if (action === "approve") await svc.approvePromotion(token, detail.promotionId);
+      if (action === "publish") await svc.publishPromotion(token, detail.promotionId);
       if (action === "pause")   await svc.pausePromotion(token, detail.promotionId);
       if (action === "resume")  await svc.resumePromotion(token, detail.promotionId);
       toast.success(`${label} thành công`);
@@ -219,22 +218,12 @@ export const PromotionDetailDialog = ({
             <div className="flex items-center gap-2">
               {detail?.status === "DRAFT" && (
                 <Button
-                  variant="outline" size="sm"
-                  onClick={() => handleAction("submit", "Gửi duyệt")}
-                  disabled={isActioning}
-                  className="text-xs border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground h-9"
-                >
-                  Gửi duyệt
-                </Button>
-              )}
-              {detail?.status === "PENDING_APPROVAL" && (
-                <Button
-                  size="sm"
-                  onClick={() => handleAction("approve", "Phê duyệt")}
+                  variant="default" size="sm"
+                  onClick={() => handleAction("publish", "Đăng khuyến mãi")}
                   disabled={isActioning}
                   className="text-xs h-9"
                 >
-                  Phê duyệt & Xuất bản
+                  Kích hoạt
                 </Button>
               )}
               {detail?.status === "PUBLISHED" && (

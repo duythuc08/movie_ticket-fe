@@ -14,7 +14,6 @@ interface PromotionColumnsProps {
 
 const STATUS_MAP: StatusMap = {
   DRAFT:              { label: "Nháp",       variant: "secondary"   },
-  PENDING_APPROVAL:   { label: "Chờ duyệt",  variant: "warning"     },
   PUBLISHED:          { label: "Đang chạy",  variant: "success"     },
   PAUSED:             { label: "Tạm dừng",   variant: "warning"     },
   EXPIRED:            { label: "Hết hạn",    variant: "secondary"   },
@@ -58,12 +57,10 @@ export const createPromotionColumns = ({
     header: "Giảm giá",
     cell: ({ row }) => (
       <div className="space-y-1">
-        <Badge variant="outline" className="font-medium text-sm px-2">
+        <p className="font-medium text-sm px-2">
           {formatDiscount(row.original)}
-        </Badge>
-        <p className="text-[10px] text-muted-foreground">
-          {row.original.type === "PERCENTAGE" ? "Phần trăm" : "Cố định"}
         </p>
+
       </div>
     ),
   },
@@ -76,7 +73,7 @@ export const createPromotionColumns = ({
       return (
         <div className="space-y-1 min-w-[80px]">
           <p className="text-sm font-medium">
-            {usedCount} / <span className="text-muted-foreground">{useLimit ?? "∞"}</span>
+            {usedCount} / <span className="text-muted-foreground ">{useLimit ?? "∞"}</span>
           </p>
           {pct !== null && (
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">

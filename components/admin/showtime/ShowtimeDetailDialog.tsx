@@ -213,22 +213,36 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                         <Map className="w-4 h-4 text-primary" /> Thống kê ghế ngồi
                       </h3>
                       <div className="py-2">
-                      <div className="h-[150px] w-full">
+                      <div className="h-[220px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
                               data={pieData}
-                              innerRadius={40}
-                              outerRadius={56}
-                              paddingAngle={4}
+                              innerRadius={55}
+                              outerRadius={75}
+                              paddingAngle={5}
                               dataKey="value"
+                              stroke="none"
                             >
                               {pieData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip />
-                            <Legend />
+                            <Tooltip 
+                              contentStyle={{ 
+                                borderRadius: '12px', 
+                                border: '1px solid hsl(var(--border))', 
+                                backgroundColor: 'hsl(var(--background))',
+                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                              }}
+                              itemStyle={{ color: 'hsl(var(--foreground))' }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={36} 
+                              iconType="circle" 
+                              wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                            />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>

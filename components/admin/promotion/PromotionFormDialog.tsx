@@ -13,7 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 import { promotionSchema, type PromotionValues } from "@/lib/validations/admin/promotion.schema";
 import type { AdminPromotion, DayOfWeekValue } from "@/types/admin/promotion";
 import { cn } from "@/lib/utils";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const toDateTimeLocal = (iso: string): string => {
   if (!iso) return "";
@@ -120,12 +121,27 @@ export const PromotionFormDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-1 font-medium">Mã khuyến mãi <span className="text-destructive">*</span></Label>
-                <Input
-                  {...form.register("code")}
-                  placeholder="VD: SUMMER2026"
-                  className="bg-background uppercase font-mono tracking-wider"
-                  onChange={(e) => form.setValue("code", e.target.value.toUpperCase())}
-                />
+                <div className="relative">
+                  <Input
+                    {...form.register("code")}
+                    placeholder="VD: SUMMER2026"
+                    className="bg-background uppercase tracking-wider pr-10"
+                    onChange={(e) => form.setValue("code", e.target.value.toUpperCase())}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-primary"
+                    onClick={() => {
+                      const randomNum = Math.floor(100000 + Math.random() * 900000);
+                      form.setValue("code", `INF-${randomNum}`, { shouldValidate: true });
+                    }}
+                    title="Tạo mã ngẫu nhiên"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
                 {form.formState.errors.code && (
                   <p className="text-xs text-destructive">{form.formState.errors.code.message}</p>
                 )}

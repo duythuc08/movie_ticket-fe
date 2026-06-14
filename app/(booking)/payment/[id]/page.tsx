@@ -30,7 +30,7 @@ export default function PaymentPage() {
 
   const [paymentMethod, setPaymentMethod] = useState("MOMO");
   const [loading, setLoading] = useState(false);
-  const { minutes, seconds, isUrgent, clearTimer } = useBookingTimer();
+  const { minutes, seconds, progress, isUrgent, clearTimer } = useBookingTimer();
   const [membershipData, setMembershipData] = useState<MembershipTier | null>(
     null,
   );
@@ -340,7 +340,24 @@ export default function PaymentPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-card border border-border rounded-2xl p-5 sticky top-20 shadow-xl shadow-black/10">
+            <div className="sticky top-20">
+              {/* Countdown timer */}
+              <div className="mb-4 bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-4">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Thời gian đặt vé</p>
+                  <div className={`text-3xl font-black font-mono ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
+                    {minutes}:{seconds}
+                  </div>
+                </div>
+                <div className="mt-3 w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-[width] duration-300 rounded-full ${isUrgent ? "bg-destructive" : "bg-primary"}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 shadow-xl shadow-black/10">
               <div className="flex mb-5 gap-3">
                 {bookingInfo?.moviePoster && (
                   <img
@@ -446,19 +463,6 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              <div
-                className={`mb-5 py-3 px-4 rounded-xl border text-center ${isUrgent ? "bg-destructive/10 border-destructive/30" : "bg-primary/8 border-primary/20"}`}
-              >
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                  Thời gian còn lại
-                </p>
-                <div
-                  className={`text-2xl font-black font-mono ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}
-                >
-                  {minutes}:{seconds}
-                </div>
-              </div>
-
               <Button
                 type="submit"
                 className="w-full py-6 text-base font-black bg-primary hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all cursor-pointer"
@@ -467,6 +471,7 @@ export default function PaymentPage() {
                 {loading ? "ĐANG XỬ LÝ..." : "THANH TOÁN NGAY"}
               </Button>
             </div>
+          </div>
           </div>
         </form>
 

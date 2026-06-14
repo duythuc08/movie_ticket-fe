@@ -18,11 +18,8 @@ export const adminPromotionService = {
   updatePromotion: (token: string, id: number, data: PromotionValues) =>
     adminPut<AdminPromotion>(token, `/admin/promotions/${id}`, data),
 
-  submitPromotion: (token: string, id: number) =>
-    adminPutEmpty(token, `/admin/promotions/${id}/submit`),
-
-  approvePromotion: (token: string, id: number) =>
-    adminPutEmpty(token, `/admin/promotions/${id}/approve`),
+  publishPromotion: (token: string, id: number) =>
+    adminPutEmpty(token, `/admin/promotions/${id}/publish`),
 
   pausePromotion: (token: string, id: number) =>
     adminPutEmpty(token, `/admin/promotions/${id}/pause`),

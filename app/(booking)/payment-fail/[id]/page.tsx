@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { XCircle, Home, RefreshCcw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AttemptedOrderInfo } from "@/components/profile/types";

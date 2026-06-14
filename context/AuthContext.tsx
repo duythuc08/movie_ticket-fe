@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import type { UserInfo } from "@/types";
-import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/components/auth/constants/auth.constants";
 import {
   isTokenExpired,
   removeStoredToken,
@@ -114,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       removeTokenCookie();
       setToken(null);
       setUser(null);
+      window.location.href = "/login";
     };
 
     window.addEventListener("auth:token-refreshed", handleTokenRefreshed);

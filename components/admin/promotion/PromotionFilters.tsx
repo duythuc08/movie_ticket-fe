@@ -38,7 +38,6 @@ export const PromotionFilters = ({ onFilterChange }: PromotionFiltersProps) => {
         <SelectContent data-admin="">
           <SelectItem value="all">-- Trạng thái --</SelectItem>
           <SelectItem value="DRAFT">Nháp</SelectItem>
-          <SelectItem value="PENDING_APPROVAL">Chờ duyệt</SelectItem>
           <SelectItem value="PUBLISHED">Đang chạy</SelectItem>
           <SelectItem value="PAUSED">Tạm dừng</SelectItem>
           <SelectItem value="EXPIRED">Hết hạn</SelectItem>

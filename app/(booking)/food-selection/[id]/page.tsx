@@ -152,7 +152,7 @@ export default function FoodSelectionPage() {
             {/* Countdown timer */}
             <div className="mb-4 bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-4">
               <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-widest">Thời gian giữ ghế</p>
+                <p className="text-xs text-muted-foreground mb-1">Thời gian đặt vé</p>
                 <div className={`text-3xl font-black font-mono ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
                   {minutes}:{seconds}
                 </div>

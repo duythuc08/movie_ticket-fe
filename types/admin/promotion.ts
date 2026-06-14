@@ -1,5 +1,5 @@
 export type PromotionType   = "PERCENTAGE" | "FIXED_AMOUNT";
-export type PromotionStatus = "DRAFT" | "PENDING_APPROVAL" | "PUBLISHED" | "PAUSED" | "EXPIRED";
+export type PromotionStatus = "DRAFT" | "PUBLISHED" | "PAUSED" | "EXPIRED";
 export type EventType       = "PREMIERE" | "FESTIVAL" | "SPECIAL_SCREENING" | "PROMOTION";
 export type DayOfWeekValue  =
   | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY"
