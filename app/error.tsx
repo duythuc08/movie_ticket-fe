@@ -27,7 +27,7 @@ export default function ErrorPage({
           Rất tiếc, có lỗi xảy ra khi tải trang này. Vui lòng thử lại.
         </p>
         {error.message && (
-          <p className="text-red-400/80 text-sm font-mono bg-red-950/20 border border-red-900/30 px-4 py-2 rounded-md">
+          <p className="text-red-400/80 text-sm  bg-red-950/20 border border-red-900/30 px-4 py-2 rounded-md">
             {error.message}
           </p>
         )}

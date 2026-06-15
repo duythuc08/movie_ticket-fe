@@ -23,7 +23,7 @@ export function Navbar() {
   const handleLogout = useCallback(() => {
     logout();
     localStorage.removeItem("user");
-    localStorage.removeItem("pendingOrder");
+    sessionStorage.removeItem("pendingOrder");
     if (window.location.pathname !== "/") {
       router.push("/login");
     }

@@ -30,7 +30,7 @@ export function removeStoredToken(): void {
 }
 
 export function setTokenCookie(token: string): void {
-  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; SameSite=Strict`;
+  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; SameSite=Lax`;
 }
 
 export function removeTokenCookie(): void {

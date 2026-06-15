@@ -32,7 +32,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       <div
-        className="fixed inset-0 bg-black/50"
+        className="fixed inset-0 bg-black/30 backdrop-blur-[1px]"
         onClick={() => onOpenChange(false)}
       />
       <div className="relative z-10 w-full flex items-center justify-center min-h-full py-6">
