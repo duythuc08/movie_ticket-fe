@@ -34,4 +34,7 @@ export const userProfileService = {
 
   claimPromotion: (token: string, promotionId: number) =>
     adminPost<void>(token, `/promotions/${promotionId}/claim`, {}),
+
+  claimPromotionByCode: (token: string, code: string) =>
+    adminPost<void>(token, `/promotions/claim-by-code?code=${encodeURIComponent(code)}`, {}),
 };

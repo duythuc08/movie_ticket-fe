@@ -158,7 +158,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
                     className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-secondary/50"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono font-black text-sm text-foreground shrink-0">
+                      <span className=" font-black text-sm text-foreground shrink-0">
                         {g.seats.join(", ")}
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${SEAT_TYPE_STYLE[g.seatType] ?? "bg-secondary text-muted-foreground"}`}>
@@ -214,7 +214,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
                 </div>
                 <div className="text-center">
                   <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Mã vé</p>
-                  <p className="text-xs font-mono font-black text-foreground mt-0.5">#{shortId}</p>
+                  <p className="text-xs  font-black text-foreground mt-0.5">#{shortId}</p>
                   {order.fullName && (
                     <p className="text-[10px] text-muted-foreground mt-1 leading-tight line-clamp-2">{order.fullName}</p>
                   )}

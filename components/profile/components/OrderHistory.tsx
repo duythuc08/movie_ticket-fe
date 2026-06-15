@@ -3,7 +3,7 @@
 import { Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {Badge, BadgeProps} from "@/components/ui/badge";
+import { Badge, BadgeProps } from "@/components/ui/badge";
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createVnpayRepaymentUrl } from "@/components/profile/service/user.service";
@@ -16,25 +16,25 @@ interface Props {
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"] }> = {
-    PENDING: {
-        label: "Chờ thanh toán",
-        variant: "pending",
-    },
-    CANCELLED: {
-        label: "Đã hủy",
-        variant: "cancelled",
-    },
-    PAID: {
-        label: "Đã thanh toán",
-        variant: "paid",
-    },
+  PENDING: {
+    label: "Chờ thanh toán",
+    variant: "pending",
+  },
+  CANCELLED: {
+    label: "Đã hủy",
+    variant: "cancelled",
+  },
+  PAID: {
+    label: "Đã thanh toán",
+    variant: "paid",
+  },
 };
 
 const getStatus = (status: string) =>
-    STATUS_MAP[status] ?? {
-        label: status,
-        variant: "default",
-    };
+  STATUS_MAP[status] ?? {
+    label: status,
+    variant: "default",
+  };
 
 const formatCurrency = (n?: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n || 0);
@@ -52,7 +52,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
   const handleRepayment = async (orderId: number) => {
     try {
       const token = getStoredToken() ?? "";
-      const url   = await createVnpayRepaymentUrl(token, String(orderId));
+      const url = await createVnpayRepaymentUrl(token, String(orderId));
       window.location.href = url;
     } catch {
       toast.error("Không thể kết nối đến máy chủ thanh toán. Vui lòng thử lại.");
@@ -117,8 +117,8 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
               </thead>
               <tbody className="divide-y divide-border">
                 {sorted.map((order) => {
-                  const status      = getStatus(order.orderStatus || "");
-                  const shortId     = String(order.orderId ?? "").slice(0, 8).toUpperCase();
+                  const status = getStatus(order.orderStatus || "");
+                  const shortId = String(order.orderId ?? "").slice(0, 8).toUpperCase();
                   const ticketCount = order.tickets?.length ?? 0;
 
                   return (
@@ -127,7 +127,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                       className="hover:bg-secondary/30 transition-colors"
                     >
                       <td className="py-3.5 pr-3">
-                        <span className="font-bold text-foreground font-mono text-xs">#{shortId}</span>
+                        <span className="font-bold text-foreground  text-xs">#{shortId}</span>
                       </td>
                       <td className="py-3.5 pr-3">
                         <div className="min-w-0">
@@ -157,9 +157,9 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                         </span>
                       </td>
                       <td className="py-3.5 pr-3 text-center">
-                          <Badge variant={status.variant} className="text-xs font-semibold px-2 py-0.5 rounded-full">
-                              {status.label}
-                          </Badge>
+                        <Badge variant={status.variant} className="text-xs font-semibold px-2 py-0.5 rounded-full">
+                          {status.label}
+                        </Badge>
                       </td>
                       <td className="py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">

@@ -32,7 +32,7 @@ export function useProfile() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("pendingOrder");
+    sessionStorage.removeItem("pendingOrder");
     router.push("/login");
   };
 
