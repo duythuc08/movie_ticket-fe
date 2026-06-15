@@ -16,6 +16,7 @@ export interface AdminPromotion {
   maxDiscountAmount: number | null;
   useLimit: number | null;
   usedCount: number;
+  isPublic: boolean;
   startTime: string;
   endTime: string;
   applicableMovieIds: number[];

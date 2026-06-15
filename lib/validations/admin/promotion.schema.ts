@@ -25,6 +25,7 @@ export const promotionSchema = z.object({
   dayOfWeek:        z.array(
     z.enum(["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"])
   ).default([]),
+  isPublic:         z.boolean().default(true),
 }).refine(
   (d) => !d.startTime || !d.endTime || new Date(d.endTime) > new Date(d.startTime),
   { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["endTime"] }

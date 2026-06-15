@@ -84,8 +84,8 @@ export const PromotionDetailDialog = ({
       const { action, label } = pendingAction;
       const svc = adminPromotionService;
       if (action === "publish") await svc.publishPromotion(token, detail.promotionId);
-      if (action === "pause")   await svc.pausePromotion(token, detail.promotionId);
-      if (action === "resume")  await svc.resumePromotion(token, detail.promotionId);
+      if (action === "pause") await svc.pausePromotion(token, detail.promotionId);
+      if (action === "resume") await svc.resumePromotion(token, detail.promotionId);
       toast.success(`${label} thành công`);
       setPendingAction(null);
       onRefresh();
@@ -115,7 +115,7 @@ export const PromotionDetailDialog = ({
                 {detail?.name ?? "Chi tiết khuyến mãi"}
               </DialogTitle>
               <div className="flex items-center gap-2">
-                <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{detail?.code}</code>
+                <code className="text-xs bg-muted px-1.5 py-0.5 rounded ">{detail?.code}</code>
                 {detail && (
                   <Badge variant={STATUS_VARIANT[detail.status]}>
                     {STATUS_LABELS[detail.status]}
@@ -219,7 +219,7 @@ export const PromotionDetailDialog = ({
               {detail?.status === "DRAFT" && (
                 <Button
                   variant="default" size="sm"
-                  onClick={() => handleAction("publish", "Đăng khuyến mãi")}
+                  onClick={() => handleAction("publish", "Xác nhận kích hoạt")}
                   disabled={isActioning}
                   className="text-xs h-9"
                 >

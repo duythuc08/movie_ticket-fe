@@ -4,6 +4,7 @@ import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { MultiSelectWithSearch } from "@/components/shared";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,6 +16,8 @@ import type { AdminPromotion, DayOfWeekValue } from "@/types/admin/promotion";
 import { cn } from "@/lib/utils";
 import { HelpCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Controller } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 
 const toDateTimeLocal = (iso: string): string => {
   if (!iso) return "";
@@ -70,6 +73,7 @@ export const PromotionFormDialog = ({
     endTime: toDateTimeLocal(promotion?.endTime ?? ""),
     applicableMovieIds: promotion?.applicableMovieIds ?? [],
     dayOfWeek: promotion?.dayOfWeek ?? [],
+    isPublic: promotion?.isPublic ?? true,
   }), [promotion]);
 
   const onSubmit = async (values: PromotionValues) => {
@@ -160,7 +164,25 @@ export const PromotionFormDialog = ({
               <Textarea {...form.register("description")} placeholder="Mô tả ngắn về khuyến mãi..." className="bg-background resize-none h-20" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 border-t pt-4 border-border/60">
+            <div className="grid grid-cols-3 gap-4 border-t pt-4 border-border/60">
+              <div className="space-y-3 flex flex-col justify-center">
+                <Label className="flex items-center gap-1 font-medium">Hiển thị công khai</Label>
+                <div className="flex items-center gap-2">
+                  <Controller
+                    name="isPublic"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {form.watch("isPublic") ? "Hiển thị cho tất cả" : "Chỉ khi nhập đúng mã"}
+                  </span>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1 font-medium">Loại giảm <span className="text-destructive">*</span></Label>
                 <Select value={watchType} onValueChange={(v) => form.setValue("type", v as PromotionValues["type"])}>
@@ -178,13 +200,36 @@ export const PromotionFormDialog = ({
                     {watchType === "PERCENTAGE" ? "(1–100%)" : "(đồng)"}
                   </span>
                 </Label>
-                <Input
-                  type="number"
-                  {...form.register("discountValue", { valueAsNumber: true })}
-                  min={1}
-                  max={watchType === "PERCENTAGE" ? 100 : undefined}
-                  className="bg-background"
-                />
+                {watchType === "PERCENTAGE" ? (
+                  <Input
+                    type="number"
+                    {...form.register("discountValue", { valueAsNumber: true })}
+                    min={1}
+                    max={100}
+                    className="bg-background"
+                  />
+                ) : (
+                  <Controller
+                    name="discountValue"
+                    control={form.control}
+                    render={({ field: { onChange, value, ref } }) => (
+                      <NumericFormat
+                        getInputRef={ref}
+                        customInput={Input}
+                        className="bg-background"
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        suffix="đ"
+                        allowNegative={false}
+                        placeholder="0đ"
+                        value={value === 0 ? "" : value}
+                        onValueChange={(values) => {
+                          onChange(values.floatValue ?? 0);
+                        }}
+                      />
+                    )}
+                  />
+                )}
                 {form.formState.errors.discountValue && (
                   <p className="text-xs text-destructive">{form.formState.errors.discountValue.message}</p>
                 )}
@@ -194,20 +239,48 @@ export const PromotionFormDialog = ({
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Đơn hàng tối thiểu (đ)</Label>
-                <Input
-                  type="number"
-                  placeholder="Không giới hạn"
-                  {...form.register("minOrderValue", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
-                  className="bg-background h-9 text-sm"
+                <Controller
+                  name="minOrderValue"
+                  control={form.control}
+                  render={({ field: { onChange, value, ref } }) => (
+                    <NumericFormat
+                      getInputRef={ref}
+                      customInput={Input}
+                      className="bg-background h-9 text-sm"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      suffix="đ"
+                      allowNegative={false}
+                      placeholder="Không giới hạn"
+                      value={value ?? ""}
+                      onValueChange={(values) => {
+                        onChange(values.floatValue ?? null);
+                      }}
+                    />
+                  )}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Giảm tối đa (đ)</Label>
-                <Input
-                  type="number"
-                  placeholder="Không giới hạn"
-                  {...form.register("maxDiscountAmount", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
-                  className="bg-background h-9 text-sm"
+                <Controller
+                  name="maxDiscountAmount"
+                  control={form.control}
+                  render={({ field: { onChange, value, ref } }) => (
+                    <NumericFormat
+                      getInputRef={ref}
+                      customInput={Input}
+                      className="bg-background h-9 text-sm"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      suffix="đ"
+                      allowNegative={false}
+                      placeholder="Không giới hạn"
+                      value={value ?? ""}
+                      onValueChange={(values) => {
+                        onChange(values.floatValue ?? null);
+                      }}
+                    />
+                  )}
                 />
               </div>
               <div className="space-y-2">
