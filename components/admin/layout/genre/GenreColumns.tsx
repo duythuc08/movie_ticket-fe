@@ -23,7 +23,7 @@ export function createGenreColumns(
             accessorKey: "genreId",
             header: "ID",
             cell: ({ row }) => (
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className=" text-xs text-muted-foreground">
                     #{row.original.genreId}
                 </span>
             ),

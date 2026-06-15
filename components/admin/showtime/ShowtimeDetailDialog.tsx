@@ -141,10 +141,10 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                             <p className="font-bold text-base">{detail.movies?.title}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Rạp / Phòng</p>
+                            <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Phòng</p>
                             <div className="flex items-center gap-1.5 font-medium">
                               <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                              {detail.rooms?.cinemas?.name} - {detail.rooms?.name}
+                              {detail.rooms?.name}
                             </div>
                           </div>
                           <div>
@@ -293,7 +293,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
         title="Huỷ suất chiếu"
-        description="Bạn có chắc chắn muốn huỷ suất chiếu này? Hành động này không thể hoàn tác."
+        description="Bạn có chắc chắn muốn huỷ suất chiếu này không? Hành động này không thể hoàn tác và sẽ hoàn tiền cho các vé đã bán."
         confirmLabel="Huỷ suất chiếu"
         confirmVariant="destructive"
         isLoading={isCancelling}

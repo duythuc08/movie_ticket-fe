@@ -58,6 +58,9 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
   };
 
   const getStartTimeFromClick = (e: React.MouseEvent<HTMLDivElement>, roomId: number) => {
+    // Chỉ kích hoạt khi click trực tiếp vào nền của dòng (không click vào block con)
+    if (e.target !== e.currentTarget) return;
+    
     if (!onAddClick) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const newStartTime = getStartTimeFromCoordinates(e.clientX, rect.left, rect.width);
@@ -220,7 +223,7 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
               })}
 
               {showtimesByRoom.get(room.roomId)?.map(st => (
-                <div key={st.showTimeId} onClick={(e) => e.stopPropagation()}>
+                <div key={st.showTimeId}>
                   <GanttShowtimeBlock showtime={st} onViewDetail={onViewDetail} onEdit={onEdit} />
                 </div>
               ))}

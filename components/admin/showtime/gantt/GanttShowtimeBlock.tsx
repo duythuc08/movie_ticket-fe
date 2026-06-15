@@ -40,10 +40,10 @@ const checkIsCrossDay = (startIso: string, endIso: string) => {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  SCHEDULED: "bg-blue-500 border-blue-600 text-white",
-  ONGOING:   "bg-emerald-500 border-emerald-600 text-white",
-  COMPLETED: "bg-slate-400 border-slate-500 text-white opacity-70",
-  CANCELLED: "bg-red-400 border-red-500 text-white opacity-80",
+  SCHEDULED:    "bg-blue-500 border-blue-600 text-white",
+  ONGOING:      "bg-emerald-500 border-emerald-600 text-white",
+  COMPLETED:    "bg-slate-400 border-slate-500 text-white opacity-70",
+  CANCELLED:    "bg-red-400 border-red-500 text-white opacity-80",
   FULLY_BOOKED: "bg-orange-400 border-orange-500 text-white",
 };
 
@@ -65,48 +65,71 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
 
   const isCrossDay = checkIsCrossDay(showtime.startTime, showtime.endTime);
   const statusStyle = STATUS_STYLE[showtime.showTimeStatus] ?? STATUS_STYLE.SCHEDULED;
+  const isScheduled = showtime.showTimeStatus === "SCHEDULED";
 
   const [isOpen, setIsOpen] = useState(false);
-  const blockRef = useRef<HTMLDivElement>(null);
   const hasDragged = useRef<boolean>(false);
 
+  const blockClassName = cn(
+    "absolute top-1 bottom-1 rounded-md text-xs px-2 py-1 overflow-hidden border shadow-md transition-all cursor-pointer hover:brightness-110 hover:shadow-lg",
+    statusStyle,
+    isCrossDay && "border-r-2 border-dashed border-white/70"
+  );
+  const blockStyle = { left: `${leftPercent}%`, width: `${widthPercent}%` };
+
+  const blockContent = (
+    <>
+      <div className="font-semibold truncate leading-tight">{showtime.movieTitle}</div>
+      <div className="text-[10px] opacity-90 mt-0.5 truncate">
+        {formatTime(showtime.startTime)} – {formatTime(showtime.endTime)}
+      </div>
+    </>
+  );
+
+  // Non-SCHEDULED: single action — click thẳng vào detail, không cần dropdown 1 item
+  if (!isScheduled) {
+    return (
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewDetail?.(showtime);
+        }}
+        className={blockClassName}
+        style={blockStyle}
+      >
+        {blockContent}
+      </div>
+    );
+  }
+
+  // SCHEDULED: dropdown với Xem chi tiết + Chỉnh sửa
   return (
     <DropdownMenu open={isOpen} onOpenChange={(v) => {
       if (hasDragged.current && v) return;
       setIsOpen(v);
     }}>
       <DropdownMenuTrigger asChild>
-    <div
-      ref={blockRef}
-      draggable={showtime.showTimeStatus === 'SCHEDULED'}
-      onDragStart={(e) => {
-        hasDragged.current = true;
-        if (showtime.showTimeStatus === 'SCHEDULED') {
-          e.dataTransfer.setData("text/plain", showtime.showTimeId.toString());
-        }
-      }}
-      onDragEnd={() => {
-        setTimeout(() => { hasDragged.current = false; }, 100);
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-      }}
-      className={cn(
-        "absolute top-1 bottom-1 rounded-md text-xs px-2 py-1 overflow-hidden border shadow-md transition-all cursor-pointer hover:brightness-110 hover:shadow-lg",
-        statusStyle,
-        isCrossDay && "border-r-2 border-dashed border-white/70"
-      )}
-      style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
-    >
-        <div className="font-semibold truncate leading-tight">{showtime.movieTitle}</div>
-        <div className="text-[10px] opacity-90 mt-0.5 truncate">
-          {formatTime(showtime.startTime)} – {formatTime(showtime.endTime)}
+        <div
+          draggable
+          onDragStart={(e) => {
+            hasDragged.current = true;
+            e.dataTransfer.setData("text/plain", showtime.showTimeId.toString());
+          }}
+          onDragEnd={() => {
+            setTimeout(() => { hasDragged.current = false; }, 100);
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          className={blockClassName}
+          style={blockStyle}
+        >
+          {blockContent}
         </div>
-      </div>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-40 z-[100] bg-white border-slate-200 text-slate-800" align="start">
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
@@ -116,18 +139,16 @@ export const GanttShowtimeBlock = ({ showtime, onViewDetail, onEdit }: GanttShow
           <Eye className="w-4 h-4 mr-2" />
           Xem chi tiết
         </DropdownMenuItem>
-        {showtime.showTimeStatus === "SCHEDULED" && (
-          <DropdownMenuItem 
-            className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.(showtime);
-            }}
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Chỉnh sửa
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(showtime);
+          }}
+        >
+          <Pencil className="w-4 h-4 mr-2" />
+          Chỉnh sửa
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

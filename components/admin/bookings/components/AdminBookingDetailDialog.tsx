@@ -97,7 +97,7 @@ export function AdminBookingDetailDialog({ order, open, onClose }: Props) {
                   <div key={g.type} className="flex justify-between items-center bg-admin-surface-2 p-3 rounded-lg border border-admin-border-2">
                     <div>
                       <span className="text-xs font-bold text-admin-accent mr-2 bg-admin-accent-sub px-2 py-0.5 rounded">{g.type}</span>
-                      <span className="text-sm font-mono text-admin-2">{g.seats.join(", ")}</span>
+                      <span className="text-sm  text-admin-2">{g.seats.join(", ")}</span>
                     </div>
                     <span className="text-sm font-semibold text-admin-2">{fc(g.total)}</span>
                   </div>
@@ -136,7 +136,7 @@ export function AdminBookingDetailDialog({ order, open, onClose }: Props) {
                   />
                 </div>
                 <p className="text-xs text-admin-4 uppercase tracking-widest mb-1">Mã QR</p>
-                <p className="text-sm font-mono font-bold text-admin-2">{order.qrCode}</p>
+                <p className="text-sm  font-bold text-admin-2">{order.qrCode}</p>
               </div>
             ) : (
               <div className="text-center text-admin-4">

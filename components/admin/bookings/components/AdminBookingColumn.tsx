@@ -38,7 +38,7 @@ export function createAdminBookingColumns(
       header: "Mã Đơn",
       cell: ({ row }) => {
         const shortId = String(row.original.orderId).slice(0, 8).toUpperCase();
-        return <span className="font-mono text-admin-2">#{shortId}</span>;
+        return <span className=" text-admin-2">#{shortId}</span>;
       },
     },
     {
@@ -64,7 +64,7 @@ export function createAdminBookingColumns(
     {
       accessorKey: "ticketCount",
       header: "Tổng vé",
-      cell: ({row}) => <span className="text-admin-3 whitespace-nowrap">{row.original.ticketCount}</span>
+      cell: ({ row }) => <span className="text-admin-3 whitespace-nowrap">{row.original.ticketCount}</span>
     },
     {
       accessorKey: "finalPrice",

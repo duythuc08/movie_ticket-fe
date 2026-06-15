@@ -30,7 +30,7 @@ export function createPersonColumns(
             accessorKey: "id",
             header: "ID",
             cell: ({ row }) => (
-                <span className="font-mono text-xs text-muted-foreground">#{row.original.id}</span>
+                <span className=" text-xs text-muted-foreground">#{row.original.id}</span>
             ),
         },
         {

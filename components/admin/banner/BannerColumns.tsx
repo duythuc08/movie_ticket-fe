@@ -14,9 +14,9 @@ const BANNER_TYPE_MAP: StatusMap = {
 };
 
 interface BannerColumnActions {
-  onViewDetail:   (banner: AdminBanner) => void;
-  onEdit:         (banner: AdminBanner) => void;
-  onDelete:       (banner: AdminBanner) => void;
+  onViewDetail: (banner: AdminBanner) => void;
+  onEdit: (banner: AdminBanner) => void;
+  onDelete: (banner: AdminBanner) => void;
   onToggleActive: (banner: AdminBanner) => void;
 }
 
@@ -28,7 +28,7 @@ export function createBannerColumns(
       accessorKey: "id",
       header: "ID",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className=" text-xs text-muted-foreground">
           #{row.original.id}
         </span>
       ),
@@ -72,7 +72,7 @@ export function createBannerColumns(
       accessorKey: "priority",
       header: ({ column }) => <ColumnHeader column={column} title="Ưu tiên" />,
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.priority}</span>
+        <span className=" text-sm">{row.original.priority}</span>
       ),
     },
     {

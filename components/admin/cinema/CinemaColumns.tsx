@@ -7,18 +7,18 @@ import type { StatusMap } from "@/components/shared";
 import { Eye, Pencil, Power, PowerOff } from "lucide-react";
 
 const CINEMA_OPERATIONAL_STATUS_MAP: StatusMap = {
-  OPERATIONAL:        { label: "Hoạt động", variant: "success"  },
-  TEMPORARILY_CLOSED: { label: "Tạm đóng",  variant: "warning"  },
+  OPERATIONAL: { label: "Hoạt động", variant: "success" },
+  TEMPORARILY_CLOSED: { label: "Tạm đóng", variant: "warning" },
 };
 
 const ENTITY_STATUS_MAP: StatusMap = {
-  ACTIVE:   { label: "Kích hoạt", variant: "success"   },
-  INACTIVE: { label: "Vô hiệu",   variant: "secondary" },
+  ACTIVE: { label: "Kích hoạt", variant: "success" },
+  INACTIVE: { label: "Vô hiệu", variant: "secondary" },
 };
 
 interface CinemaColumnActions {
-  onViewDetail:   (cinema: AdminCinema) => void;
-  onEdit:         (cinema: AdminCinema) => void;
+  onViewDetail: (cinema: AdminCinema) => void;
+  onEdit: (cinema: AdminCinema) => void;
   onToggleStatus: (cinema: AdminCinema) => void;
 }
 
@@ -30,7 +30,7 @@ export function createCinemaColumns(
       accessorKey: "cinemaId",
       header: "ID",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className=" text-xs text-muted-foreground">
           #{row.original.cinemaId}
         </span>
       ),
@@ -77,11 +77,11 @@ export function createCinemaColumns(
         return (
           <ActionMenu
             actions={[
-              { label: "Xem chi tiết", icon: Eye,     onClick: () => actions.onViewDetail(cinema) },
-              { label: "Chỉnh sửa",   icon: Pencil,   onClick: () => actions.onEdit(cinema) },
+              { label: "Xem chi tiết", icon: Eye, onClick: () => actions.onViewDetail(cinema) },
+              { label: "Chỉnh sửa", icon: Pencil, onClick: () => actions.onEdit(cinema) },
               {
-                label:   isActive ? "Vô hiệu hóa" : "Kích hoạt",
-                icon:    isActive ? PowerOff : Power,
+                label: isActive ? "Vô hiệu hóa" : "Kích hoạt",
+                icon: isActive ? PowerOff : Power,
                 onClick: () => actions.onToggleStatus(cinema),
                 variant: isActive ? "destructive" : "default",
               },
@@ -94,19 +94,19 @@ export function createCinemaColumns(
 }
 
 export const CINEMA_STATUS_OPTIONS: { value: CinemaStatus; label: string }[] = [
-  { value: "OPERATIONAL",        label: "Hoạt động" },
-  { value: "TEMPORARILY_CLOSED", label: "Tạm đóng"  },
+  { value: "OPERATIONAL", label: "Hoạt động" },
+  { value: "TEMPORARILY_CLOSED", label: "Tạm đóng" },
 ];
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   STANDARD: "Thường",
-  VIP:      "VIP",
-  IMAX:     "IMAX",
-  THREE_D:  "3D",
+  VIP: "VIP",
+  IMAX: "IMAX",
+  THREE_D: "3D",
 };
 
 export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
   OPERATIONAL: "Hoạt động",
   MAINTENANCE: "Bảo trì",
-  CLEANING:    "Vệ sinh",
+  CLEANING: "Vệ sinh",
 };

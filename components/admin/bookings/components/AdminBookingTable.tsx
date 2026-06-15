@@ -62,7 +62,7 @@ export function AdminBookingTable({ orders, onViewDetail, onCheckin }: Props) {
 
               return (
                 <tr key={order.orderId} className="hover:bg-admin-surface-3 transition-colors">
-                  <td className="px-4 py-3 font-mono text-admin-2">#{shortId}</td>
+                  <td className="px-4 py-3  text-admin-2">#{shortId}</td>
                   <td className="px-4 py-3 text-admin font-medium">
                     {order.fullName}
                   </td>
