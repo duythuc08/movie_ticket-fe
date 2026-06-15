@@ -28,7 +28,7 @@ export default function FoodSelectionPage() {
   useEffect(() => {
     const token = sessionStorage.getItem("token") ?? "";
     const cinemaId = bookingInfo?.cinemaId;
-    
+
     if (!cinemaId) {
       setLoadingProducts(false);
       return;
@@ -153,7 +153,7 @@ export default function FoodSelectionPage() {
             <div className="mb-4 bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-4">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground mb-1">Thời gian đặt vé</p>
-                <div className={`text-3xl font-black font-mono ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
+                <div className={`text-3xl font-black  ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
                   {minutes}:{seconds}
                 </div>
               </div>

@@ -35,6 +35,7 @@ export function QuickBookingBar() {
       movie: selectedMovie.title,
       movieDuration: selectedMovie.durationText,
       moviePoster: selectedMovie.poster,
+      cinemaId: selectedCinema.id,
       cinema: selectedCinema.name,
       location: selectedCinema.address,
       time: selectedSlot.startTime,

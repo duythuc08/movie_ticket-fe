@@ -23,7 +23,7 @@ function PaymentSuccessContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      const savedOrder = localStorage.getItem("pendingOrder");
+      const savedOrder = sessionStorage.getItem("pendingOrder");
 
       if (savedOrder) {
         try {
@@ -287,14 +287,14 @@ function PaymentSuccessContent() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                onClick={() => { localStorage.removeItem("pendingOrder"); router.push("/"); }}
+                onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/"); }}
                 variant="outline"
                 className="flex-1 gap-2 hover:-translate-y-0.5 transition-all"
               >
                 <Home className="w-4 h-4" /> Về trang chủ
               </Button>
               <Button
-                onClick={() => { localStorage.removeItem("pendingOrder"); router.push("/profile"); }}
+                onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/profile"); }}
                 className="flex-1 gap-2 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all"
               >
                 <Ticket className="w-4 h-4" /> Xem vé của tôi

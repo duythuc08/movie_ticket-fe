@@ -11,7 +11,7 @@ function PaymentFailContent() {
   const searchParams = useSearchParams();
   const [attemptedInfo] = useState<AttemptedOrderInfo | null>(() => {
     if (typeof window === "undefined") return null;
-    const saved = localStorage.getItem("pendingOrder");
+    const saved = sessionStorage.getItem("pendingOrder");
     if (!saved) return null;
     try {
       return JSON.parse(saved) as AttemptedOrderInfo;
@@ -35,7 +35,7 @@ function PaymentFailContent() {
   };
 
   const handleGoHome = () => {
-    localStorage.removeItem("pendingOrder");
+    sessionStorage.removeItem("pendingOrder");
     router.push("/");
   };
 

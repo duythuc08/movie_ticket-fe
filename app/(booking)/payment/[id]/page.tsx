@@ -12,12 +12,14 @@ import {
   clearBookingState,
   mergeBookingState,
 } from "@/components/booking/utils/bookingStorage";
-import { createPayment } from "@/components/booking/service/booking.service";
+import { createPayment, getApplicableVouchers } from "@/components/booking/service/booking.service";
 import {
   VoucherSelectDialog,
   estimateVoucherDiscount,
 } from "@/components/booking/VoucherSelectDialog";
 import { fetchMembershipTierByName } from "@/components/profile/service/user.service";
+import { userProfileService } from "@/services/userProfileService";
+import { getErrorMessage } from "@/lib/errors";
 import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import type { BookingState, MembershipTier, UserVoucher } from "@/types";
 import { formatCurrency } from "@/components/booking/utils/booking.utils";
@@ -26,7 +28,9 @@ export default function PaymentPage() {
   const router = useRouter();
   useParams<{ id: string }>();
 
-  const [bookingInfo, setBookingInfo] = useState<BookingState | null>(null);
+  const [bookingInfo] = useState<BookingState | null>(() =>
+    typeof window === "undefined" ? null : getBookingState()
+  );
 
   const [paymentMethod, setPaymentMethod] = useState("MOMO");
   const [loading, setLoading] = useState(false);
@@ -38,20 +42,24 @@ export default function PaymentPage() {
 
   // Voucher state
   const [appliedVoucher, setAppliedVoucher] = useState<UserVoucher | null>(null);
-  const [manualCode, setManualCode] = useState("");
+  const [manualCode, setManualCode] = useState<string>(() =>
+    typeof window === "undefined" ? "" : (getBookingState()?.promotionCode ?? "")
+  );
   const [isVoucherOpen, setIsVoucherOpen] = useState(false);
 
+  // Fix hydration
+  const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
-    const state = getBookingState();
-    if (!state) {
+    const timer = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!bookingInfo) {
       toast.error("Không có thông tin đặt vé. Vui lòng bắt đầu lại.");
       router.push("/");
-      return;
     }
-    setBookingInfo(state);
-    // Khôi phục mã đã áp dụng trước đó (nếu có)
-    if (state.promotionCode) setManualCode(state.promotionCode);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -113,13 +121,33 @@ export default function PaymentPage() {
     mergeBookingState({ promotionCode: code || undefined });
   };
 
-  const handleApplyManual = () => {
+  const handleApplyManual = async () => {
     const code = manualCode.trim().toUpperCase();
     if (!code) return;
-    setAppliedVoucher(null); // nhập tay không có data voucher để estimate
-    mergeBookingState({ promotionCode: code });
-    setManualCode(code);
-    toast.success(`Đã áp mã "${code}"`);
+
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // Vừa lưu vừa áp dụng
+      await userProfileService.claimPromotionByCode(token, code);
+      toast.success(`Lưu và áp dụng mã "${code}" thành công`);
+
+      // Fetch lại để lấy thông tin voucher mới nhất và tính toán discount
+      const data = await getApplicableVouchers(token, bookingInfo?.total || 0);
+      const newlyClaimed = data.find((v) => v.code === code);
+      if (newlyClaimed) {
+        setAppliedVoucher(newlyClaimed);
+      } else {
+        setAppliedVoucher(null);
+      }
+
+      mergeBookingState({ promotionCode: code });
+      setManualCode(code);
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: number } | null)?.code;
+      toast.error(getErrorMessage(errorCode, "Mã giảm giá không hợp lệ hoặc đã hết hạn."));
+    }
   };
 
   const handleRemoveCode = () => {
@@ -180,7 +208,7 @@ export default function PaymentPage() {
         };
 
         clearTimer();
-        localStorage.setItem("pendingOrder", JSON.stringify(orderData));
+        sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
         window.location.href = result.paymentUrl;
       } catch (err) {
         const error = err as Error;
@@ -197,7 +225,7 @@ export default function PaymentPage() {
         paymentMethod: "MOMO",
       };
       clearTimer();
-      localStorage.setItem("pendingOrder", JSON.stringify(pendingOrder));
+      sessionStorage.setItem("pendingOrder", JSON.stringify(pendingOrder));
       clearBookingState();
       router.push(`/payment-success/momo`);
     }
@@ -212,6 +240,10 @@ export default function PaymentPage() {
     acc[type].totalPrice += seat.price;
     return acc;
   }, {});
+
+  if (!isMounted) {
+    return null; // Tránh lỗi Hydration bằng cách không render nội dung SSR không khớp với CSR
+  }
 
   return (
     <div className="min-h-screen pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 pb-12 bg-background">
@@ -232,11 +264,10 @@ export default function PaymentPage() {
                 className="space-y-3"
               >
                 <label
-                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                    paymentMethod === "MOMO"
+                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${paymentMethod === "MOMO"
                       ? "border-[#d82d8b] bg-[#d82d8b]/8 shadow-lg shadow-[#d82d8b]/10"
                       : "border-border hover:border-[#d82d8b]/40 bg-secondary/30"
-                  }`}
+                    }`}
                 >
                   <RadioGroupItem value="MOMO" id="pm1" />
                   <div className="flex-1">
@@ -251,11 +282,10 @@ export default function PaymentPage() {
                 </label>
 
                 <label
-                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                    paymentMethod === "VNPAY"
+                  className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${paymentMethod === "VNPAY"
                       ? "border-[#0066b3] bg-[#0066b3]/8 shadow-lg shadow-[#0066b3]/10"
                       : "border-border hover:border-[#0066b3]/40 bg-secondary/30"
-                  }`}
+                    }`}
                 >
                   <RadioGroupItem value="VNPAY" id="pm2" />
                   <div className="flex-1">
@@ -279,33 +309,24 @@ export default function PaymentPage() {
               </div>
 
               {manualCode ? (
-                <div className="flex items-center justify-between rounded-xl border border-primary/50 bg-primary/5 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setIsVoucherOpen(true)}
+                  className="w-full flex items-center justify-between rounded-xl border border-primary/50 bg-primary/5 px-4 py-3 text-left hover:bg-primary/10 transition-colors cursor-pointer"
+                >
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Đã áp dụng</p>
-                    <code className="font-bold font-mono text-primary text-sm">{manualCode}</code>
+                    <code className="font-bold text-primary text-sm">{manualCode}</code>
                     {voucherDiscount > 0 && (
                       <p className="text-xs text-emerald-500 mt-0.5">
                         Tiết kiệm ~{formatCurrency(voucherDiscount)}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsVoucherOpen(true)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Đổi
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemoveCode}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    >
-                      <X size={14} />
-                    </button>
+                  <div className="text-xs text-primary hover:underline">
+                    Nhấn để đổi
                   </div>
-                </div>
+                </button>
               ) : (
                 <div className="space-y-3">
                   <div className="flex gap-2">
@@ -345,7 +366,7 @@ export default function PaymentPage() {
               <div className="mb-4 bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-4">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">Thời gian đặt vé</p>
-                  <div className={`text-3xl font-black font-mono ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
+                  <div className={`text-3xl font-black  ${isUrgent ? "text-destructive animate-pulse" : "text-primary"}`}>
                     {minutes}:{seconds}
                   </div>
                 </div>
@@ -358,120 +379,122 @@ export default function PaymentPage() {
               </div>
 
               <div className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 shadow-xl shadow-black/10">
-              <div className="flex mb-5 gap-3">
-                {bookingInfo?.moviePoster && (
-                  <img
-                    src={bookingInfo.moviePoster}
-                    alt="Poster phim"
-                    className="w-16 h-24 rounded-xl object-cover flex-shrink-0 border border-border shadow-md"
-                  />
-                )}
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold leading-tight text-card-foreground line-clamp-2 mb-1">
-                    {bookingInfo?.movie}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {bookingInfo?.cinema}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {bookingInfo?.date}
-                  </p>
-                  <p className="text-xs font-semibold text-foreground">
-                    {bookingInfo?.time}
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-dashed border-border pt-4 mb-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                  Vé đã đặt
-                </p>
-                {Object.values(groupedSeats).map((group) => (
-                  <div
-                    key={group.seatType}
-                    className="flex justify-between items-center text-sm mb-1.5"
-                  >
-                    <span className="text-muted-foreground">
-                      {group.count}× {group.seatType}
-                    </span>
-                    <span className="font-medium">
-                      {formatCurrency(group.totalPrice)}
-                    </span>
+                <div className="flex mb-5 gap-3">
+                  {bookingInfo?.moviePoster && (
+                    <img
+                      src={bookingInfo.moviePoster}
+                      alt="Poster phim"
+                      className="w-16 h-24 rounded-xl object-cover flex-shrink-0 border border-border shadow-md"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold leading-tight text-card-foreground line-clamp-2 mb-1">
+                      {bookingInfo?.movie}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {bookingInfo?.cinema}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {bookingInfo?.date}
+                    </p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {bookingInfo?.time}
+                    </p>
                   </div>
-                ))}
-                <p className="text-xs mt-2 text-muted-foreground">
-                  Ghế:{" "}
-                  <span className="text-foreground font-medium">
-                    {(bookingInfo?.seats || [])
-                      .map((s) => `${s.seatRow}${s.seatNumber}`)
-                      .join(", ")}
-                  </span>
-                </p>
-              </div>
+                </div>
 
-              {bookingInfo?.foods && bookingInfo.foods.length > 0 && (
-                <div className="mb-4">
+                <div className="border-t border-dashed border-border pt-4 mb-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                    Đồ ăn &amp; Nước
+                    Vé đã đặt
                   </p>
-                  {bookingInfo.foods.map((item) => (
+                  {Object.values(groupedSeats).map((group) => (
                     <div
-                      key={item.id}
+                      key={group.seatType}
                       className="flex justify-between items-center text-sm mb-1.5"
                     >
-                      <span className="flex-1 pr-2 text-muted-foreground">
-                        {item.qty}× {item.name}
+                      <span className="text-muted-foreground">
+                        {group.count}× {group.seatType}
                       </span>
-                      <span className="whitespace-nowrap font-medium">
-                        {formatCurrency(item.totalPrice)}
+                      <span className="font-medium">
+                        {formatCurrency(group.totalPrice)}
                       </span>
                     </div>
                   ))}
+                  <p className="text-xs mt-2 text-muted-foreground">
+                    Ghế:{" "}
+                    <span className="text-foreground font-medium">
+                      {(bookingInfo?.seats || [])
+                        .map((s) => `${s.seatRow}${s.seatNumber}`)
+                        .join(", ")}
+                    </span>
+                  </p>
                 </div>
-              )}
 
-              <div className="border-t border-dashed border-border pt-4 space-y-2.5 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tạm tính</span>
-                  <span className="font-medium">
-                    {formatCurrency(bookingInfo?.total || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm text-emerald-500">
-                  <span>
-                    Giảm giá ({isTierLoading ? "..." : discountInfo.label})
-                  </span>
-                  <span>−{formatCurrency(discountInfo.amount)}</span>
-                </div>
-                {manualCode && (
-                  <div className="flex justify-between text-sm text-emerald-500">
-                    <span className="truncate max-w-[60%]">
-                      Mã KM ({manualCode})
-                    </span>
-                    <span>
-                      {voucherDiscount > 0
-                        ? `−~${formatCurrency(voucherDiscount)}`
-                        : "−..."}
-                    </span>
+                {bookingInfo?.foods && bookingInfo.foods.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                      Đồ ăn &amp; Nước
+                    </p>
+                    {bookingInfo.foods.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center text-sm mb-1.5"
+                      >
+                        <span className="flex-1 pr-2 text-muted-foreground">
+                          {item.qty}× {item.name}
+                        </span>
+                        <span className="whitespace-nowrap font-medium">
+                          {formatCurrency(item.totalPrice)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
-                  <span>Tổng cộng</span>
-                  <span className="text-primary">
-                    {formatCurrency(finalPrice)}
-                  </span>
-                </div>
-              </div>
 
-              <Button
-                type="submit"
-                className="w-full py-6 text-base font-black bg-primary hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all cursor-pointer"
-                disabled={loading || isTierLoading}
-              >
-                {loading ? "ĐANG XỬ LÝ..." : "THANH TOÁN NGAY"}
-              </Button>
+                <div className="border-t border-dashed border-border pt-4 space-y-2.5 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tạm tính</span>
+                    <span className="font-medium">
+                      {formatCurrency(bookingInfo?.total || 0)}
+                    </span>
+                  </div>
+                  {discountInfo.amount > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-500">
+                      <span>
+                        Giảm giá ({isTierLoading ? "..." : discountInfo.label})
+                      </span>
+                      <span>−{formatCurrency(discountInfo.amount)}</span>
+                    </div>
+                  )}
+                  {manualCode && (
+                    <div className="flex justify-between text-sm text-emerald-500">
+                      <span className="truncate max-w-[60%]">
+                        Mã KM ({manualCode})
+                      </span>
+                      <span>
+                        {voucherDiscount > 0
+                          ? `−${formatCurrency(voucherDiscount)}`
+                          : "−..."}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
+                    <span>Tổng cộng</span>
+                    <span className="text-primary">
+                      {formatCurrency(finalPrice)}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full py-6 text-base font-black bg-primary hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all cursor-pointer"
+                  disabled={loading || isTierLoading}
+                >
+                  {loading ? "ĐANG XỬ LÝ..." : "THANH TOÁN NGAY"}
+                </Button>
+              </div>
             </div>
-          </div>
           </div>
         </form>
 
