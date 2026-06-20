@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { AdminMovie } from "@/types/admin.type";
 import { StatusBadge, ActionMenu, ColumnHeader } from "@/components/shared";
 import type { StatusMap } from "@/components/shared";
-import { Eye, Pencil, Power, PowerOff } from "lucide-react";
+import { Eye, Pencil, Power, PowerOff, Ban, RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 const MOVIE_STATUS_MAP: StatusMap = {
@@ -22,6 +22,8 @@ interface MovieColumnActions {
   onViewDetail:   (movie: AdminMovie) => void;
   onEdit:         (movie: AdminMovie) => void;
   onToggleStatus: (movie: AdminMovie) => void;
+  onStop:         (movie: AdminMovie) => void;
+  onReplay:       (movie: AdminMovie) => void;
 }
 
 export function createMovieColumns(
@@ -110,11 +112,18 @@ export function createMovieColumns(
       cell: ({ row }) => {
         const movie = row.original;
         const isActive = movie.entityStatus === "ACTIVE";
+        const isStopped = movie.movieStatus === "STOPPED";
         return (
           <ActionMenu
             actions={[
               { label: "Xem chi tiết", icon: Eye,    onClick: () => actions.onViewDetail(movie) },
               { label: "Chỉnh sửa",   icon: Pencil,  onClick: () => actions.onEdit(movie) },
+              {
+                label: isStopped ? "Chiếu lại" : "Tạm dừng",
+                icon: isStopped ? RotateCcw : Ban,
+                onClick: () => isStopped ? actions.onReplay(movie) : actions.onStop(movie),
+                variant: isStopped ? "default" : "destructive",
+              },
               {
                 label: isActive ? "Vô hiệu hóa" : "Kích hoạt",
                 icon:  isActive ? PowerOff : Power,

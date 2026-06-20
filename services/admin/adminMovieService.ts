@@ -88,6 +88,20 @@ export async function inactivateMovie(
   return adminPutEmpty(token, `/admin/movies/${movieId}/inactivate`);
 }
 
+export async function stopAdminMovie(
+  token: string,
+  movieId: number
+): Promise<void> {
+  return adminPost<void>(token, `/admin/movies/${movieId}/stop`, {});
+}
+
+export async function replayAdminMovie(
+  token: string,
+  movieId: number
+): Promise<void> {
+  return adminPost<void>(token, `/admin/movies/${movieId}/replay`, {});
+}
+
 export async function toggleMovieEntityStatus(
   token: string,
   movieId: number,

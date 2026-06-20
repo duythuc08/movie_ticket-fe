@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/components/auth/hooks/use-auth";
+import { apiFetch } from "@/lib/fetchApi";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -19,6 +20,47 @@ export function Navbar() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const [showingRes, comingSoonRes] = await Promise.all([
+          apiFetch("/movies/showing").then(res => res.json()),
+          apiFetch("/movies/comingSoon").then(res => res.json())
+        ]);
+        
+        const showingMovies = showingRes.result || [];
+        const comingSoonMovies = comingSoonRes.result || [];
+        
+        const allMovies = [...showingMovies, ...comingSoonMovies];
+        
+        const uniqueMoviesMap = new Map();
+        allMovies.forEach(m => uniqueMoviesMap.set(m.movieId, m));
+        const uniqueMovies = Array.from(uniqueMoviesMap.values());
+        
+        const query = searchQuery.toLowerCase().trim();
+        const filtered = uniqueMovies.filter((m: any) => 
+          m.title?.toLowerCase().includes(query)
+        );
+        
+        setSearchResults(filtered.slice(0, 5));
+      } catch (err) {
+        console.error("Lỗi khi tìm kiếm phim", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -36,6 +78,7 @@ export function Navbar() {
       else if (currentScrollY > lastScrollY) {
         setIsVisible(false);
         setShowUserMenu(false);
+        setShowSearch(false);
       } else setIsVisible(true);
       setLastScrollY(currentScrollY);
     };
@@ -80,18 +123,60 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <div className="flex items-center gap-1">
+            <div className="relative flex items-center gap-1">
               {showSearch && (
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm phim..."
-                  className="hidden sm:block h-9 w-48 lg:w-64 rounded-full bg-white/10 border border-white/20 px-4 text-base text-white placeholder:text-white/50 focus:outline-none focus:border-primary focus:bg-white/15 transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Tìm kiếm phim..."
+                    autoFocus
+                    className="hidden sm:block h-9 w-48 lg:w-72 rounded-full bg-white/10 border border-white/20 px-4 text-base text-white placeholder:text-white/50 focus:outline-none focus:border-primary focus:bg-white/15 transition-all"
+                  />
+                  
+                  {searchQuery.trim() !== "" && (
+                    <div className="absolute top-full mt-2 left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl z-50">
+                      {isSearching ? (
+                        <div className="p-4 text-sm text-white/50 text-center">Đang tìm kiếm...</div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="flex flex-col max-h-[300px] overflow-y-auto">
+                          {searchResults.map((m) => (
+                            <button
+                              key={m.movieId}
+                              onClick={() => {
+                                setShowSearch(false);
+                                setSearchQuery("");
+                                router.push(`/movie/${m.movieId}`);
+                              }}
+                              className="flex items-center gap-3 p-2 hover:bg-white/10 transition-colors text-left"
+                            >
+                              {m.posterUrl ? (
+                                <img src={m.posterUrl} alt={m.title} className="w-10 h-14 object-cover rounded bg-white/5" />
+                              ) : (
+                                <div className="w-10 h-14 rounded bg-white/10" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">{m.title}</p>
+                                <p className="text-xs text-white/50 mt-0.5">
+                                  {m.movieStatus === 'SHOWING' ? 'Đang chiếu' : m.movieStatus === 'COMING_SOON' ? 'Sắp chiếu' : ''}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-sm text-white/50 text-center">Không tìm thấy phim.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               <button
-                onClick={() => setShowSearch(!showSearch)}
+                onClick={() => {
+                  setShowSearch(!showSearch);
+                  if (showSearch) setSearchQuery("");
+                }}
                 className="cursor-pointer p-2 hover:text-primary transition-colors rounded-full hover:bg-white/10 text-white shrink-0"
               >
                 <Search className="w-5 h-5 sm:w-5 sm:h-5" />

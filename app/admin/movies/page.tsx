@@ -11,6 +11,8 @@ import {
   createAdminMovie,
   updateAdminMovie,
   toggleMovieEntityStatus,
+  stopAdminMovie,
+  replayAdminMovie,
 } from "@/services/admin/adminMovieService";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 import { DataTable, PageHeader } from "@/components/shared";
@@ -123,11 +125,35 @@ export default function AdminMoviesPage() {
     }
   }
 
+  async function handleStopMovie(movie: AdminMovie) {
+    if (!token) return;
+    try {
+      await stopAdminMovie(token, movie.movieId);
+      toast.success(`Đã tạm dừng phim "${movie.title}"`);
+      loadMovies();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tạm dừng phim");
+    }
+  }
+
+  async function handleReplayMovie(movie: AdminMovie) {
+    if (!token) return;
+    try {
+      await replayAdminMovie(token, movie.movieId);
+      toast.success(`Đã chiếu lại phim "${movie.title}"`);
+      loadMovies();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể chiếu lại phim");
+    }
+  }
+
   const columns = useMemo(
     () => createMovieColumns({
       onViewDetail:   handleViewDetail,
       onEdit:         handleEditDirect,
       onToggleStatus: handleToggleStatus,
+      onStop:         handleStopMovie,
+      onReplay:       handleReplayMovie,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [token]

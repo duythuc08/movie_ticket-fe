@@ -10,6 +10,7 @@ import { useMovieDetail } from "@/components/movie/hooks/use-movie-detail";
 import { getRatingColor, formatReleaseDate } from "@/components/movie/utils/movie.utils";
 import { AGE_RATING_LABELS } from "@/components/movie/constants/movie.constants";
 import { MovieReview } from "@/components/movie/components/MovieReview";
+import { toast } from "sonner";
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,16 @@ export default function MovieDetailsPage() {
   useEffect(() => {
     fetchMovieBanner(id).then(setBannerUrl).catch(() => { });
   }, [id]);
+
+  useEffect(() => {
+    if (!loading && movie) {
+      if (window.location.hash === "#reviews") {
+        setTimeout(() => {
+          document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [loading, movie]);
 
   const handleWatchTrailer = () => {
     trailerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -141,8 +152,27 @@ export default function MovieDetailsPage() {
                 >
                   <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Xem trailer
                 </button>
-                <button className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-white/15 hover:bg-white/25 hover:-translate-y-0.5 text-white rounded-xl font-semibold transition-all duration-200 border border-white/30 backdrop-blur-sm">
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" /> Share
+                <button 
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-white/15 hover:bg-white/25 hover:-translate-y-0.5 text-white rounded-xl font-semibold transition-all duration-200 border border-white/30 backdrop-blur-sm"
+                  onClick={async () => {
+                    const url = window.location.href;
+                    try {
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: movie.title,
+                          text: `Cùng xem phim ${movie.title} nhé!`,
+                          url: url,
+                        });
+                      } else {
+                        await navigator.clipboard.writeText(url);
+                        toast.success("Đã copy link phim vào clipboard!");
+                      }
+                    } catch (err) {
+                      console.error("Lỗi khi chia sẻ:", err);
+                    }
+                  }}
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" /> Chia sẻ
                 </button>
               </div>
 
@@ -233,7 +263,7 @@ export default function MovieDetailsPage() {
       </div>
 
       {/* Reviews */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
+      <div id="reviews" className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1920px] mx-auto border-t border-border/10">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
           <MessageSquare className="w-5 h-5 text-yellow-400" /> Cộng đồng đánh giá
         </h2>
