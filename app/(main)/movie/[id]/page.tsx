@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MessageSquare, Play, Share2 } from "lucide-react";
 import { Showtimes } from "@/components/movie/components/MovieShowTime";
@@ -11,26 +11,65 @@ import { getRatingColor, formatReleaseDate } from "@/components/movie/utils/movi
 import { AGE_RATING_LABELS } from "@/components/movie/constants/movie.constants";
 import { MovieReview } from "@/components/movie/components/MovieReview";
 import { toast } from "sonner";
+import { logActivity } from "@/components/activity/service/activity.service";
+import { useAuth } from "@/components/auth/hooks/use-auth";
+
+// ── YouTube IFrame API helpers ────────────────────────────────────────────────
+
+function extractYouTubeId(url: string): string | null {
+  return url.match(/\/embed\/([^?&]+)/)?.[1] ?? null;
+}
+
+let ytApiLoading = false;
+const ytReadyCallbacks: (() => void)[] = [];
+
+function loadYouTubeApi(onReady: () => void) {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as Record<string, unknown>;
+  if ((w.YT as { Player?: unknown })?.Player) { onReady(); return; }
+  ytReadyCallbacks.push(onReady);
+  if (ytApiLoading) return;
+  ytApiLoading = true;
+  const prev = w.onYouTubeIframeAPIReady as (() => void) | undefined;
+  w.onYouTubeIframeAPIReady = () => {
+    prev?.();
+    ytReadyCallbacks.forEach((cb) => cb());
+    ytReadyCallbacks.length = 0;
+  };
+  const s = document.createElement("script");
+  s.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(s);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function MovieDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const { movie, showtimes, showtimeDates, selectedDateIndex, loading, selectDate } =
     useMovieDetail(id);
 
   const [bannerUrl, setBannerUrl] = useState("");
-  const [autoplay, setAutoplay] = useState(false);
+  const [autoplay, setAutoplay] = useState(false); // only used for non-auth iframe fallback
   const [isExpanded, setIsExpanded] = useState(false);
-  const trailerRef = useRef<HTMLDivElement>(null);
 
-  // Derive trailerSrc — không cần state riêng, không cần effect
-  const trailerSrc = movie?.trailerUrl
-    ? autoplay
-      ? movie.trailerUrl.includes("?")
-        ? `${movie.trailerUrl}&autoplay=1`
-        : `${movie.trailerUrl}?autoplay=1`
-      : movie.trailerUrl
+  const trailerRef = useRef<HTMLDivElement>(null);
+  const trailerDivRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ytPlayerRef = useRef<any>(null);
+  const maxWatchPctRef = useRef(0);
+  const hasPlayedRef = useRef(false);
+  const wantsAutoplayRef = useRef(false);
+  const viewStartRef = useRef<number | null>(null);
+
+  // Non-auth iframe src (with or without autoplay)
+  const trailerBaseSrc = movie?.trailerUrl ?? "";
+  const trailerAutoplaySrc = trailerBaseSrc
+    ? trailerBaseSrc.includes("?")
+      ? `${trailerBaseSrc}&autoplay=1`
+      : `${trailerBaseSrc}?autoplay=1`
     : "";
 
   useEffect(() => {
@@ -38,19 +77,128 @@ export default function MovieDetailsPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!loading && movie) {
-      if (window.location.hash === "#reviews") {
-        setTimeout(() => {
-          document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      }
+    if (!loading && movie && window.location.hash === "#reviews") {
+      setTimeout(() => document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth" }), 100);
     }
   }, [loading, movie]);
 
+  // ── VIEW_DETAILS: time-on-page ────────────────────────────────────────────
+  useEffect(() => {
+    if (!movie || !isAuthenticated) return;
+    viewStartRef.current = Date.now();
+    const movieId = movie.id;
+    return () => {
+      if (viewStartRef.current) {
+        const duration_sec = Math.round((Date.now() - viewStartRef.current) / 1000);
+        if (duration_sec >= 5) {
+          logActivity({ actionType: "VIEW_DETAILS", movieId, metadata: { duration_sec } });
+        }
+        viewStartRef.current = null;
+      }
+    };
+  }, [movie?.id, isAuthenticated]);
+
+  // ── WATCH_TRAILER: YT Player for authenticated users ─────────────────────
+  useEffect(() => {
+    if (!movie || !isAuthenticated) return;
+    const videoId = extractYouTubeId(movie.trailerUrl);
+    if (!videoId) return;
+
+    const movieId = movie.id;
+    maxWatchPctRef.current = 0;
+    hasPlayedRef.current = false;
+
+    function initPlayer() {
+      const w = window as unknown as Record<string, unknown>;
+      const YT = w.YT as { Player: new (el: HTMLElement, cfg: unknown) => unknown } | undefined;
+      if (!trailerDivRef.current || !YT?.Player) return;
+
+      const wrapper = document.createElement("div");
+      trailerDivRef.current.innerHTML = "";
+      trailerDivRef.current.appendChild(wrapper);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ytPlayerRef.current = new YT.Player(wrapper as unknown as HTMLElement, {
+        videoId,
+        width: "100%",
+        height: "100%",
+        playerVars: { rel: 0 },
+        events: {
+          onReady() {
+            if (wantsAutoplayRef.current) {
+              ytPlayerRef.current?.playVideo();
+            }
+          },
+          onStateChange(e: { data: number }) {
+            const player = ytPlayerRef.current;
+            if (!player) return;
+            if (e.data === 1) hasPlayedRef.current = true; // started playing
+            const dur: number = player.getDuration?.() ?? 0;
+            const cur: number = player.getCurrentTime?.() ?? 0;
+            if (dur > 0) {
+              maxWatchPctRef.current = Math.max(maxWatchPctRef.current, (cur / dur) * 100);
+            }
+            if (e.data === 0) maxWatchPctRef.current = 100; // ended
+          },
+        },
+      });
+    }
+
+    loadYouTubeApi(initPlayer);
+
+    return () => {
+      const player = ytPlayerRef.current;
+      if (player) {
+        try {
+          if (hasPlayedRef.current) {
+            const dur: number = player.getDuration?.() ?? 0;
+            const cur: number = player.getCurrentTime?.() ?? 0;
+            if (dur > 0) {
+              maxWatchPctRef.current = Math.max(maxWatchPctRef.current, (cur / dur) * 100);
+            }
+            logActivity({
+              actionType: "WATCH_TRAILER",
+              movieId,
+              metadata: {
+                watch_pct: parseFloat(maxWatchPctRef.current.toFixed(1)),
+                ...(dur > 0 ? { duration_sec: Math.round(dur) } : {}),
+              },
+            });
+          }
+          player.destroy();
+        } catch { }
+        ytPlayerRef.current = null;
+      }
+      if (trailerDivRef.current) trailerDivRef.current.innerHTML = "";
+      wantsAutoplayRef.current = false;
+    };
+  }, [movie?.id, isAuthenticated]);
+
   const handleWatchTrailer = () => {
     trailerRef.current?.scrollIntoView({ behavior: "smooth" });
-    setAutoplay(true);
+    if (isAuthenticated) {
+      wantsAutoplayRef.current = true;
+      ytPlayerRef.current?.playVideo();
+    } else {
+      setAutoplay(true);
+    }
   };
+
+  // ── VIEW_SHOWTIMES: log when user explicitly picks a future date ─────────
+  // index 0 = today (default view), skip — only future dates signal booking intent
+  const handleSelectDate = useCallback(
+    (index: number) => {
+      selectDate(index);
+      if (index === 0 || !movie || !isAuthenticated) return;
+      const d = showtimeDates[index]?.date;
+      logActivity({
+        actionType: "VIEW_SHOWTIMES",
+        movieId: movie.id,
+        metadata: d ? { selected_date: d.toISOString().split("T")[0] } : undefined,
+      });
+    },
+    [selectDate, movie, isAuthenticated, showtimeDates]
+  );
 
   if (loading || !movie) {
     return (
@@ -130,8 +278,9 @@ export default function MovieDetailsPage() {
 
               <div className="mb-4 sm:mb-6">
                 <p
-                  className={`text-sm sm:text-base lg:text-lg text-white/90 transition-all duration-300 ${!isExpanded ? "line-clamp-2" : ""
-                    }`}
+                  className={`text-sm sm:text-base lg:text-lg text-white/90 transition-all duration-300 ${
+                    !isExpanded ? "line-clamp-2" : ""
+                  }`}
                 >
                   {movie.synopsis}
                 </p>
@@ -152,21 +301,28 @@ export default function MovieDetailsPage() {
                 >
                   <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Xem trailer
                 </button>
-                <button 
+                <button
                   className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-white/15 hover:bg-white/25 hover:-translate-y-0.5 text-white rounded-xl font-semibold transition-all duration-200 border border-white/30 backdrop-blur-sm"
                   onClick={async () => {
                     const url = window.location.href;
+                    let channel = "clipboard";
                     try {
                       if (navigator.share) {
                         await navigator.share({
                           title: movie.title,
                           text: `Cùng xem phim ${movie.title} nhé!`,
-                          url: url,
+                          url,
                         });
+                        channel = "native";
                       } else {
                         await navigator.clipboard.writeText(url);
                         toast.success("Đã copy link phim vào clipboard!");
                       }
+                      logActivity({
+                        actionType: "SHARE_MOVIE",
+                        movieId: movie.id,
+                        metadata: { channel },
+                      });
                     } catch (err) {
                       console.error("Lỗi khi chia sẻ:", err);
                     }
@@ -232,13 +388,19 @@ export default function MovieDetailsPage() {
         <div className="max-w-5xl mx-auto">
           <h2 className="mb-6 text-2xl font-bold">Trailer</h2>
           <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
-            <iframe
-              src={trailerSrc}
-              width="100%"
-              height="100%"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-            />
+            {isAuthenticated ? (
+              // Auth users: YT Player (tracks any play — button click OR direct click on player)
+              <div ref={trailerDivRef} className="w-full h-full" />
+            ) : (
+              // Non-auth users: plain iframe fallback
+              <iframe
+                src={autoplay ? trailerAutoplaySrc : trailerBaseSrc}
+                width="100%"
+                height="100%"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              />
+            )}
           </div>
         </div>
       </div>
@@ -249,7 +411,7 @@ export default function MovieDetailsPage() {
           data={currentShowtimes}
           days={showtimeDates}
           selectedDate={selectedDateIndex}
-          onSelectDate={selectDate}
+          onSelectDate={handleSelectDate}
           onSelect={(bookingInfo) => {
             saveBookingState({
               movie: movie.title,

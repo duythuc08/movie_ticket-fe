@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/components/auth/hooks/use-auth";
 import { apiFetch } from "@/lib/fetchApi";
+import { logActivity } from "@/components/activity/service/activity.service";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -145,8 +146,14 @@ export function Navbar() {
                             <button
                               key={m.movieId}
                               onClick={() => {
+                                const keyword = searchQuery;
                                 setShowSearch(false);
                                 setSearchQuery("");
+                                logActivity({
+                                  actionType: "SEARCH",
+                                  movieId: m.movieId,
+                                  metadata: { keyword },
+                                });
                                 router.push(`/movie/${m.movieId}`);
                               }}
                               className="flex items-center gap-3 p-2 hover:bg-white/10 transition-colors text-left"
