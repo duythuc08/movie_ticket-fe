@@ -120,6 +120,7 @@ export interface FoodDetail {
 }
 
 export interface BookingState {
+  movieId?: number;
   movie?: string;
   movieDuration?: string;
   moviePoster?: string;

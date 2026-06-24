@@ -414,6 +414,7 @@ export default function MovieDetailsPage() {
           onSelectDate={handleSelectDate}
           onSelect={(bookingInfo) => {
             saveBookingState({
+              movieId: movie.id,
               movie: movie.title,
               movieDuration: movie.duration,
               moviePoster: movie.poster,

@@ -32,6 +32,7 @@ export function QuickBookingBar() {
   const handleBuyTicket = () => {
     if (!canBook || !selectedSlot || !selectedMovie || !selectedCinema || !selectedDate) return;
     saveBookingState({
+      movieId: selectedMovie.id,
       movie: selectedMovie.title,
       movieDuration: selectedMovie.durationText,
       moviePoster: selectedMovie.poster,

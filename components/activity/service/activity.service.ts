@@ -8,7 +8,8 @@ export type ActionType =
   | "VIEW_SHOWTIMES"
   | "SEARCH"
   | "SHARE_MOVIE"
-  | "SKIP_RECOMMENDATION";
+  | "SKIP_RECOMMENDATION"
+  | "ABANDON_SEAT_SELECTION";
 
 export interface ActivityPayload {
   actionType: ActionType;

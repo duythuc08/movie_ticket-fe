@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
 import { fetchSeatSelection } from "@/components/booking/service/booking.service";
+import { logActivity } from "@/components/activity/service/activity.service";
 import type { SeatShowTime, SeatDetail, SuggestedSeat } from "@/types";
 
 import { SeatMap } from "@/components/booking/components/SeatMap";
@@ -22,6 +23,8 @@ export default function SeatSelectionPage() {
   const bookingInfo = getBookingState() ?? {};
 
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
+  const selectedSeatsRef = useRef<number[]>([]);
+  const proceededRef = useRef(false);
   const [seatData, setSeatData] = useState<Record<string, SeatShowTime[]>>({});
   const [seatPrices, setSeatPrices] = useState<Record<string, number>>({});
   const [suggestedSeats, setSuggestedSeats] = useState<SuggestedSeat[]>([]);
@@ -78,6 +81,20 @@ export default function SeatSelectionPage() {
   const isSeatOccupied = (seat: SeatShowTime) => seat.seatShowTimeStatus !== "AVAILABLE";
   const isSeatSelected = (seatId: number) => selectedSeats.includes(seatId);
 
+  // sync ref với state để cleanup effect đọc được giá trị mới nhất
+  useEffect(() => { selectedSeatsRef.current = selectedSeats; }, [selectedSeats]);
+
+  // log ABANDON_SEAT_SELECTION khi user rời trang mà chưa chọn ghế nào
+  useEffect(() => {
+    const movieId = bookingInfo.movieId;
+    return () => {
+      if (!proceededRef.current && selectedSeatsRef.current.length > 0 && movieId) {
+        logActivity({ actionType: "ABANDON_SEAT_SELECTION", movieId });
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleSeat = (seat: SeatShowTime) => {
     if (isSeatOccupied(seat)) return;
     const seatsToToggle = [seat.seatId];
@@ -111,6 +128,7 @@ export default function SeatSelectionPage() {
 
   const handleGoToFoods = () => {
     if (selectedSeats.length === 0) return;
+    proceededRef.current = true;
     const selectedSeatDetails: SeatDetail[] = Object.values(seatData)
       .flat()
       .filter((s) => selectedSeats.includes(s.seatId))
