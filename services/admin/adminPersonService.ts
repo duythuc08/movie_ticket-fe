@@ -2,12 +2,14 @@ import type {
   AdminPerson,
   ApiPagedResult,
   PersonCreatePayload,
+  PersonUpdatePayload,
   PersonListQuery,
   EntityStatus,
 } from "@/types/admin.type";
 import {
   adminGet,
   adminPost,
+  adminPut,
   adminPutEmpty,
   buildFilterString,
 } from "./adminApiClient";
@@ -42,7 +44,9 @@ export async function fetchPersonsByRoleForSelect(
     "/admin/persons",
     { page: 0, size: 999, sort: "name,asc" }
   );
-  return result.content.filter((p) => p.movieRole === movieRole);
+  return result.content.filter(
+    (p) => !p.movieRole?.length || p.movieRole.includes(movieRole)
+  );
 }
 
 export async function fetchPersonById(
@@ -57,6 +61,14 @@ export async function createPerson(
   payload: PersonCreatePayload
 ): Promise<AdminPerson> {
   return adminPost<AdminPerson>(token, "/admin/persons", payload);
+}
+
+export async function updatePerson(
+  token: string,
+  personId: number,
+  payload: PersonUpdatePayload
+): Promise<AdminPerson> {
+  return adminPut<AdminPerson>(token, `/admin/persons/${personId}`, payload);
 }
 
 export async function activatePerson(

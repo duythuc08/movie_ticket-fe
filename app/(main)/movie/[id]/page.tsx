@@ -251,7 +251,7 @@ export default function MovieDetailsPage() {
             </div>
 
             <div className="flex-1 text-white">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl mb-3 sm:mb-4 font-bold drop-shadow-lg">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl mb-3 sm:mb-4 font-bold drop-shadow-lg">
                 {movie.title}
               </h1>
 

@@ -52,6 +52,7 @@ export function PersonFormDialog({
 
     return (
         <AdminFormDialog
+            key={person?.id ?? "create"}
             open={open}
             onOpenChange={(isOpen) => {
                 if (!isOpen) setImageSrc(null);
@@ -63,7 +64,7 @@ export function PersonFormDialog({
             defaultValues={{
                 name: person?.name ?? "",
                 avatarUrl: person?.avatarUrl ?? "",
-                movieRole: person?.movieRole ?? "ACTOR",
+                movieRole: person?.movieRole ?? ["ACTOR"],
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
@@ -184,59 +185,67 @@ export function PersonFormDialog({
 
                     <div className="space-y-2">
                         <Label className="text-sm font-semibold text-foreground">
-                            Vai trò chính trong đoàn phim <span className="text-destructive">*</span>
+                            Vai trò trong đoàn phim <span className="text-destructive">*</span>
                         </Label>
 
                         <Controller
                             name="movieRole"
                             control={form.control}
-                            render={({ field }) => (
-                                <div className="grid grid-cols-2 gap-3">
-
-                                    <div
-                                        onClick={() => field.onChange("ACTOR")}
-                                        className={cn(
-                                            "flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer select-none transition-all duration-200 bg-background hover:bg-muted/50",
-                                            field.value === "ACTOR"
-                                                ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
-                                                : "border-border/80"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "p-2 rounded-lg transition-colors",
-                                            field.value === "ACTOR" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                                        )}>
-                                            <User2 size={16} />
+                            render={({ field }) => {
+                                const selected = Array.isArray(field.value) ? field.value : [field.value];
+                                const toggle = (role: "ACTOR" | "DIRECTOR") => {
+                                    if (selected.includes(role)) {
+                                        field.onChange(selected.filter((r) => r !== role));
+                                    } else {
+                                        field.onChange([...selected, role]);
+                                    }
+                                };
+                                return (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div
+                                            onClick={() => toggle("ACTOR")}
+                                            className={cn(
+                                                "flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer select-none transition-all duration-200 bg-background hover:bg-muted/50",
+                                                selected.includes("ACTOR")
+                                                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
+                                                    : "border-border/80"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "p-2 rounded-lg transition-colors",
+                                                selected.includes("ACTOR") ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                                            )}>
+                                                <User2 size={16} />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-sm font-bold text-foreground">Diễn viên</span>
+                                                <span className="text-[10px] text-muted-foreground">Cast / Actor</span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-sm font-bold text-foreground">Diễn viên</span>
-                                            <span className="text-[10px] text-muted-foreground">Cast / Actor</span>
+
+                                        <div
+                                            onClick={() => toggle("DIRECTOR")}
+                                            className={cn(
+                                                "flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer select-none transition-all duration-200 bg-background hover:bg-muted/50",
+                                                selected.includes("DIRECTOR")
+                                                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
+                                                    : "border-border/80"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "p-2 rounded-lg transition-colors",
+                                                selected.includes("DIRECTOR") ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                                            )}>
+                                                <Clapperboard size={16} />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-sm font-bold text-foreground">Đạo diễn</span>
+                                                <span className="text-[10px] text-muted-foreground">Director</span>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div
-                                        onClick={() => field.onChange("DIRECTOR")}
-                                        className={cn(
-                                            "flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer select-none transition-all duration-200 bg-background hover:bg-muted/50",
-                                            field.value === "DIRECTOR"
-                                                ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
-                                                : "border-border/80"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "p-2 rounded-lg transition-colors",
-                                            field.value === "DIRECTOR" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                                        )}>
-                                            <Clapperboard size={16} />
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-sm font-bold text-foreground">Đạo diễn</span>
-                                            <span className="text-[10px] text-muted-foreground">Director</span>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            )}
+                                );
+                            }}
                         />
 
                         {form.formState.errors.movieRole && (

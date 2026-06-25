@@ -112,6 +112,7 @@ export function DataTable<TData>({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [filterKey, setFilterKey] = React.useState(0);
 
   const table = useReactTable({
     data,
@@ -145,6 +146,7 @@ export function DataTable<TData>({
   const handleReset = () => {
     table.resetColumnFilters();
     setGlobalFilter("");
+    setFilterKey((k) => k + 1);
     if (onResetFilters) onResetFilters();
   };
 
@@ -166,7 +168,7 @@ export function DataTable<TData>({
 
         {filters?.map((filter) => (
           <Select
-            key={filter.key}
+            key={`${filter.key}-${filterKey}`}
             onValueChange={(value) => handleFilterChange(filter.key, value)}
           >
             <SelectTrigger className="w-[180px]">

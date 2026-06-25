@@ -148,7 +148,7 @@ export function MovieFormDialog({
 
   async function handleQuickAddDirector(name: string, role: "DIRECTOR" | "ACTOR") {
     if (!token) throw new Error("Chưa đăng nhập");
-    const created = await createPerson(token, { name, movieRole: role });
+    const created = await createPerson(token, { name, movieRole: [role] });
     setDirectorOptions((prev) => [...prev, { value: String(created.id), label: created.name }]);
     return { id: created.id, name: created.name };
   }
@@ -160,7 +160,7 @@ export function MovieFormDialog({
 
   async function handleQuickAddActor(name: string, role: "DIRECTOR" | "ACTOR") {
     if (!token) throw new Error("Chưa đăng nhập");
-    const created = await createPerson(token, { name, movieRole: role });
+    const created = await createPerson(token, { name, movieRole: [role] });
     setActorOptions((prev) => [...prev, { value: String(created.id), label: created.name }]);
     return { id: created.id, name: created.name };
   }

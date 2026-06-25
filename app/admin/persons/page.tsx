@@ -9,20 +9,14 @@ import type { PersonFormSchema } from "@/lib/validations/admin.schemas";
 import {
     fetchAdminPersons,
     createPerson,
+    updatePerson,
     togglePersonStatus,
 } from "@/services/admin/adminPersonService";
 import { fetchAdminMovies, fetchAdminMovieById } from "@/services/admin/adminMovieService";
-import { DataTable, PageHeader } from "@/components/shared";
+import { DataTable, PageHeader, SingleSelectWithSearch } from "@/components/shared";
 import { PersonFormDialog } from "@/components/admin/layout/person/PersonFormDialog";
 import { createPersonColumns } from "@/components/admin/layout/person/PersonColumns";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 
 const STATUS_FILTER_OPTIONS = [
@@ -46,7 +40,8 @@ export default function AdminPersonsPage() {
 
     const [movieOptions, setMovieOptions] = useState<{ value: string; label: string }[]>([]);
     const [movieFilterId, setMovieFilterId] = useState<string>("");
-    const [moviePersonIds, setMoviePersonIds] = useState<Set<number> | null>(null);
+    const [fetchedMovieId, setFetchedMovieId] = useState<string>("");
+    const [fetchedPersonIds, setFetchedPersonIds] = useState<Set<number>>(new Set());
 
     const loadPersons = useCallback(async () => {
         if (!token) return;
@@ -77,24 +72,24 @@ export default function AdminPersonsPage() {
 
     // When movie filter changes, fetch movie detail to get person IDs
     useEffect(() => {
-        if (!movieFilterId || !token) {
-            setMoviePersonIds(null);
-            return;
-        }
+        if (!movieFilterId || !token) return;
         fetchAdminMovieById(token, Number(movieFilterId))
             .then(movie => {
                 const ids = new Set([
                     ...(movie.castPersons || []).map((p) => p.id),
                     ...(movie.directors || []).map((p) => p.id),
                 ]);
-                setMoviePersonIds(ids);
+                setFetchedMovieId(movieFilterId);
+                setFetchedPersonIds(ids);
             })
-            .catch(() => setMoviePersonIds(null));
+            .catch(() => {});
     }, [movieFilterId, token]);
 
     const displayedPersons = useMemo(
-        () => (moviePersonIds ? persons.filter(p => moviePersonIds.has(p.id)) : persons),
-        [persons, moviePersonIds]
+        () => (movieFilterId && movieFilterId === fetchedMovieId
+            ? persons.filter(p => fetchedPersonIds.has(p.id))
+            : persons),
+        [persons, movieFilterId, fetchedMovieId, fetchedPersonIds]
     );
 
     function handleOpenCreate() {
@@ -112,7 +107,18 @@ export default function AdminPersonsPage() {
         setIsSubmitting(true);
         try {
             if (selectedPerson) {
-                toast.info("Tính năng cập nhật đang được phát triển");
+                let avatarUrl: string | undefined;
+                if (data.avatarUrl instanceof File) {
+                    avatarUrl = await uploadFileAndGetUrl(token, data.avatarUrl);
+                } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
+                    avatarUrl = data.avatarUrl;
+                }
+                const updated = await updatePerson(token, selectedPerson.id, {
+                    name: data.name,
+                    avatarUrl,
+                    movieRole: data.movieRole,
+                });
+                toast.success(`Đã cập nhật "${updated.name}" thành công`);
             } else {
                 let avatarUrl: string | undefined;
                 if (data.avatarUrl instanceof File) {
@@ -182,19 +188,14 @@ export default function AdminPersonsPage() {
                 emptyText="Chưa có diễn viên / đạo diễn nào."
                 onResetFilters={() => setMovieFilterId("")}
             >
-                <Select value={movieFilterId} onValueChange={setMovieFilterId}>
-                    <SelectTrigger className="w-50">
-                        <SelectValue placeholder="Lọc theo phim" />
-                    </SelectTrigger>
-                    <SelectContent data-admin="">
-                        <SelectItem value="">Tất cả phim</SelectItem>
-                        {movieOptions.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <SingleSelectWithSearch
+                    options={movieOptions}
+                    value={movieFilterId}
+                    onChange={setMovieFilterId}
+                    placeholder="Lọc theo phim"
+                    searchPlaceholder="Tìm tên phim..."
+                    className="w-52"
+                />
             </DataTable>
 
             <PersonFormDialog

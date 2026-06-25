@@ -6,14 +6,20 @@ export interface AdminPerson {
   id: number;
   name: string;
   avatarUrl: string | null;
-  movieRole: MovieRole;
+  movieRole: MovieRole[];
   entityStatus: EntityStatus;
 }
 
 export interface PersonCreatePayload {
   name: string;
   avatarUrl?: string;
-  movieRole: MovieRole;
+  movieRole: MovieRole[];
+}
+
+export interface PersonUpdatePayload {
+  name?: string;
+  avatarUrl?: string;
+  movieRole?: MovieRole[];
 }
 
 export interface PersonListQuery extends AdminListQuery {
@@ -24,5 +30,5 @@ export interface PersonListQuery extends AdminListQuery {
 export interface PersonFormValues {
   name: string;
   avatarUrl: string;
-  movieRole: MovieRole;
+  movieRole: MovieRole[];
 }

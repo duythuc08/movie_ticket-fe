@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Play, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "@/components/movie/components/ImageWithFallback";
+import { fetchReviewsByMovie } from "@/components/movie/service/review.service";
 import type { Movie } from "@/types";
 
 interface MovieCardProps {
@@ -11,6 +13,13 @@ interface MovieCardProps {
 
 export function MovieCard({ movie }: MovieCardProps) {
   const router = useRouter();
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchReviewsByMovie(movie.id, 0, 1)
+      .then((res) => setAvgRating(res.averageRating))
+      .catch(() => {});
+  }, [movie.id]);
 
   return (
     <div
@@ -36,6 +45,9 @@ export function MovieCard({ movie }: MovieCardProps) {
 
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-yellow-400 text-xs font-semibold">
+              {avgRating != null ? avgRating.toFixed(1) : "—"}
+            </span>
             <span className="text-white/60 text-xs">•</span>
             <span className="text-white/60 text-xs">{movie.durationText}</span>
           </div>

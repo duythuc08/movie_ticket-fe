@@ -58,8 +58,14 @@ export function createPersonColumns(
         {
             accessorKey: "movieRole",
             header: "Vai trò",
+            filterFn: (row, _columnId, filterValue: string) =>
+                (row.original.movieRole ?? []).includes(filterValue as "ACTOR" | "DIRECTOR"),
             cell: ({ row }) => (
-                <StatusBadge status={row.original.movieRole} statusMap={ROLE_MAP} />
+                <div className="flex gap-1 flex-wrap">
+                    {(row.original.movieRole ?? []).map((role) => (
+                        <StatusBadge key={role} status={role} statusMap={ROLE_MAP} />
+                    ))}
+                </div>
             ),
         },
         {

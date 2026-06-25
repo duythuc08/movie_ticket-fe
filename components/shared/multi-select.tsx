@@ -53,9 +53,14 @@ export function MultiSelectWithSearch({
         }
     }, [isOpen]);
 
-    const filteredOptions = options.filter((o) =>
-        o.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOptions = options
+        .filter((o) => o.label.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            const aSelected = selectedValues.includes(a.value);
+            const bSelected = selectedValues.includes(b.value);
+            if (aSelected === bSelected) return 0;
+            return aSelected ? -1 : 1;
+        });
 
     const handleToggle = useCallback(
         (value: string) => {
