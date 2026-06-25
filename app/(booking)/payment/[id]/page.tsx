@@ -12,7 +12,7 @@ import {
   clearBookingState,
   mergeBookingState,
 } from "@/components/booking/utils/bookingStorage";
-import { createPayment, getApplicableVouchers } from "@/components/booking/service/booking.service";
+import { checkoutBooking, getApplicableVouchers } from "@/components/booking/service/booking.service";
 import {
   VoucherSelectDialog,
   estimateVoucherDiscount,
@@ -182,21 +182,25 @@ export default function PaymentPage() {
     }
 
     if (paymentMethod === "VNPAY") {
+      const orderId = bookingInfo?.orderId;
+      if (!orderId) {
+        toast.error("Phiên đặt vé không hợp lệ. Vui lòng bắt đầu lại.");
+        router.push("/");
+        setLoading(false);
+        return;
+      }
       try {
-        const result = await createPayment(token, {
-          userId,
-          seatShowTimeIds: (bookingInfo?.seats || []).map(
-            (seat) => seat.seatShowTimeId,
-          ),
-          foods: (bookingInfo?.foods || []).map((food) => ({
-            foodId: food.id,
-            quantity: food.qty,
-          })),
-          promotionCode: bookingInfo?.promotionCode,
-        });
+        const result = await checkoutBooking(
+          token,
+          Number(orderId),
+          bookingInfo?.promotionCode,
+        );
 
         const orderData = {
-          ...result,
+          orderId,
+          finalPrice: result.finalPrice,
+          discountAmount: result.discountAmount,
+          memberDiscountAmount: result.memberDiscountAmount,
           paymentMethod: "VNPAY",
           movie: bookingInfo?.movie,
           moviePoster: bookingInfo?.moviePoster,

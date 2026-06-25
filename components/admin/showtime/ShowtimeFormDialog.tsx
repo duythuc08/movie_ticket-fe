@@ -81,11 +81,14 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
         fetchAdminRooms(token, { size: 200, entityStatus: "ACTIVE" })
       ]);
 
-      const mOptions = moviesRes.content.map(m => ({ value: String(m.movieId), label: m.title }));
+      const activeMovies = moviesRes.content.filter(
+        m => m.movieStatus === "NOW_SHOWING" || m.movieStatus === "COMING_SOON"
+      );
+      const mOptions = activeMovies.map(m => ({ value: String(m.movieId), label: m.title }));
       setMovieOptions(mOptions);
 
       const durations: Record<string, number> = {};
-      moviesRes.content.forEach(m => durations[String(m.movieId)] = m.duration);
+      activeMovies.forEach(m => durations[String(m.movieId)] = m.duration);
       setMovieDurations(durations);
 
       const roomTypeMap: Record<string, string> = {

@@ -137,7 +137,9 @@ export interface BookingState {
   foodTotal?: number;
   total?: number;
   promotionCode?: string;
-  orderId?: string;
+  orderId?: number | string;
+  expiredTime?: string;
+  bookingStartTime?: string;
 }
 
 // ─── Food ─────────────────────────────────────────────────

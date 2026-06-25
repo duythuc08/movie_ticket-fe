@@ -59,6 +59,72 @@ export async function getApplicableVouchers(
   return data.result ?? [];
 }
 
+export interface InitiateBookingPayload {
+  userId: string;
+  seatShowTimeIds: number[];
+}
+
+export interface InitiateBookingResult {
+  orderId: number;
+  totalTicketPrice: number;
+  expiredTime: string;
+  bookingTime: string;
+  showTimeInfo: Record<string, unknown>;
+  tickets: { orderTicketId: number; seatName: string; price: number; seatType: string }[];
+}
+
+export async function initiateBooking(
+  token: string,
+  payload: InitiateBookingPayload
+): Promise<InitiateBookingResult> {
+  const res = await apiFetch(`${BASE_URL}/bookings/initiate`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể khóa ghế"));
+  return data.result as InitiateBookingResult;
+}
+
+export async function releaseBooking(token: string, orderId: number): Promise<void> {
+  const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/release`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể thả ghế"));
+}
+
+export async function addFoodsToBooking(
+  token: string,
+  orderId: number,
+  foods: { foodId: number; quantity: number }[]
+): Promise<void> {
+  const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/foods`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ foods }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể cập nhật đồ ăn"));
+}
+
+export async function checkoutBooking(
+  token: string,
+  orderId: number,
+  promotionCode?: string
+): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number }> {
+  const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/checkout`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ promotionCode: promotionCode ?? null }),
+  });
+  const data = await res.json();
+  if (data.code !== 1000) throw new Error(getErrorMessage(data?.code, data?.message || "Checkout thất bại"));
+  return data.result;
+}
+
 export async function createPayment(
   token: string,
   payload: VnpayBookingPayload

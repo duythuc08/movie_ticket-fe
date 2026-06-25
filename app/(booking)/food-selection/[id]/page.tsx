@@ -6,8 +6,8 @@ import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
-import { getFoods } from "@/components/booking/service/booking.service";
-import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
+import { getFoods, releaseBooking, addFoodsToBooking } from "@/components/booking/service/booking.service";
+import { useBookingTimer, clearBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import type { FoodProduct, FoodDetail } from "@/types";
 import { FoodMenuItem } from "@/components/booking/components/FoodMenuItem";
 import { BookingSummary } from "@/components/booking/components/BookingSummary";
@@ -19,6 +19,7 @@ export default function FoodSelectionPage() {
   const [cart, setCart] = useState<Record<number, number>>({});
   const [products, setProducts] = useState<FoodProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [proceeding, setProceeding] = useState(false);
 
   const { minutes, seconds, progress, isUrgent } = useBookingTimer();
 
@@ -76,32 +77,65 @@ export default function FoodSelectionPage() {
     return acc;
   }, {});
 
-  const handleProceedToCheckout = () => {
+  const handleBack = async () => {
+    const token = sessionStorage.getItem("token") ?? "";
+    const orderId = bookingInfo?.orderId;
+    if (orderId && token) {
+      await releaseBooking(token, Number(orderId)).catch(() => {});
+    }
+    clearBookingTimer();
+    router.back();
+  };
+
+  const handleProceedToCheckout = async () => {
     if (!bookingInfo?.seats || bookingInfo.seats.length === 0) return;
+    if (proceeding) return;
 
-    const selectedFoods: FoodDetail[] = Object.entries(cart).map(([pid, qty]) => {
-      const product = products.find((p) => p.id === Number(pid))!;
-      return {
-        id: product.id,
-        foodId: product.id,
-        name: product.name,
-        desc: product.desc,
-        price: product.price,
-        img: product.img,
-        qty,
-        totalPrice: product.price * qty,
-        isCombo: product.isCombo,
-      };
-    });
+    const token = sessionStorage.getItem("token") ?? "";
+    const orderId = bookingInfo?.orderId;
+    if (!orderId || !token) {
+      toast.error("Phiên đặt vé không hợp lệ. Vui lòng bắt đầu lại.");
+      router.push("/");
+      return;
+    }
 
-    mergeBookingState({
-      foods: selectedFoods,
-      foodTotal,
-      total: (bookingInfo.seatTotal || 0) + foodTotal,
-      orderId: id,
-    });
+    const foodsPayload = Object.entries(cart).map(([pid, qty]) => ({
+      foodId: Number(pid),
+      quantity: qty,
+    }));
 
-    router.push(`/payment/${id}`);
+    setProceeding(true);
+    try {
+      await addFoodsToBooking(token, Number(orderId), foodsPayload);
+
+      const selectedFoods: FoodDetail[] = Object.entries(cart).map(([pid, qty]) => {
+        const product = products.find((p) => p.id === Number(pid))!;
+        return {
+          id: product.id,
+          foodId: product.id,
+          name: product.name,
+          desc: product.desc,
+          price: product.price,
+          img: product.img,
+          qty,
+          totalPrice: product.price * qty,
+          isCombo: product.isCombo,
+        };
+      });
+
+      mergeBookingState({
+        foods: selectedFoods,
+        foodTotal,
+        total: (bookingInfo.seatTotal || 0) + foodTotal,
+      });
+
+      router.push(`/payment/${id}`);
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Không thể cập nhật đồ ăn. Vui lòng thử lại.");
+    } finally {
+      setProceeding(false);
+    }
   };
 
   return (
@@ -172,10 +206,11 @@ export default function FoodSelectionPage() {
               cart={cart}
               products={products}
               grandTotal={grandTotal}
-              onBack={() => router.back()}
+              onBack={handleBack}
               onProceed={handleProceedToCheckout}
               backText="Quay lại"
-              proceedText="Thanh toán"
+              proceedText={proceeding ? "Đang xử lý..." : "Thanh toán"}
+              disableProceed={proceeding}
             />
           </div>
         </div>

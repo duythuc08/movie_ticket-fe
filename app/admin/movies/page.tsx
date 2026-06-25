@@ -27,6 +27,12 @@ const MOVIE_STATUS_FILTER = [
   { label: "Ngừng chiếu", value: "STOPPED"     },
 ];
 
+const MOVIE_STATUS_ORDER: Record<string, number> = {
+  NOW_SHOWING: 0,
+  COMING_SOON: 1,
+  STOPPED: 2,
+};
+
 export default function AdminMoviesPage() {
   const { token } = useAuth();
 
@@ -42,7 +48,10 @@ export default function AdminMoviesPage() {
     setIsLoading(true);
     try {
       const result = await fetchAdminMovies(token, { page: 0, size: 999 });
-      setMovies(result.content);
+      const sorted = [...result.content].sort(
+        (a, b) => (MOVIE_STATUS_ORDER[a.movieStatus] ?? 99) - (MOVIE_STATUS_ORDER[b.movieStatus] ?? 99)
+      );
+      setMovies(sorted);
     } catch {
       toast.error("Không thể tải danh sách phim");
     } finally {

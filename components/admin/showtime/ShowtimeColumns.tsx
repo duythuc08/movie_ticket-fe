@@ -13,9 +13,9 @@ interface ShowtimeColumnsProps {
 }
 
 const STATUS_MAP: StatusMap = {
-  SCHEDULED:    { label: "Đã lên lịch", variant: "success"   },
+  SCHEDULED:    { label: "Đã lên lịch", variant: "upcoming"   },
   ONGOING:      { label: "Đang chiếu",  variant: "warning"   },
-  COMPLETED:    { label: "Đã xong",     variant: "secondary" },
+  COMPLETED:    { label: "Đã xong",     variant: "success" },
   CANCELLED:    { label: "Đã huỷ",      variant: "destructive" },
   FULLY_BOOKED: { label: "Full ghế",    variant: "default"   },
 };

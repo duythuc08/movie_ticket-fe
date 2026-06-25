@@ -4,45 +4,58 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const TIMER_KEY = "infinityCinema_seatHoldEndTime";
-const HOLD_DURATION_S = 10 * 60;
+const TIMER_END_KEY = "infinityCinema_seatHoldEndTime";
+const TIMER_START_KEY = "infinityCinema_seatHoldStartTime";
 
-function getOrCreateEndTime(): number {
-  const stored = sessionStorage.getItem(TIMER_KEY);
-  if (stored) {
-    const endTime = parseInt(stored, 10);
-    if (!isNaN(endTime) && endTime > Date.now()) return endTime;
+export function setBookingTimer(expiredTime: string) {
+  const endTime = new Date(expiredTime).getTime();
+  sessionStorage.setItem(TIMER_END_KEY, String(endTime));
+  sessionStorage.setItem(TIMER_START_KEY, String(Date.now()));
+}
+
+export function clearBookingTimer() {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(TIMER_END_KEY);
+    sessionStorage.removeItem(TIMER_START_KEY);
   }
-  const newEndTime = Date.now() + HOLD_DURATION_S * 1000;
-  sessionStorage.setItem(TIMER_KEY, String(newEndTime));
-  return newEndTime;
 }
 
 export function useBookingTimer() {
   const router = useRouter();
   const endTimeRef = useRef<number>(0);
+  const totalDurationRef = useRef<number>(5 * 60); // fallback 5 phút
   const hasWarnedRef = useRef(false);
 
   const [timeLeft, setTimeLeft] = useState<number>(() => {
-    if (typeof window === "undefined") return HOLD_DURATION_S;
-    const endTime = getOrCreateEndTime();
+    if (typeof window === "undefined") return 5 * 60;
+    const stored = sessionStorage.getItem(TIMER_END_KEY);
+    if (!stored) return 5 * 60;
+    const endTime = parseInt(stored, 10);
     return Math.max(0, Math.floor((endTime - Date.now()) / 1000));
   });
 
   useEffect(() => {
-    if (endTimeRef.current === 0) {
-      endTimeRef.current = getOrCreateEndTime();
+    const stored = sessionStorage.getItem(TIMER_END_KEY);
+    const startStored = sessionStorage.getItem(TIMER_START_KEY);
+
+    if (!stored) {
+      // Không có timer — không có seat hold hợp lệ, redirect về trang chủ
+      toast.error("Phiên đặt vé không hợp lệ. Vui lòng bắt đầu lại.");
+      router.push("/");
+      return;
     }
 
-    const intervalRef = {
-      current: 0 as unknown as ReturnType<typeof setInterval>,
-    };
+    endTimeRef.current = parseInt(stored, 10);
+    if (startStored) {
+      totalDurationRef.current = Math.floor(
+        (endTimeRef.current - parseInt(startStored, 10)) / 1000
+      );
+    }
+
+    const intervalRef = { current: 0 as unknown as ReturnType<typeof setInterval> };
 
     const tick = () => {
-      const remaining = Math.max(
-        0,
-        Math.floor((endTimeRef.current - Date.now()) / 1000),
-      );
+      const remaining = Math.max(0, Math.floor((endTimeRef.current - Date.now()) / 1000));
       setTimeLeft(remaining);
 
       if (remaining === 60 && !hasWarnedRef.current) {
@@ -52,10 +65,8 @@ export function useBookingTimer() {
 
       if (remaining <= 0) {
         clearInterval(intervalRef.current);
-        sessionStorage.removeItem(TIMER_KEY);
-        toast.error("Hết thời gian giữ ghế! Vui lòng đặt vé lại.", {
-          duration: 5000,
-        });
+        clearBookingTimer();
+        toast.error("Hết thời gian giữ ghế! Vui lòng đặt vé lại.", { duration: 5000 });
         router.push("/");
       }
     };
@@ -64,14 +75,12 @@ export function useBookingTimer() {
     return () => clearInterval(intervalRef.current);
   }, [router]);
 
-  const clearTimer = () => {
-    if (typeof window !== "undefined") sessionStorage.removeItem(TIMER_KEY);
-  };
-
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const seconds = String(timeLeft % 60).padStart(2, "0");
-  const progress = (timeLeft / HOLD_DURATION_S) * 100;
+  const progress = totalDurationRef.current > 0
+    ? (timeLeft / totalDurationRef.current) * 100
+    : 0;
   const isUrgent = timeLeft <= 60;
 
-  return { timeLeft, minutes, seconds, progress, isUrgent, clearTimer };
+  return { timeLeft, minutes, seconds, progress, isUrgent, clearTimer: clearBookingTimer };
 }

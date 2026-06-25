@@ -11,10 +11,18 @@ import {
     createPerson,
     togglePersonStatus,
 } from "@/services/admin/adminPersonService";
+import { fetchAdminMovies, fetchAdminMovieById } from "@/services/admin/adminMovieService";
 import { DataTable, PageHeader } from "@/components/shared";
 import { PersonFormDialog } from "@/components/admin/layout/person/PersonFormDialog";
 import { createPersonColumns } from "@/components/admin/layout/person/PersonColumns";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 
 const STATUS_FILTER_OPTIONS = [
@@ -36,6 +44,10 @@ export default function AdminPersonsPage() {
     const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [movieOptions, setMovieOptions] = useState<{ value: string; label: string }[]>([]);
+    const [movieFilterId, setMovieFilterId] = useState<string>("");
+    const [moviePersonIds, setMoviePersonIds] = useState<Set<number> | null>(null);
+
     const loadPersons = useCallback(async () => {
         if (!token) return;
         setIsLoading(true);
@@ -50,6 +62,40 @@ export default function AdminPersonsPage() {
     }, [token]);
 
     useEffect(() => { loadPersons(); }, [loadPersons]);
+
+    // Load movie list for filter dropdown
+    useEffect(() => {
+        if (!token) return;
+        fetchAdminMovies(token, { size: 200 })
+            .then(res => {
+                setMovieOptions(
+                    res.content.map(m => ({ value: String(m.movieId), label: m.title }))
+                );
+            })
+            .catch(() => {});
+    }, [token]);
+
+    // When movie filter changes, fetch movie detail to get person IDs
+    useEffect(() => {
+        if (!movieFilterId || !token) {
+            setMoviePersonIds(null);
+            return;
+        }
+        fetchAdminMovieById(token, Number(movieFilterId))
+            .then(movie => {
+                const ids = new Set([
+                    ...(movie.castPersons || []).map((p) => p.id),
+                    ...(movie.directors || []).map((p) => p.id),
+                ]);
+                setMoviePersonIds(ids);
+            })
+            .catch(() => setMoviePersonIds(null));
+    }, [movieFilterId, token]);
+
+    const displayedPersons = useMemo(
+        () => (moviePersonIds ? persons.filter(p => moviePersonIds.has(p.id)) : persons),
+        [persons, moviePersonIds]
+    );
 
     function handleOpenCreate() {
         setSelectedPerson(null);
@@ -90,6 +136,7 @@ export default function AdminPersonsPage() {
             setIsSubmitting(false);
         }
     }
+
     async function handleToggleStatus(person: AdminPerson) {
         if (!token) return;
         const action = person.entityStatus === "ACTIVE" ? "vô hiệu hóa" : "kích hoạt";
@@ -124,7 +171,7 @@ export default function AdminPersonsPage() {
 
             <DataTable
                 columns={columns}
-                data={persons}
+                data={displayedPersons}
                 searchKey="name"
                 searchPlaceholder="Tìm theo tên..."
                 filters={[
@@ -133,7 +180,22 @@ export default function AdminPersonsPage() {
                 ]}
                 isLoading={isLoading}
                 emptyText="Chưa có diễn viên / đạo diễn nào."
-            />
+                onResetFilters={() => setMovieFilterId("")}
+            >
+                <Select value={movieFilterId} onValueChange={setMovieFilterId}>
+                    <SelectTrigger className="w-50">
+                        <SelectValue placeholder="Lọc theo phim" />
+                    </SelectTrigger>
+                    <SelectContent data-admin="">
+                        <SelectItem value="">Tất cả phim</SelectItem>
+                        {movieOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </DataTable>
 
             <PersonFormDialog
                 open={isDialogOpen}

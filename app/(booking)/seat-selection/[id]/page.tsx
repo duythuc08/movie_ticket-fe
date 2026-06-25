@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
-import { fetchSeatSelection } from "@/components/booking/service/booking.service";
+import { fetchSeatSelection, initiateBooking } from "@/components/booking/service/booking.service";
+import { setBookingTimer, clearBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import { logActivity } from "@/components/activity/service/activity.service";
 import type { SeatShowTime, SeatDetail, SuggestedSeat } from "@/types";
 
@@ -30,6 +31,7 @@ export default function SeatSelectionPage() {
   const [suggestedSeats, setSuggestedSeats] = useState<SuggestedSeat[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [initiating, setInitiating] = useState(false);
 
   const processSeatData = (data: SeatShowTime[]) => {
     const grouped = data.reduce<Record<string, SeatShowTime[]>>((acc, seat) => {
@@ -95,6 +97,36 @@ export default function SeatSelectionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Short-polling mỗi 5s để cập nhật trạng thái ghế theo thời gian thực
+  useEffect(() => {
+    if (loading) return;
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    const pollId = setInterval(async () => {
+      try {
+        const res = await fetchSeatSelection(showTimeId, token);
+        processSeatData(res.seats || []);
+        const nowOccupied = (res.seats || [])
+          .filter((s) => s.seatShowTimeStatus !== "AVAILABLE")
+          .map((s) => s.seatId);
+        setSelectedSeats((prev) => {
+          const conflicts = prev.filter((id) => nowOccupied.includes(id));
+          if (conflicts.length > 0) {
+            toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.");
+            return prev.filter((id) => !nowOccupied.includes(id));
+          }
+          return prev;
+        });
+      } catch {
+        // silent — không làm gián đoạn UX khi poll thất bại
+      }
+    }, 5000);
+
+    return () => clearInterval(pollId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, showTimeId]);
+
   const toggleSeat = (seat: SeatShowTime) => {
     if (isSeatOccupied(seat)) return;
     const seatsToToggle = [seat.seatId];
@@ -126,11 +158,36 @@ export default function SeatSelectionPage() {
       .filter((s) => selectedSeats.includes(s.seatId))
       .reduce((sum, s) => sum + (seatPrices[s.seatType] || 0), 0);
 
-  const handleGoToFoods = () => {
-    if (selectedSeats.length === 0) return;
-    proceededRef.current = true;
-    const selectedSeatDetails: SeatDetail[] = Object.values(seatData)
-      .flat()
+  const getUserId = () => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId || payload.sub || payload.id;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleGoToFoods = async () => {
+    if (selectedSeats.length === 0 || initiating) return;
+
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      toast.error("Vui lòng đăng nhập để tiếp tục đặt vé.");
+      router.push(`/login?from=/seat-selection/${showTimeId}`);
+      return;
+    }
+
+    const userId = getUserId();
+    if (!userId) {
+      toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      router.push("/login");
+      return;
+    }
+
+    const allSeats = Object.values(seatData).flat();
+    const selectedSeatDetails: SeatDetail[] = allSeats
       .filter((s) => selectedSeats.includes(s.seatId))
       .map((seat) => ({
         seatId: seat.seatId,
@@ -142,8 +199,40 @@ export default function SeatSelectionPage() {
         partnerId: seat.partnerId,
         seatShowTimeStatus: seat.seatShowTimeStatus,
       }));
-    mergeBookingState({ seats: selectedSeatDetails, seatTotal: calculateTotal() });
-    router.push(`/food-selection/${showTimeId}`);
+
+    const seatShowTimeIds = selectedSeatDetails
+      .map((s) => s.seatShowTimeId)
+      .filter((id): id is number => id !== undefined);
+
+    setInitiating(true);
+    try {
+      const result = await initiateBooking(token, { userId, seatShowTimeIds });
+      proceededRef.current = true;
+      setBookingTimer(result.expiredTime);
+      mergeBookingState({
+        seats: selectedSeatDetails,
+        seatTotal: calculateTotal(),
+        orderId: result.orderId,
+        expiredTime: result.expiredTime,
+      });
+      router.push(`/food-selection/${showTimeId}`);
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error.message || "Không thể khóa ghế. Vui lòng thử lại.");
+      // Refresh để lấy trạng thái ghế mới nhất và bỏ chọn ghế bị conflict
+      try {
+        const fresh = await fetchSeatSelection(showTimeId, token);
+        processSeatData(fresh.seats || []);
+        const nowOccupied = (fresh.seats || [])
+          .filter((s) => s.seatShowTimeStatus !== "AVAILABLE")
+          .map((s) => s.seatId);
+        setSelectedSeats((prev) => prev.filter((id) => !nowOccupied.includes(id)));
+      } catch {
+        // silent
+      }
+    } finally {
+      setInitiating(false);
+    }
   };
 
   // ─── Loading skeleton ───────────────────────────────────────────────────────
@@ -256,8 +345,9 @@ export default function SeatSelectionPage() {
                 size="lg"
                 className="cursor-pointer shadow-lg shadow-primary/30 hover:-translate-y-0.5 transition-all font-bold"
                 onClick={handleGoToFoods}
+                disabled={initiating}
               >
-                Tiếp tục →
+                {initiating ? "Đang xử lý..." : "Tiếp tục →"}
               </Button>
             </div>
           </div>
