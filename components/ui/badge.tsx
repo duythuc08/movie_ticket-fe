@@ -18,7 +18,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const badgeVariantClasses: Record<BadgeVariant, string> = {
-  upcoming: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-transparent",
+  upcoming: "bg-blue-50 text-blue-700 light:bg-blue-950/50 light:text-blue-400 border-transparent",
   default: "bg-primary text-primary-foreground border-transparent",
   secondary: "bg-secondary text-secondary-foreground border-transparent",
   outline: "border border-input bg-transparent text-foreground",

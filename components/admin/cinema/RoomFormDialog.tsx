@@ -6,15 +6,15 @@ import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { roomFormSchema, type RoomFormSchema } from "@/lib/validations/admin.schemas";
-import type { AdminRoom, AdminCinema, RoomType, RoomStatus } from "@/types/admin.type";
-import { ROOM_TYPE_OPTIONS, ROOM_STATUS_OPTIONS } from "./RoomColumns";
+import type { AdminCinema, AdminRoom, RoomStatus, RoomType } from "@/types/admin.type";
+import { ROOM_STATUS_OPTIONS, ROOM_TYPE_OPTIONS } from "./RoomColumns";
 
 interface RoomFormDialogProps {
   open: boolean;
@@ -54,6 +54,7 @@ export function RoomFormDialog({
       title={isCreateMode ? "Thêm phòng chiếu" : "Chỉnh sửa phòng chiếu"}
       subtitle={!isCreateMode ? `${room.cinemas?.name ?? ""} — ${room.name}` : undefined}
       updatedAt={null}
+      resetKey={room?.roomId ?? `create-${defaultCinemaId ?? "none"}`}
       schema={roomFormSchema}
       defaultValues={defaultValues}
       onSubmit={onSubmit}

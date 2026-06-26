@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { personFormSchema, type PersonFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminPerson } from "@/types/admin.type";
-import { ShieldAlert, Camera, Clapperboard, User2, RefreshCw } from "lucide-react";
-import { Controller } from "react-hook-form";
-import { cn } from "@/lib/utils";
+import { Camera, Clapperboard, RefreshCw, ShieldAlert, User2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import Cropper from "react-easy-crop";
+import { Controller } from "react-hook-form";
 
 interface PersonFormDialogProps {
     open: boolean;
@@ -32,6 +32,13 @@ export function PersonFormDialog({
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+    useEffect(() => {
+        setImageSrc(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCroppedAreaPixels(null);
+    }, [open, person?.id]);
 
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, onChangeForm: (file: File) => void) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -60,6 +67,7 @@ export function PersonFormDialog({
             }}
             title={isCreateMode ? "Thêm nhân sự mới" : "Cập nhật thông tin nhân sự"}
             subtitle={!isCreateMode ? `Đang chỉnh sửa: ${person.name}` : "Điền thông tin diễn viên hoặc đạo diễn"}
+            resetKey={person?.id ?? "create"}
             schema={personFormSchema}
             defaultValues={{
                 name: person?.name ?? "",
@@ -74,7 +82,7 @@ export function PersonFormDialog({
             {(form) => (
                 <div className="space-y-6 py-2">
 
-                    <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-muted/40 to-muted/10 border border-border/60 rounded-2xl shadow-sm">
+                    <div className="flex flex-col items-center justify-center p-6 bg-linear-to-b from-muted/40 to-muted/10 border border-border/60 rounded-2xl shadow-sm">
 
                         {!imageSrc ? (
                             <label className="relative w-28 h-28 rounded-full border-2 border-dashed border-green-500/40 hover:border-green-500 bg-background shadow-sm flex flex-col items-center justify-center cursor-pointer group overflow-hidden transition-all duration-300">

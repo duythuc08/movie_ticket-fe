@@ -1,20 +1,20 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Controller, useFieldArray } from "react-hook-form";
-import { toast } from "sonner";
-import { Plus, Trash2, Calendar, Clock as ClockIcon } from "lucide-react";
+import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { SelectOption, SingleSelectWithSearch } from "@/components/shared";
+import { TimePicker24h } from "@/components/shared/TimePicker24h";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
+import { useAuth } from "@/context/AuthContext";
+import { createShowtimeSchema, CreateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAdminRooms } from "@/services/admin/adminRoomService";
 import { fetchSeatsByRoom } from "@/services/admin/adminSeatService";
-import { useAuth } from "@/context/AuthContext";
-import { createShowtimeSchema, CreateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
-import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
-import { SingleSelectWithSearch, SelectOption } from "@/components/shared";
+import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
+import { Clock as ClockIcon, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Controller, useFieldArray } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { TimePicker24h } from "@/components/shared/TimePicker24h";
+import { toast } from "sonner";
 
 const calculateExpectedEndTime = (startStr: string, dur: number) => {
   if (!startStr || dur === 0) return "";
@@ -146,6 +146,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo suất chiếu mới"
+      resetKey={`${initialRoomId ?? "none"}-${initialStartTime ?? "none"}-${defaultDateStr}`}
       schema={createShowtimeSchema}
       defaultValues={defaultValues}
       onSubmit={onSubmit}

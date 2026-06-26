@@ -1,23 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Ticket, X, Check, AlertCircle } from "lucide-react";
-import { getApplicableVouchers } from "@/components/booking/service/booking.service";
-import type { UserVoucher } from "@/types";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-const DAY_SHORT: Record<string, string> = {
-  MONDAY: "T2", TUESDAY: "T3", WEDNESDAY: "T4",
-  THURSDAY: "T5", FRIDAY: "T6", SATURDAY: "T7", SUNDAY: "CN",
-};
+import type { UserVoucher } from "@/types";
+import { AlertCircle, Check, Ticket, X } from "lucide-react";
+import { useState } from "react";
 
 export function estimateVoucherDiscount(v: UserVoucher, total: number): number {
   if (!v.eligible) return 0;
@@ -32,8 +25,9 @@ export function estimateVoucherDiscount(v: UserVoucher, total: number): number {
 interface VoucherSelectDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  token: string;
   totalAmount: number;
+  vouchers: UserVoucher[];
+  isLoading: boolean;
   selectedCode: string | null;
   onSelect: (voucher: UserVoucher | null) => void;
 }
@@ -41,35 +35,13 @@ interface VoucherSelectDialogProps {
 export function VoucherSelectDialog({
   open,
   onOpenChange,
-  token,
   totalAmount,
+  vouchers,
+  isLoading,
   selectedCode,
   onSelect,
 }: VoucherSelectDialogProps) {
-  const [vouchers, setVouchers] = useState<UserVoucher[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [pending, setPending] = useState<string | null>(selectedCode);
-
-  useEffect(() => {
-    if (open) setPending(selectedCode);
-  }, [open, selectedCode]);
-
-  const load = useCallback(async () => {
-    if (!open || !token) return;
-    setIsLoading(true);
-    try {
-      const data = await getApplicableVouchers(token, totalAmount);
-      setVouchers(data);
-    } catch {
-      toast.error("Không thể tải danh sách voucher");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [open, token, totalAmount]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const handleConfirm = () => {
     const found = pending
@@ -130,7 +102,6 @@ export function VoucherSelectDialog({
             {vouchers.map((v) => {
               const isSelected = pending === v.code;
               const ok = v.eligible === true;
-              const est = ok ? estimateVoucherDiscount(v, totalAmount) : 0;
 
               return (
                 <button
@@ -149,9 +120,9 @@ export function VoucherSelectDialog({
                         : "border-border/50 opacity-60 cursor-not-allowed",
                   )}
                 >
-                  <div className="flex items-stretch h-[110px]">
+                  <div className="flex items-stretch h-27.5">
                     <div className={cn(
-                      "w-[100px] shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed relative",
+                      "w-25 shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed relative",
                       isSelected ? "bg-primary/10 border-primary/40" : "bg-primary/5 border-border/60"
                     )}>
                       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-muted/30 rounded-full border border-border/50" />

@@ -1,28 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Controller, type UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { ImageUploadPreview, SingleSelectWithSearch } from "@/components/shared";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
-import { bannerFormSchema, type BannerFormSchema } from "@/lib/validations/admin.schemas";
-import type { AdminBanner, AdminMovie } from "@/types/admin.type";
-import { Image as ImageIcon, Link as LinkIcon, Hash, Settings2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import { bannerFormSchema, type BannerFormSchema } from "@/lib/validations/admin.schemas";
 import { adminEventService } from "@/services/admin/adminEventService";
+import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import type { AdminBanner, AdminMovie } from "@/types/admin.type";
 import type { AdminEvent } from "@/types/admin/promotion";
+import { Hash, Image as ImageIcon, Link as LinkIcon, Settings2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
+import { toast } from "sonner";
 
 interface BannerFormDialogProps {
   open: boolean;
@@ -291,12 +291,16 @@ export function BannerFormDialog({
   useEffect(() => {
     if (!open || !token) return;
     let cancelled = false;
-    setMovies([]);
-    setEvents([]);
-    setMoviePage(0);
-    setEventPage(0);
-    setHasMore(false);
-    setHasMoreEvents(false);
+
+    const resetTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      setMovies([]);
+      setEvents([]);
+      setMoviePage(0);
+      setEventPage(0);
+      setHasMore(false);
+      setHasMoreEvents(false);
+    }, 0);
 
     async function load() {
       setIsLoadingMovies(true);
@@ -329,7 +333,10 @@ export function BannerFormDialog({
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      window.clearTimeout(resetTimer);
+    };
   }, [open, token]);
 
   async function handleLoadMore() {
@@ -374,6 +381,7 @@ export function BannerFormDialog({
             : "Thêm Banner mới"
       }
       subtitle={banner?.title || "Cấu hình hình ảnh quảng bá trên trang chủ"}
+      resetKey={banner?.id ?? "create"}
       schema={bannerFormSchema}
       defaultValues={{
         imageUrl: banner?.imageUrl ?? "",

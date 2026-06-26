@@ -71,8 +71,8 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
   }, [token, userId]);
 
   useEffect(() => {
-    if (open && userId) { loadUser(); }
-    else { setUser(null); setHistory([]); setHistoryPage(0); setActiveTab("info"); }
+    setUser(null); setHistory([]); setHistoryPage(0); setActiveTab("info");
+    if (open && userId) loadUser();
   }, [open, userId, loadUser]);
 
   useEffect(() => {

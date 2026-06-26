@@ -1,16 +1,16 @@
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { MultiSelectWithSearch } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelectWithSearch } from "@/components/shared";
-import { adminUserService } from "@/services/admin/adminUserService";
 import { useAuth } from "@/context/AuthContext";
 import {
-  createUserSchema, updateUserSchema,
-  type CreateUserValues, type UpdateUserValues,
+    createUserSchema, updateUserSchema,
+    type CreateUserValues, type UpdateUserValues,
 } from "@/lib/validations/admin/user.schema";
+import { adminUserService } from "@/services/admin/adminUserService";
 import type { AdminUser } from "@/types/admin/user";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
   { value: "USER",  label: "USER — Người dùng thông thường" },
@@ -76,6 +76,7 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
         title="Chỉnh sửa tài khoản"
         subtitle={user.username}
         updatedAt={undefined}
+        resetKey={user.userId}
         schema={updateUserSchema}
         defaultValues={editDefaults}
         onSubmit={handleUpdate}
@@ -133,6 +134,7 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo tài khoản mới"
+      resetKey="create-user"
       schema={createUserSchema}
       defaultValues={createDefaults}
       onSubmit={handleCreate}

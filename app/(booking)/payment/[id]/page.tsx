@@ -1,28 +1,28 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { toast } from "sonner";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Ticket, X } from "lucide-react";
+import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
+import { checkoutBooking, getApplicableVouchers } from "@/components/booking/service/booking.service";
+import { formatCurrency } from "@/components/booking/utils/booking.utils";
 import {
-  getBookingState,
   clearBookingState,
+  getBookingState,
   mergeBookingState,
 } from "@/components/booking/utils/bookingStorage";
-import { checkoutBooking, getApplicableVouchers } from "@/components/booking/service/booking.service";
 import {
   VoucherSelectDialog,
   estimateVoucherDiscount,
 } from "@/components/booking/VoucherSelectDialog";
 import { fetchMembershipTierByName } from "@/components/profile/service/user.service";
-import { userProfileService } from "@/services/userProfileService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getErrorMessage } from "@/lib/errors";
-import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
+import { userProfileService } from "@/services/userProfileService";
 import type { BookingState, MembershipTier, UserVoucher } from "@/types";
-import { formatCurrency } from "@/components/booking/utils/booking.utils";
+import { Ticket } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -46,6 +46,8 @@ export default function PaymentPage() {
     typeof window === "undefined" ? "" : (getBookingState()?.promotionCode ?? "")
   );
   const [isVoucherOpen, setIsVoucherOpen] = useState(false);
+  const [voucherOptions, setVoucherOptions] = useState<UserVoucher[]>([]);
+  const [isVoucherLoading, setIsVoucherLoading] = useState(false);
 
   // Fix hydration
   const [isMounted, setIsMounted] = useState(false);
@@ -111,6 +113,7 @@ export default function PaymentPage() {
     : 0;
 
   const finalPrice = (bookingInfo?.total || 0) - discountInfo.amount - voucherDiscount;
+  const checkoutEligibleAmount = Math.max(0, (bookingInfo?.total || 0) - discountInfo.amount);
 
   // ─── Voucher handlers ────────────────────────────────────────────────────────
 
@@ -119,6 +122,22 @@ export default function PaymentPage() {
     const code = voucher?.code ?? "";
     setManualCode(code);
     mergeBookingState({ promotionCode: code || undefined });
+  };
+
+  const handleOpenVoucherDialog = async () => {
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    setIsVoucherLoading(true);
+    try {
+      const data = await getApplicableVouchers(token, bookingInfo?.movieId, checkoutEligibleAmount);
+      setVoucherOptions(data);
+      setIsVoucherOpen(true);
+    } catch {
+      toast.error("Không thể tải danh sách voucher");
+    } finally {
+      setIsVoucherLoading(false);
+    }
   };
 
   const handleApplyManual = async () => {
@@ -134,7 +153,7 @@ export default function PaymentPage() {
       toast.success(`Lưu và áp dụng mã "${code}" thành công`);
 
       // Fetch lại để lấy thông tin voucher mới nhất và tính toán discount
-      const data = await getApplicableVouchers(token, bookingInfo?.total || 0);
+      const data = await getApplicableVouchers(token, bookingInfo?.movieId, checkoutEligibleAmount);
       const newlyClaimed = data.find((v) => v.code === code);
       if (newlyClaimed) {
         setAppliedVoucher(newlyClaimed);
@@ -148,12 +167,6 @@ export default function PaymentPage() {
       const errorCode = (err as { code?: number } | null)?.code;
       toast.error(getErrorMessage(errorCode, "Mã giảm giá không hợp lệ hoặc đã hết hạn."));
     }
-  };
-
-  const handleRemoveCode = () => {
-    setAppliedVoucher(null);
-    setManualCode("");
-    mergeBookingState({ promotionCode: undefined });
   };
 
   const getUserId = () => {
@@ -193,7 +206,7 @@ export default function PaymentPage() {
         const result = await checkoutBooking(
           token,
           Number(orderId),
-          bookingInfo?.promotionCode,
+          manualCode.trim() || undefined,
         );
 
         const orderData = {
@@ -257,7 +270,7 @@ export default function PaymentPage() {
             <div className="bg-card border border-border rounded-2xl p-6 shadow-lg shadow-black/5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-6 bg-primary rounded-full" />
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/60">
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-foreground to-foreground/60">
                   Chọn Phương Thức Thanh Toán
                 </h1>
               </div>
@@ -353,7 +366,7 @@ export default function PaymentPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsVoucherOpen(true)}
+                    onClick={handleOpenVoucherDialog}
                     className="flex items-center gap-1.5 text-sm text-primary hover:underline"
                   >
                     <Ticket className="w-3.5 h-3.5" />
@@ -385,11 +398,14 @@ export default function PaymentPage() {
               <div className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 shadow-xl shadow-black/10">
                 <div className="flex mb-5 gap-3">
                   {bookingInfo?.moviePoster && (
-                    <img
-                      src={bookingInfo.moviePoster}
-                      alt="Poster phim"
-                      className="w-16 h-24 rounded-xl object-cover flex-shrink-0 border border-border shadow-md"
-                    />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={bookingInfo.moviePoster}
+                        alt="Poster phim"
+                        className="w-16 h-24 rounded-xl object-cover shrink-0 border border-border shadow-md"
+                      />
+                    </>
                   )}
                   <div className="min-w-0">
                     <h3 className="text-sm font-bold leading-tight text-card-foreground line-clamp-2 mb-1">
@@ -503,10 +519,12 @@ export default function PaymentPage() {
         </form>
 
         <VoucherSelectDialog
+          key={`${isVoucherOpen ? "open" : "closed"}-${manualCode || "empty"}-${bookingInfo?.movieId ?? "none"}`}
           open={isVoucherOpen}
           onOpenChange={setIsVoucherOpen}
-          token={typeof window !== "undefined" ? (sessionStorage.getItem("token") ?? "") : ""}
-          totalAmount={bookingInfo?.total ?? 0}
+          totalAmount={checkoutEligibleAmount}
+          vouchers={voucherOptions}
+          isLoading={isVoucherLoading}
           selectedCode={manualCode || null}
           onSelect={handleSelectVoucher}
         />

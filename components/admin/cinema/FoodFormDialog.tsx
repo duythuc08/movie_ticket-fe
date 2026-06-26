@@ -1,21 +1,21 @@
 "use client";
 
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { ImageUploadPreview } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { foodFormSchema, type FoodFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminFood } from "@/services/admin/adminFoodService";
-import { Utensils, Info, DollarSign, Package } from "lucide-react";
-import { ImageUploadPreview } from "@/components/shared";
+import { DollarSign, Utensils } from "lucide-react";
 import { Controller } from "react-hook-form";
 
 interface FoodFormDialogProps {
@@ -42,6 +42,7 @@ export function FoodFormDialog({
       title={isCreateMode ? "Thêm Đồ ăn / Combo" : "Chỉnh sửa Đồ ăn / Combo"}
       subtitle={!isCreateMode ? food.name : undefined}
       updatedAt={food?.updatedAt}
+      resetKey={food?.foodId ?? "create"}
       schema={foodFormSchema}
       defaultValues={{
         name: food?.name ?? "",
@@ -60,7 +61,7 @@ export function FoodFormDialog({
     >
       {(form) => (
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-8 items-start">
-          <div className="space-y-5 mx-auto md:mx-0 w-full max-w-[220px] sticky top-0">
+          <div className="space-y-5 mx-auto md:mx-0 w-full max-w-55 sticky top-0">
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Hình ảnh món</Label>
               <Controller

@@ -1,20 +1,20 @@
-import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { ImageUploadPreview, SingleSelectWithSearch } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SingleSelectWithSearch, ImageUploadPreview } from "@/components/shared";
-import { Controller } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { adminEventService } from "@/services/admin/adminEventService";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
-import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 import { useAuth } from "@/context/AuthContext";
 import { eventSchema, type EventValues } from "@/lib/validations/admin/promotion.schema";
+import { adminEventService } from "@/services/admin/adminEventService";
+import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
+import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import type { AdminEvent } from "@/types/admin/promotion";
 import { HelpCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Controller } from "react-hook-form";
+import { toast } from "sonner";
 
 const toDateTimeLocal = (iso: string): string => {
   if (!iso) return "";
@@ -75,7 +75,7 @@ export const EventFormDialog = ({
     if (values.posterUrl instanceof File) {
       try {
         finalPosterUrl = await uploadFileAndGetUrl(token, values.posterUrl);
-      } catch (error) {
+      } catch {
         toast.error("Lỗi khi tải ảnh lên");
         setIsSubmitting(false);
         return;
@@ -113,6 +113,7 @@ export const EventFormDialog = ({
       title={isEdit ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
       subtitle={isEdit ? `#${event!.eventId}` : undefined}
       updatedAt={event?.updatedAt}
+      resetKey={event?.eventId ?? "create"}
       schema={eventSchema}
       defaultValues={defaultValues}
       onSubmit={onSubmit}
@@ -128,7 +129,7 @@ export const EventFormDialog = ({
               name="posterUrl"
               control={form.control}
               render={({ field }) => (
-                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1.5 w-full flex-1 flex flex-col justify-center min-h-[280px]">
+                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1.5 w-full flex-1 flex flex-col justify-center min-h-70">
                   <ImageUploadPreview
                     currentImageUrl={typeof field.value === "string" ? field.value : null}
                     aspectRatio="poster"
@@ -214,7 +215,7 @@ export const EventFormDialog = ({
               <Textarea
                 {...form.register("description")}
                 placeholder="Nhập nội dung chi tiết bài viết sự kiện tại đây (Hỗ trợ cấu trúc Markdown giống bài báo)..."
-                className="bg-background resize-y min-h-[160px] line-height-relaxed text-sm"
+                className="bg-background resize-y min-h-40 line-height-relaxed text-sm"
               />
             </div>
           </div>

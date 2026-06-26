@@ -1,6 +1,6 @@
-import type { SeatShowTime, FoodProduct, SelectionResponse, UserVoucher } from "@/types";
 import { getErrorMessage } from "@/lib/errors";
 import { apiFetch } from "@/lib/fetchApi";
+import type { FoodProduct, SelectionResponse, UserVoucher } from "@/types";
 
 const BASE_URL = "/api-proxy";
 
@@ -44,12 +44,12 @@ export interface VnpayBookingPayload {
 
 export async function getApplicableVouchers(
   token: string,
-  totalAmount: number,
   movieId?: number,
+  totalAmount?: number,
 ): Promise<UserVoucher[]> {
   const params = new URLSearchParams();
-  if (totalAmount) params.set("totalAmount", String(totalAmount));
   if (movieId)     params.set("movieId",     String(movieId));
+  if (totalAmount != null) params.set("totalAmount", String(totalAmount));
 
   const res = await apiFetch(`${BASE_URL}/users/vouchers/applicable?${params}`, {
     headers: authHeaders(token),

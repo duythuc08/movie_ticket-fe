@@ -1,21 +1,21 @@
 "use client";
 
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { cinemaFormSchema, type CinemaFormSchema } from "@/lib/validations/admin.schemas";
-import type { AdminCinema, AdminCinemaDetail, CinemaStatus, RoomType, RoomStatus } from "@/types/admin.type";
-import { CINEMA_STATUS_OPTIONS } from "./CinemaColumns";
-import { MapPin, Phone, Mail, Building2, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { AdminCinema, AdminCinemaDetail, CinemaStatus, RoomStatus, RoomType } from "@/types/admin.type";
+import { Building2, Mail, MapPin, Phone, Plus, Trash2 } from "lucide-react";
 import { useFieldArray } from "react-hook-form";
+import { CINEMA_STATUS_OPTIONS } from "./CinemaColumns";
 
 interface CinemaFormDialogProps {
   open: boolean;
@@ -42,6 +42,7 @@ export function CinemaFormDialog({
       title={isCreateMode ? "Thêm rạp chiếu mới" : "Chỉnh sửa rạp chiếu"}
       subtitle={!isCreateMode ? cinema.name : undefined}
       updatedAt={null}
+      resetKey={cinema && "cinemaId" in cinema ? cinema.cinemaId : "create"}
       schema={cinemaFormSchema}
       defaultValues={{
         name:         cinema?.name         ?? "",

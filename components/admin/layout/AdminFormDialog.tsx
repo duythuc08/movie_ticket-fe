@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Clock, Loader2, X } from "lucide-react";
@@ -19,6 +19,7 @@ interface AdminFormDialogProps<TSchema extends FieldValues> {
   title: string;
   subtitle?: string;
   updatedAt?: string | null;
+  resetKey?: React.Key;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: ZodType<TSchema, any>;
   defaultValues?: DefaultValues<TSchema>;
@@ -38,6 +39,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
   title,
   subtitle,
   updatedAt,
+  resetKey,
   schema,
   defaultValues,
   onSubmit,
@@ -61,7 +63,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
       form.reset(defaultValues);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isLoading]);
+  }, [open, isLoading, resetKey]);
 
   function handleClose() {
     form.reset(defaultValues);
@@ -100,7 +102,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
           </DialogHeader>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center flex-1 py-16 min-h-[300px]">
+            <div className="flex flex-col items-center justify-center flex-1 py-16 min-h-75">
               <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
               <p className="text-sm font-medium text-muted-foreground">Đang tải dữ liệu...</p>
             </div>
@@ -138,7 +140,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
                         Đóng
                       </Button>
                       {onEdit && (
-                        <Button type="button" onClick={onEdit} className="min-w-[120px] h-9 text-xs font-semibold">
+                        <Button type="button" onClick={onEdit} className="min-w-30 h-9 text-xs font-semibold">
                           Chỉnh sửa
                         </Button>
                       )}
@@ -148,7 +150,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
                       <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="h-9 text-xs font-semibold">
                         Hủy bỏ
                       </Button>
-                      <Button type="submit" disabled={isSubmitting} className="min-w-[120px] h-9 text-xs font-semibold">
+                      <Button type="submit" disabled={isSubmitting} className="min-w-30 h-9 text-xs font-semibold">
                         {isSubmitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
                         {submitLabel}
                       </Button>

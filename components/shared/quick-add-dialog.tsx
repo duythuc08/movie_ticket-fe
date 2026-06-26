@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { toast } from "sonner";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
     genreFormSchema, type GenreFormSchema,
     quickAddPersonSchema, type QuickAddPersonSchema,
 } from "@/lib/validations/admin.schemas";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 // ─── QuickAdd Genre ────────────────────────────────────────────────────────────
 
@@ -51,6 +51,7 @@ export function QuickAddGenreButton({ onCreated, onCreateRequest }: QuickAddGenr
                 open={isOpen}
                 onOpenChange={setIsOpen}
                 title="Thêm thể loại mới"
+                resetKey="quick-genre"
                 schema={genreFormSchema}
                 defaultValues={{ name: "", description: "" }}
                 onSubmit={handleSubmit}
@@ -134,6 +135,7 @@ export function QuickAddPersonButton({ defaultRole, onCreated, onCreateRequest }
                 open={isOpen}
                 onOpenChange={setIsOpen}
                 title={`Thêm ${roleLabel} mới`}
+                resetKey={defaultRole}
                 schema={quickAddPersonSchema}
                 defaultValues={{ name: "", movieRole: defaultRole, avatarUrl: "" }}
                 onSubmit={handleSubmit}

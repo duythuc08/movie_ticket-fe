@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Calendar, Clock as ClockIcon } from "lucide-react";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { SingleSelectWithSearch } from "@/components/shared";
 import { TimePicker24h } from "@/components/shared/TimePicker24h";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 import { updateShowtimeSchema, UpdateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
-import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAdminRooms } from "@/services/admin/adminRoomService";
-import { useAuth } from "@/context/AuthContext";
+import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
 import type { Showtime } from "@/types/admin/showtime";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface ShowtimeEditDialogProps {
   open: boolean;
@@ -34,6 +32,11 @@ const parseDateTimeToDateAndTime = (iso: string): { date: string; time: string }
 const combineDateAndTime = (dateStr: string, timeStr: string): string =>
   `${dateStr}T${timeStr}:00`;
 
+const getInitialDateTime = (iso?: string) => {
+  if (!iso) return { date: "", time: "" };
+  return parseDateTimeToDateAndTime(iso);
+};
+
 export const ShowtimeEditDialog = ({
   open,
   onOpenChange,
@@ -44,8 +47,9 @@ export const ShowtimeEditDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [movieOptions, setMovieOptions] = useState<{ value: string; label: string; duration: number }[]>([]);
   const [roomOptions, setRoomOptions] = useState<{ value: string; label: string }[]>([]);
-  const [dateStr, setDateStr] = useState("");
-  const [timeStr, setTimeStr] = useState("");
+  const initialDateTime = useMemo(() => getInitialDateTime(showtime?.startTime), [showtime?.startTime]);
+  const [dateStr, setDateStr] = useState(initialDateTime.date);
+  const [timeStr, setTimeStr] = useState(initialDateTime.time);
 
   useEffect(() => {
     if (!token) return;
@@ -60,14 +64,6 @@ export const ShowtimeEditDialog = ({
       )
       .catch(() => {});
   }, [token]);
-
-  useEffect(() => {
-    if (open && showtime?.startTime) {
-      const { date, time } = parseDateTimeToDateAndTime(showtime.startTime);
-      setDateStr(date);
-      setTimeStr(time);
-    }
-  }, [open, showtime]);
 
   const defaultValues: UpdateShowtimeValues = {
     movieId: showtime?.movieId || 0,
@@ -92,10 +88,12 @@ export const ShowtimeEditDialog = ({
 
   return (
     <AdminFormDialog
+      key={showtime?.showTimeId ?? "create"}
       open={open}
       onOpenChange={onOpenChange}
       title="Chỉnh sửa suất chiếu"
       subtitle={showtime ? `#${showtime.showTimeId} – ${showtime.movieTitle}` : undefined}
+      resetKey={showtime?.showTimeId ?? "none"}
       schema={updateShowtimeSchema}
       defaultValues={defaultValues}
       onSubmit={handleSubmit}

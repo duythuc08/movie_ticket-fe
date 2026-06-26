@@ -1,23 +1,22 @@
-import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { MultiSelectWithSearch } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { MultiSelectWithSearch } from "@/components/shared";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { adminPromotionService } from "@/services/admin/adminPromotionService";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { useAuth } from "@/context/AuthContext";
-import { promotionSchema, type PromotionValues } from "@/lib/validations/admin/promotion.schema";
-import type { AdminPromotion, DayOfWeekValue } from "@/types/admin/promotion";
 import { cn } from "@/lib/utils";
-import { HelpCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { promotionSchema, type PromotionValues } from "@/lib/validations/admin/promotion.schema";
+import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import { adminPromotionService } from "@/services/admin/adminPromotionService";
+import type { AdminPromotion, DayOfWeekValue } from "@/types/admin/promotion";
+import { RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
+import { toast } from "sonner";
 
 const toDateTimeLocal = (iso: string): string => {
   if (!iso) return "";
@@ -108,6 +107,7 @@ export const PromotionFormDialog = ({
       title={isEdit ? "Chỉnh sửa khuyến mãi" : "Tạo khuyến mãi mới"}
       subtitle={isEdit ? `#${promotion!.promotionId} — ${promotion!.code}` : undefined}
       updatedAt={promotion?.updatedAt}
+      resetKey={promotion?.promotionId ?? "create"}
       schema={promotionSchema}
       defaultValues={defaultValues}
       onSubmit={onSubmit}
