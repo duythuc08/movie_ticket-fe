@@ -23,8 +23,9 @@ export default function AdminBookingsPage() {
   const [loading, setLoading] = useState(true);
 
   // Filters (server-side for dates)
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [fromDate, setFromDate] = useState(todayStr);
+  const [toDate, setToDate] = useState(todayStr);
 
   // Dialogs
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -41,7 +42,7 @@ export default function AdminBookingsPage() {
       const res = await adminBookingService.getAdminOrders(
         token,
         0,
-        10,
+        1000,
         undefined,
         undefined,
         fromDate,
@@ -111,18 +112,21 @@ export default function AdminBookingsPage() {
           key: "orderStatus",
           label: "Trạng thái",
           options: [
+            { label: "(Mặc định)", value: "PENDING_OR_PAID" },
             { label: "Chờ thanh toán", value: "PENDING" },
+            { label: "Đang xử lý", value: "IN_PROGRESS" },
             { label: "Đã thanh toán", value: "PAID" },
             { label: "Đã hủy", value: "CANCELLED" },
             { label: "Hết hạn", value: "EXPIRED" },
             { label: "Đã sử dụng", value: "USED" },
           ],
         }]}
+        initialFilters={[{ id: "orderStatus", value: "PENDING_OR_PAID" }]}
         isLoading={loading}
         emptyText="Không tìm thấy đơn hàng nào."
         onResetFilters={() => {
-          setFromDate("");
-          setToDate("");
+          setFromDate(todayStr);
+          setToDate(todayStr);
         }}
       >
         <div className="flex items-center gap-2 text-sm">

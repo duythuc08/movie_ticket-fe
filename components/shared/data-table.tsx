@@ -91,6 +91,7 @@ interface DataTableProps<TData> {
   isLoading?: boolean;
   emptyText?: string;
   onResetFilters?: () => void;
+  initialFilters?: ColumnFiltersState;
   /** Slot bên phải toolbar — ví dụ nút "Thêm mới" */
   children?: React.ReactNode;
 }
@@ -107,10 +108,11 @@ export function DataTable<TData>({
   isLoading = false,
   emptyText = "Không có dữ liệu.",
   onResetFilters,
+  initialFilters = [],
   children,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(initialFilters || []);
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [filterKey, setFilterKey] = React.useState(0);
 
@@ -125,7 +127,10 @@ export function DataTable<TData>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: PAGE_SIZE } },
+    initialState: { 
+      pagination: { pageSize: PAGE_SIZE },
+      columnFilters: initialFilters,
+    },
   });
 
   const { pageIndex, pageSize } = table.getState().pagination;
@@ -166,24 +171,28 @@ export function DataTable<TData>({
           </div>
         )}
 
-        {filters?.map((filter) => (
-          <Select
-            key={`${filter.key}-${filterKey}`}
-            onValueChange={(value) => handleFilterChange(filter.key, value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={filter.label} />
-            </SelectTrigger>
-            <SelectContent data-admin="">
-              <SelectItem value="__all__">Tất cả</SelectItem>
-              {filter.options.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+        {filters?.map((filter) => {
+          const currentFilterValue = (table.getColumn(filter.key)?.getFilterValue() as string) || "__all__";
+          return (
+            <Select
+              key={`${filter.key}-${filterKey}`}
+              value={currentFilterValue}
+              onValueChange={(value) => handleFilterChange(filter.key, value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={filter.label} />
+              </SelectTrigger>
+              <SelectContent data-admin="">
+                {filter.options.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__all__">Tất cả</SelectItem>
+              </SelectContent>
+            </Select>
+          );
+        })}
 
         {children}
 

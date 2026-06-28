@@ -59,6 +59,16 @@ export function SignupForm() {
       return;
     }
 
+    let formattedDate = form.birthday;
+    if (formattedDate) {
+      const dateObj = new Date(formattedDate);
+      if (isNaN(dateObj.getTime())) {
+        setError("Ngày sinh không hợp lệ!");
+        return;
+      }
+      formattedDate = dateObj.toISOString().split("T")[0];
+    }
+
     setLoading(true);
 
     try {
@@ -68,7 +78,7 @@ export function SignupForm() {
         firstname: form.firstname,
         lastname: form.lastname,
         phoneNumber: form.phoneNumber,
-        birthday: form.birthday,
+        birthday: formattedDate,
       });
       setMode("verify");
     } catch (err) {

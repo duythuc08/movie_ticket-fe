@@ -159,148 +159,124 @@ function PaymentSuccessContent() {
         </div>
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Boarding Pass Ticket UI */}
+        <div className="relative mx-auto w-full max-w-4xl flex flex-col md:flex-row bg-card rounded-3xl overflow-hidden shadow-2xl border border-border mt-4">
+          
+          {/* Left part: Movie Details */}
+          <div className="flex-1 p-8 md:border-r-[3px] md:border-dashed border-border relative">
+            {/* Notches for the ticket visual */}
+            <div className="hidden md:block absolute -right-5 top-[-24px] w-10 h-10 rounded-full bg-background shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)] z-10" />
+            <div className="hidden md:block absolute -right-5 bottom-[-24px] w-10 h-10 rounded-full bg-background shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] z-10" />
 
-          <div className="lg:col-span-1 bg-card border border-border rounded-2xl p-6 flex flex-col items-center gap-5 shadow-xl shadow-black/10">
-            <div className="bg-white p-3 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/15 text-primary p-3 rounded-2xl shadow-inner">
+                  <Ticket className="w-8 h-8" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Boarding Pass</p>
+                  <h2 className="text-2xl font-black text-foreground tracking-tight">INFINITY CINEMA</h2>
+                </div>
+              </div>
+              <div className="text-right hidden sm:block">
+                 <p className="text-xs text-muted-foreground uppercase mb-1">Thanh toán qua</p>
+                 <p className="font-bold text-sm text-foreground">{extraInfo?.paymentMethod || "VNPAY"}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-6 items-start mb-8 pb-8 border-b border-border">
+              {extraInfo?.moviePoster ? (
+                <Image src={extraInfo.moviePoster} alt="poster" width={96} height={144} className="rounded-xl shadow-lg border border-border" />
+              ) : (
+                <div className="w-24 h-36 bg-muted rounded-xl flex items-center justify-center border border-border">
+                   <Ticket className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+              )}
+              <div className="flex flex-col justify-center py-2">
+                <h3 className="text-2xl font-black uppercase tracking-tight text-foreground line-clamp-2">{extraInfo?.movie || "---"}</h3>
+                <span className="inline-block mt-2 px-3 py-1 bg-muted text-muted-foreground text-xs font-bold rounded-full w-fit">
+                  {extraInfo?.format || "2D"}
+                </span>
+                <p className="text-sm mt-4 text-foreground/80"><span className="text-muted-foreground">Khách hàng:</span> <span className="font-bold text-foreground">{orderData.fullName}</span></p>
+                <p className="text-sm mt-1 text-foreground/80"><span className="text-muted-foreground">Ngày mua:</span> <span className="font-medium text-foreground">{formatDate(orderData.bookingTime)}</span></p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ngày chiếu</p>
+                <p className="font-bold text-base text-foreground">{extraInfo?.date || "---"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Giờ chiếu</p>
+                <p className="font-black text-lg text-primary">{extraInfo?.time || "---"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Rạp</p>
+                <p className="font-bold text-base text-foreground">{extraInfo?.cinema || "---"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Phòng chiếu</p>
+                <p className="font-bold text-base text-foreground">{extraInfo?.roomName || "---"}</p>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-8 border-t border-border flex justify-between items-center">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ghế ngồi</p>
+                <p className="text-2xl font-black tracking-widest text-primary break-all">{getSeatList()}</p>
+              </div>
+              <Button className="hidden sm:flex gap-2 hover:-translate-y-0.5 transition-all shadow-lg rounded-xl h-12 px-6">
+                <Download className="w-4 h-4" /> Lưu vé
+              </Button>
+            </div>
+          </div>
+
+          {/* Right part: QR and Price */}
+          <div className="w-full md:w-80 bg-muted/20 p-8 flex flex-col justify-center items-center relative">
+            <div className="text-center mb-8 w-full border-b border-border/50 pb-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Mã đơn hàng</p>
+              <p className="font-mono font-black text-xl text-foreground tracking-widest">#{orderData.orderId}</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-2xl shadow-md border border-border mb-8 inline-block transform hover:scale-105 transition-transform duration-300">
               <img
-                alt={`QR Code for order ${orderData.orderId}`}
-                className="w-full max-w-[200px] aspect-square"
+                alt={`QR Code`}
+                className="w-40 h-40 object-contain"
                 src={
                   orderData.qrCode?.startsWith("data:image")
                     ? orderData.qrCode
-                    : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(orderData.qrCode || orderData.orderId)}`
+                    : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(orderData.qrCode || orderData.orderId)}`
                 }
               />
             </div>
-            <div className="text-center">
-              <p className="text-base font-bold">{orderData.qrCode || `#${orderData.orderId}`}</p>
-              <p className="text-muted-foreground text-xs mt-1 leading-relaxed">
-                Đưa mã QR này tại quầy vé để nhận vé.
-              </p>
+
+            <div className="w-full text-center mb-6">
+               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Tổng thanh toán</p>
+               <p className="font-black text-3xl text-yellow-500">{formatCurrency(orderData.finalPrice)}</p>
             </div>
-            <Button className="w-full gap-2 hover:-translate-y-0.5 transition-all">
-              <Download className="w-4 h-4" /> Tải vé về
-            </Button>
+            
+            <p className="text-[10px] text-muted-foreground text-center uppercase tracking-widest leading-relaxed">
+              Vui lòng đưa mã QR này<br/>cho nhân viên soát vé
+            </p>
           </div>
+        </div>
 
-
-          <div className="lg:col-span-2 flex flex-col gap-5">
-
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg shadow-black/5">
-              <div className="flex items-start gap-4 mb-5">
-                {extraInfo?.moviePoster && (
-                  <Image
-                    src={extraInfo.moviePoster}
-                    alt={extraInfo?.movie ?? "Movie poster"}
-                    width={64}
-                    height={96}
-                    className="w-16 h-24 object-cover rounded-xl border border-border shadow-md flex-shrink-0"
-                  />
-                )}
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Chi tiết vé</p>
-                  <p className="text-xl font-bold">{extraInfo?.movie || "---"}</p>
-                  <p className="text-muted-foreground text-sm mt-1">{extraInfo?.format || "2D Phụ đề"}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 border-t border-border pt-5">
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Rạp chiếu</p>
-                  <p className="text-sm font-semibold">{extraInfo?.cinema || "---"} – {extraInfo?.roomName || "---"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Suất chiếu</p>
-                  <p className="text-sm font-semibold">{extraInfo?.date || "---"} – {extraInfo?.time || "---"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Ghế ngồi</p>
-                  <p className="text-sm font-semibold">{getSeatList()}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 border-t border-border pt-4 mt-4">
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Thời gian đặt</p>
-                  <p className="text-sm font-semibold">{formatDate(orderData.bookingTime)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs mb-1">Khách hàng</p>
-                  <p className="text-sm font-semibold">{orderData.fullName || "---"}</p>
-                </div>
-              </div>
-            </div>
-
-
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg shadow-black/5">
-              <h3 className="font-bold text-base flex items-center gap-2 mb-4">
-                <Ticket className="w-5 h-5 text-primary" />
-                Tóm tắt đơn hàng
-              </h3>
-
-              <div className="space-y-2.5 border-t border-border pt-4">
-                {ticketSummary.map((group, index) => (
-                  <div key={index} className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">Vé {group.seatType} (×{group.count})</p>
-                    <p className="font-semibold">{formatCurrency(group.totalPrice)}</p>
-                  </div>
-                ))}
-                {orderData.foods?.map((item, index) => (
-                  <div key={`food-${index}`} className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">{item.name} (×{item.quantity})</p>
-                    <p className="font-semibold">{formatCurrency(item.totalPrice)}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-2 border-t border-border pt-4 mt-2">
-                <div className="flex justify-between items-center text-sm">
-                  <p className="text-muted-foreground">Tổng tiền vé</p>
-                  <p className="font-medium">{formatCurrency(orderData.totalTicketPrice)}</p>
-                </div>
-                {(orderData.totalFoodPrice || 0) > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">Tổng tiền đồ ăn</p>
-                    <p className="font-medium">{formatCurrency(orderData.totalFoodPrice)}</p>
-                  </div>
-                )}
-                {(orderData.discountAmount || 0) > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">Giảm giá {orderData.promotionCode && `(${orderData.promotionCode})`}</p>
-                    <p className="text-emerald-500 font-medium">−{formatCurrency(orderData.discountAmount)}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center border-t border-border pt-4 mt-2">
-                <p className="font-black text-lg">Tổng cộng</p>
-                <p className="text-yellow-500 font-black text-2xl">{formatCurrency(orderData.finalPrice)}</p>
-              </div>
-
-              <div className="flex justify-between items-center text-sm text-muted-foreground pt-3 border-t border-border mt-2">
-                <span>Thanh toán qua</span>
-                <span className="font-bold text-foreground">{extraInfo?.paymentMethod || "VNPAY"}</span>
-              </div>
-            </div>
-
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/"); }}
-                variant="outline"
-                className="flex-1 gap-2 hover:-translate-y-0.5 transition-all"
-              >
-                <Home className="w-4 h-4" /> Về trang chủ
-              </Button>
-              <Button
-                onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/profile"); }}
-                className="flex-1 gap-2 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all"
-              >
-                <Ticket className="w-4 h-4" /> Xem vé của tôi
-              </Button>
-            </div>
-          </div>
+        {/* Action Buttons Container */}
+        <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 mt-2">
+          <Button
+            onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/"); }}
+            variant="outline"
+            className="flex-1 gap-2 hover:-translate-y-0.5 transition-all h-12 rounded-xl text-base"
+          >
+            <Home className="w-5 h-5" /> Về trang chủ
+          </Button>
+          <Button
+            onClick={() => { sessionStorage.removeItem("pendingOrder"); router.push("/profile"); }}
+            className="flex-1 gap-2 hover:-translate-y-0.5 shadow-lg shadow-primary/30 transition-all h-12 rounded-xl text-base"
+          >
+            <Ticket className="w-5 h-5" /> Xem tất cả vé của tôi
+          </Button>
         </div>
       </div>
     </main>

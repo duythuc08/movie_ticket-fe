@@ -7,6 +7,7 @@ import { Eye, QrCode } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
   PENDING: { label: "Chờ thanh toán", style: "bg-amber-500/20 text-amber-500 border-amber-500/30" },
+  IN_PROGRESS: { label: "Đang xử lý", style: "bg-blue-500/20 text-blue-500 border-blue-500/30" },
   PAID: { label: "Đã thanh toán", style: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
   CANCELLED: { label: "Đã hủy", style: "bg-rose-500/20 text-rose-500 border-rose-500/30" },
   EXPIRED: { label: "Hết hạn", style: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
@@ -74,6 +75,13 @@ export function createAdminBookingColumns(
     {
       accessorKey: "orderStatus",
       header: "Trạng Thái",
+      filterFn: (row, columnId, filterValue) => {
+        const val = row.getValue(columnId) as string;
+        if (filterValue === "PENDING_OR_PAID") {
+          return val === "PENDING" || val === "PAID" || val === "IN_PROGRESS";
+        }
+        return val === filterValue;
+      },
       cell: ({ row }) => {
         const st = row.original.orderStatus;
         const statusInfo = STATUS_MAP[st] || { label: st, style: "bg-admin-surface-3 text-admin-3" };

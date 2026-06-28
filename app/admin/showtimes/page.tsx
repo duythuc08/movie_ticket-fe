@@ -106,7 +106,7 @@ export default function AdminShowtimesPage() {
   const [ganttRooms, setGanttRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  const [viewMode, setViewMode] = useState<"table" | "gantt">("table");
+  const [viewMode, setViewMode] = useState<"table" | "gantt">("gantt");
 
   const [isInitialAddOpen, setIsInitialAddOpen] = useState(false);
   const [initialAddData, setInitialAddData] = useState<{ cinemaId: string; date: string }>({ cinemaId: "", date: "" });
