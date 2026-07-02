@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, Star, BellRing } from "lucide-react";
-import { apiFetch } from "@/lib/fetchApi"; // Adjust path if necessary
+import { apiFetch } from "@/lib/fetchApi";
+import { useAuth } from "@/context/AuthContext";
 
 interface UnreviewedMovieResponse {
   movieId: number;
@@ -14,13 +15,16 @@ interface UnreviewedMovieResponse {
 
 export function ReviewNotificationBanner() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [allUnreviewed, setAllUnreviewed] = useState<UnreviewedMovieResponse[]>([]);
   const [dismissedIds, setDismissedIds] = useState<number[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedMovieForDialog, setSelectedMovieForDialog] = useState<UnreviewedMovieResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<"reviews" | "recommendations">("reviews");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     // Load dismissed IDs from local storage
     const stored = localStorage.getItem("dismissedReviewMovieIds");
     if (stored) {
@@ -70,6 +74,30 @@ export function ReviewNotificationBanner() {
   // According to requirements: "nếu nhấn X nữa thì đưa vô noti" -> only dismissed ones go to noti
   const notificationMovies = allUnreviewed.filter(m => dismissedIds.includes(m.movieId));
 
+  const [dismissedRecommendations, setDismissedRecommendations] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load dismissed recommendations from sessionStorage
+    const storedRecs = sessionStorage.getItem("dismissedRecommendationsCache");
+    if (storedRecs) {
+      try {
+        setDismissedRecommendations(JSON.parse(storedRecs));
+      } catch (e) {}
+    }
+
+    const handleRecommendationDismissed = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const recs = customEvent.detail;
+      if (recs && recs.length > 0) {
+        setDismissedRecommendations(recs);
+        sessionStorage.setItem("dismissedRecommendationsCache", JSON.stringify(recs));
+      }
+    };
+
+    window.addEventListener("recommendation:dismissed", handleRecommendationDismissed);
+    return () => window.removeEventListener("recommendation:dismissed", handleRecommendationDismissed);
+  }, []);
+
   const handleConfirmReview = () => {
     if (selectedMovieForDialog) {
       router.push(`/movie/${selectedMovieForDialog.movieId}#reviews`);
@@ -78,7 +106,9 @@ export function ReviewNotificationBanner() {
     }
   };
 
-  if (allUnreviewed.length === 0) return null;
+  if (!isAuthenticated && allUnreviewed.length === 0 && dismissedRecommendations.length === 0) return null;
+
+  const totalNotifications = notificationMovies.length + dismissedRecommendations.length;
 
   return (
     <>
@@ -123,34 +153,105 @@ export function ReviewNotificationBanner() {
         </div>
       )}
 
-      {/* Floating Bell Notification for dismissed movies */}
-      {notificationMovies.length > 0 && (
+      {/* Floating Bell Notification for dismissed movies & recommendations */}
+      {totalNotifications > 0 && (
         <div className="fixed bottom-6 right-6 z-50" ref={dropdownRef}>
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className="absolute bottom-16 right-0 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-5 fade-in-20">
+            <div className="absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-5 fade-in-20">
               <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="font-semibold text-gray-700 text-sm">Chờ đánh giá ({notificationMovies.length})</h3>
+                <h3 className="font-semibold text-gray-700 text-sm">Thông báo</h3>
                 <button onClick={() => setIsDropdownOpen(false)} className="text-gray-400 hover:text-gray-600">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notificationMovies.map(movie => (
-                  <button
-                    key={movie.movieId}
-                    onClick={() => setSelectedMovieForDialog(movie)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 transition-colors text-left"
-                  >
-                    <img src={movie.posterUrl} alt={movie.movieName} className="w-10 h-14 object-cover rounded" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{movie.movieName}</p>
-                      <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-blue-600" /> Nhấn để đánh giá
-                      </p>
-                    </div>
-                  </button>
-                ))}
+
+              {/* Tabs */}
+              <div className="flex border-b border-gray-100">
+                <button
+                  className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wider text-center transition-colors ${
+                    activeTab === "reviews" 
+                      ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50" 
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setActiveTab("reviews")}
+                >
+                  Chờ đánh giá ({notificationMovies.length})
+                </button>
+                <button
+                  className={`relative flex-1 py-2 text-xs font-semibold uppercase tracking-wider text-center transition-colors ${
+                    activeTab === "recommendations" 
+                      ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50" 
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setActiveTab("recommendations")}
+                >
+                  Phim gợi ý
+                  {dismissedRecommendations.length > 0 && (
+                    <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                      !
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto bg-white">
+                
+                {/* 1. Reviews Tab */}
+                {activeTab === "reviews" && (
+                  <div>
+                    {notificationMovies.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500 text-sm">
+                        Chưa có phim nào chờ đánh giá.
+                      </div>
+                    ) : (
+                      notificationMovies.map(movie => (
+                        <button
+                          key={`rev-${movie.movieId}`}
+                          onClick={() => setSelectedMovieForDialog(movie)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 transition-colors text-left"
+                        >
+                          <img src={movie.posterUrl} alt={movie.movieName} className="w-10 h-14 object-cover rounded" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{movie.movieName}</p>
+                            <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-blue-600" /> Nhấn để đánh giá
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* 2. Recommendations Tab */}
+                {activeTab === "recommendations" && (
+                  <div>
+                    {dismissedRecommendations.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500 text-sm">
+                        Chưa có phim gợi ý nào.
+                      </div>
+                    ) : (
+                      dismissedRecommendations.map((movie: any) => (
+                        <Link
+                          key={`rec-${movie.movieId}`}
+                          href={`/movie/${movie.movieId}`}
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-blue-50 border-b border-gray-50 transition-colors text-left"
+                        >
+                          <img src={movie.posterUrl} alt={movie.title} className="w-10 h-14 object-cover rounded" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{movie.title}</p>
+                            <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-blue-600" /> Nhấn để xem
+                            </p>
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                )}
+
               </div>
             </div>
           )}
@@ -159,12 +260,14 @@ export function ReviewNotificationBanner() {
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="bg-white text-blue-600 p-4 rounded-full shadow-xl border border-gray-100 hover:shadow-2xl transition-all hover:scale-105 flex items-center justify-center group relative"
-            aria-label="Thông báo đánh giá"
+            aria-label="Thông báo"
           >
             <BellRing className={`w-6 h-6 ${!isDropdownOpen ? 'animate-pulse group-hover:animate-none' : ''}`} />
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm ring-2 ring-white">
-              {notificationMovies.length}
-            </span>
+            {notificationMovies.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm ring-2 ring-white">
+                {notificationMovies.length}
+              </span>
+            )}
           </button>
         </div>
       )}

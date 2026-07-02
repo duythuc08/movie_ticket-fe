@@ -2,6 +2,7 @@ import { HomeBannerCarousel } from "@/components/home/components/HomeBannerCarou
 import { MovieCarousel } from "@/components/home/components/MovieCarousel";
 import { QuickBookingBar } from "@/components/home/components/QuickBookingBar";
 import { ReviewNotificationBanner } from "@/components/home/components/ReviewNotificationBanner";
+import { RecommendationPopup } from "@/components/home/components/RecommendationPopup";
 import {
   getBanners,
   getShowingMoviesPaged,
@@ -36,6 +37,7 @@ export default async function HomePage() {
           initialTotalElements={comingSoon.totalElements}
         />
       </div>
+      <RecommendationPopup />
     </div>
   );
 }
