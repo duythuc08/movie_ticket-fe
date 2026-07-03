@@ -23,7 +23,7 @@ export function clearBookingTimer() {
 export function useBookingTimer() {
   const router = useRouter();
   const endTimeRef = useRef<number>(0);
-  const totalDurationRef = useRef<number>(5 * 60); // fallback 5 phút
+  const [totalDuration, setTotalDuration] = useState<number>(5 * 60); // fallback 5 phút
   const hasWarnedRef = useRef(false);
 
   const [timeLeft, setTimeLeft] = useState<number>(() => {
@@ -47,9 +47,9 @@ export function useBookingTimer() {
 
     endTimeRef.current = parseInt(stored, 10);
     if (startStored) {
-      totalDurationRef.current = Math.floor(
+      setTotalDuration(Math.floor(
         (endTimeRef.current - parseInt(startStored, 10)) / 1000
-      );
+      ));
     }
 
     const intervalRef = { current: 0 as unknown as ReturnType<typeof setInterval> };
@@ -77,8 +77,8 @@ export function useBookingTimer() {
 
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const seconds = String(timeLeft % 60).padStart(2, "0");
-  const progress = totalDurationRef.current > 0
-    ? (timeLeft / totalDurationRef.current) * 100
+  const progress = totalDuration > 0
+    ? (timeLeft / totalDuration) * 100
     : 0;
   const isUrgent = timeLeft <= 60;
 

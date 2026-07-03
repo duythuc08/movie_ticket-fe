@@ -3,6 +3,9 @@
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft, Film } from "lucide-react";
 import Link from "next/link";
+import { getBookingState, clearOrderData } from "@/components/booking/utils/bookingStorage";
+import { releaseBooking } from "@/components/booking/service/booking.service";
+import { clearBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 
 const STEPS = [
   { label: "Chọn ghế", path: "/seat-selection" },
@@ -21,6 +24,20 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
   const activeStep = getStepIndex(pathname);
 
+  const handleBack = async () => {
+    if (pathname.includes("/food-selection")) {
+      const token = sessionStorage.getItem("token") ?? "";
+      const bookingInfo = getBookingState();
+      const orderId = bookingInfo?.orderId;
+      if (orderId && token) {
+        await releaseBooking(token, Number(orderId)).catch(() => {});
+        clearBookingTimer();
+        clearOrderData();
+      }
+    }
+    router.back();
+  };
+
   const isSuccessOrFail =
     pathname.includes("/payment-success") || pathname.includes("/payment-fail");
 
@@ -33,7 +50,7 @@ export default function BookingLayout({ children }: { children: React.ReactNode 
 
               <div className="w-24 sm:w-44 flex items-center">
                 <button
-                  onClick={() => router.back()}
+                  onClick={handleBack}
                   aria-label="Quay lại"
                   className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer group"
                 >

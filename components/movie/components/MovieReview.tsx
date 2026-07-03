@@ -112,6 +112,7 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
         const created = await createReview(movieId, rating, comment.trim());
         setMyReview(created);
         setHasReviewed(true);
+        window.dispatchEvent(new CustomEvent("review:submitted", { detail: { movieId } }));
       }
       setComment("");
       setRating(0);

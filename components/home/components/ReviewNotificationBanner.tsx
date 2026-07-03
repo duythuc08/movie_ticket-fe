@@ -61,6 +61,17 @@ export function ReviewNotificationBanner() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Khi user submit review thành công, xóa phim đó khỏi danh sách chờ đánh giá
+  useEffect(() => {
+    const handleReviewSubmitted = (e: Event) => {
+      const { movieId } = (e as CustomEvent<{ movieId: number }>).detail;
+      setAllUnreviewed((prev) => prev.filter((m) => m.movieId !== movieId));
+      setDismissedIds((prev) => prev.filter((id) => id !== movieId));
+    };
+    window.addEventListener("review:submitted", handleReviewSubmitted);
+    return () => window.removeEventListener("review:submitted", handleReviewSubmitted);
+  }, []);
+
   const handleDismissBanner = (movieId: number) => {
     const updated = [...dismissedIds, movieId];
     setDismissedIds(updated);

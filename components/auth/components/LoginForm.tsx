@@ -31,6 +31,7 @@ export function LoginForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError(""); // Clear error on typing
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -77,117 +78,126 @@ export function LoginForm() {
     }
   };
 
+  const inputClass = (name: keyof LoginFormState) =>
+    `transition-colors duration-200 ${
+      completedFields[name]
+        ? "bg-white text-black border-white"
+        : "bg-white/10 text-white border-white/20 hover:border-white/40 hover:bg-white/15"
+    } focus:border-primary focus:ring-1 focus:ring-primary h-11`;
+
+  if (showVerify) {
+    return (
+      <VerifyEmailForm
+        email={form.email}
+        onClose={() => {
+          setShowVerify(false);
+          router.push(AUTH_ROUTES.LOGIN);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-black text-white overflow-hidden">
-      <div className="absolute inset-3">
-        <img
-          src="/backgroundLogin.jpg"
-          alt="Cinema background"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black" />
-      </div>
+    <>
+      <div className="relative min-h-screen flex items-center justify-center text-white">
+        <div className="absolute inset-0">
+          <img src="/backgroundLogin.jpg" className="absolute inset-0 w-full h-full object-cover" alt="" />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
 
-      <div className="relative z-10 w-full max-w-md p-6 sm:p-8 bg-black/50 backdrop-blur-xl border border-white/30 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-        <Link href={AUTH_ROUTES.HOME} className="flex items-center justify-center gap-2 mb-8">
-          <Film className="w-10 h-10 text-primary" />
-          <span className="text-3xl tracking-wider">INFINITY CINEMA</span>
-        </Link>
-
-        <h2 className="text-center text-2xl font-medium mb-6">Đăng Nhập</h2>
-
-        {error && (
-          <div className="mb-4 p-3 text-sm text-primary bg-red-100/10 border border-red-500/30 rounded text-center">
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Nhập email..."
-              value={form.email}
-              onChange={handleChange}
-              required
-              onBlur={handleBlur}
-              className={`transition-all duration-300 ${
-                completedFields.email
-                  ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                  : "bg-zinc-900 text-white border-zinc-700"
-              } focus:border-primary focus:ring-1 focus:ring-primary`}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-white">Mật khẩu</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Nhập mật khẩu..."
-              value={form.password}
-              onChange={handleChange}
-              required
-              onBlur={handleBlur}
-              className={`transition-all duration-300 ${
-                completedFields.password
-                  ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                  : "bg-zinc-900 text-white border-zinc-700"
-              } focus:border-primary focus:ring-1 focus:ring-primary`}
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-sm mt-6">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" className="w-4 h-4 accent-primary" />
-              <span className="text-muted-foreground">Ghi nhớ đăng nhập</span>
-            </label>
-            <Link href={AUTH_ROUTES.FORGOT_PASSWORD} className="text-primary hover:underline">
-              Quên mật khẩu?
+        <div className="relative z-10 w-full px-4 py-8">
+          <div className="mx-auto max-w-md bg-black/55 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl px-6 py-8 sm:px-10 sm:py-10">
+            <Link href={AUTH_ROUTES.HOME} className="flex justify-center gap-2 mb-2 items-center group">
+              <Film className="w-8 h-8 text-primary group-hover:scale-105 transition-transform" />
+              <span className="text-2xl tracking-widest font-semibold">INFINITY CINEMA</span>
             </Link>
-          </div>
 
-          <Button
-            type="submit"
-            size="lg"
-            disabled={loading}
-            className="w-full h-10 mt-8 text-lg font-semibold bg-primary hover:bg-primary/90 transition cursor-pointer"
-          >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </Button>
+            <h1 className="text-center text-xl font-medium tracking-wide mb-8 mt-2">Đăng Nhập</h1>
 
-          <div className="mt-12 space-y-5 text-center text-sm text-muted-foreground">
-            <p>
-              Chưa có tài khoản?{" "}
-              <Link href={AUTH_ROUTES.SIGNUP} className="text-primary hover:underline">
-                Đăng ký ngay
-              </Link>
-            </p>
-            <p className="text-xs">Demo: admin@gmail.com / 123456</p>
-            <p className="text-xs">
-              Trang này được bảo vệ bởi reCAPTCHA của Google.{" "}
-              <Link href="#" className="underline">Privacy Policy</Link>
-              {" "}và{" "}
-              <Link href="#" className="underline">Terms of Service</Link>
-              {" "}áp dụng.
-            </p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <Label htmlFor="email" className="text-sm text-white/90 mb-1.5 block">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Nhập email..."
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  onBlur={handleBlur}
+                  className={inputClass("email")}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password" className="text-sm text-white/90 mb-1.5 block">Mật khẩu</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Nhập mật khẩu..."
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  onBlur={handleBlur}
+                  className={inputClass("password")}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-sm mt-6">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-white/70">
+                  <input type="checkbox" className="w-4 h-4 accent-primary rounded bg-white/10 border-white/20" />
+                  <span>Ghi nhớ đăng nhập</span>
+                </label>
+                <Link href={AUTH_ROUTES.FORGOT_PASSWORD} className="text-primary hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
+
+              {error && (
+                <div className="text-sm text-red-400 text-center font-medium bg-red-500/10 py-2 rounded-md">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 mt-2 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-colors shadow-md"
+              >
+                Đăng nhập
+              </Button>
+
+              <div className="mt-8 space-y-4 text-center text-sm text-white/70">
+                <p>
+                  Chưa có tài khoản?{" "}
+                  <Link href={AUTH_ROUTES.SIGNUP} className="text-primary font-medium hover:underline">
+                    Đăng ký ngay
+                  </Link>
+                </p>
+                <p className="text-xs text-white/40">Demo: admin@gmail.com / 123456</p>
+                <p className="text-[11px] text-white/40 leading-relaxed max-w-xs mx-auto">
+                  Trang này được bảo vệ bởi reCAPTCHA của Google.{" "}
+                  <Link href="#" className="underline hover:text-white/70">Privacy Policy</Link>
+                  {" "}và{" "}
+                  <Link href="#" className="underline hover:text-white/70">Terms of Service</Link>
+                  {" "}áp dụng.
+                </p>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
 
-      {showVerify && (
-        <VerifyEmailForm
-          email={form.email}
-          onClose={() => {
-            setShowVerify(false);
-            router.push(AUTH_ROUTES.LOGIN);
-          }}
-        />
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 bg-black/80 px-8 py-6 rounded-xl border border-white/10">
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <span className="text-white text-sm font-medium">Đang đăng nhập...</span>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import { HomeBannerCarousel } from "@/components/home/components/HomeBannerCarousel";
 import { MovieCarousel } from "@/components/home/components/MovieCarousel";
 import { QuickBookingBar } from "@/components/home/components/QuickBookingBar";
-import { ReviewNotificationBanner } from "@/components/home/components/ReviewNotificationBanner";
 import { RecommendationPopup } from "@/components/home/components/RecommendationPopup";
 import {
   getBanners,
@@ -18,7 +17,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <ReviewNotificationBanner />
       <HomeBannerCarousel banners={banners} />
       <QuickBookingBar />
       <div className="py-8 sm:py-12">

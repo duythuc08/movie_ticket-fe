@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
+import { getBookingState, mergeBookingState, clearOrderData } from "@/components/booking/utils/bookingStorage";
 import { getFoods, releaseBooking, addFoodsToBooking } from "@/components/booking/service/booking.service";
 import { useBookingTimer, clearBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import type { FoodProduct, FoodDetail } from "@/types";
@@ -21,9 +21,49 @@ export default function FoodSelectionPage() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [proceeding, setProceeding] = useState(false);
 
+  const releasedRef = useRef(false);
+
   const { minutes, seconds, progress, isUrgent } = useBookingTimer();
 
   const bookingInfo = getBookingState();
+
+  const unmountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Khi component unmount (back, timer hết, đóng tab) mà chưa release → tự release.
+  // keepalive: true đảm bảo request hoàn thành dù page đang unload.
+  useEffect(() => {
+    if (unmountTimeoutRef.current) {
+      clearTimeout(unmountTimeoutRef.current);
+      unmountTimeoutRef.current = null;
+    }
+
+    const release = () => {
+      if (releasedRef.current) return;
+      const token = sessionStorage.getItem("token") ?? "";
+      const orderId = getBookingState()?.orderId;
+      if (!orderId || !token) return;
+      clearBookingTimer();
+      clearOrderData();
+      fetch(`/api-proxy/bookings/${orderId}/release`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    const handleBeforeUnload = () => {
+      release();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      unmountTimeoutRef.current = setTimeout(() => {
+        release();
+      }, 300);
+    };
+  }, []);
 
   // Fetch foods
   useEffect(() => {
@@ -78,12 +118,14 @@ export default function FoodSelectionPage() {
   }, {});
 
   const handleBack = async () => {
+    releasedRef.current = true;
     const token = sessionStorage.getItem("token") ?? "";
     const orderId = bookingInfo?.orderId;
     if (orderId && token) {
       await releaseBooking(token, Number(orderId)).catch(() => {});
     }
     clearBookingTimer();
+    clearOrderData();
     router.back();
   };
 
@@ -104,6 +146,7 @@ export default function FoodSelectionPage() {
       quantity: qty,
     }));
 
+    releasedRef.current = true; // báo cleanup không release khi navigate sang payment
     setProceeding(true);
     try {
       await addFoodsToBooking(token, Number(orderId), foodsPayload);

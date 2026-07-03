@@ -210,18 +210,12 @@ export default function PaymentPage() {
         );
 
         const orderData = {
+          ...bookingInfo,
           orderId,
           finalPrice: result.finalPrice,
           discountAmount: result.discountAmount,
           memberDiscountAmount: result.memberDiscountAmount,
           paymentMethod: "VNPAY",
-          movie: bookingInfo?.movie,
-          moviePoster: bookingInfo?.moviePoster,
-          cinema: bookingInfo?.cinema,
-          roomName: bookingInfo?.roomName,
-          time: bookingInfo?.time,
-          date: bookingInfo?.date,
-          seats: bookingInfo?.seats,
         };
 
         clearTimer();
