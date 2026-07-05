@@ -85,6 +85,10 @@ export const ErrorCodeMap: Record<number, string> = {
     1082: "Bạn không sở hữu đánh giá này",
     1083: "Refresh token không hợp lệ hoặc đã hết hạn",
     1084: "Không thể tạo suất chiếu trong quá khứ",
+    1085: "Phim đã được tạm dừng",
+    1086: "Phim chưa được tạm dừng, không thể chiếu lại",
+    1087: "Ghế đã được đặt bởi người khác",
+    1088: "Đơn hàng không ở trạng thái chờ xử lý",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

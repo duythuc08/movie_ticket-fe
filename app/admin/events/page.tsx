@@ -21,16 +21,21 @@ export default function AdminEventsPage() {
   const [editEvent, setEditEvent] = useState<AdminEvent | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [page, setPage]             = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
       const parts: string[] = [];
       if (filters.keyword)   parts.push(`title~'${filters.keyword}'`);
       if (filters.eventType) parts.push(`eventType:'${filters.eventType}'`);
-      const result = await adminEventService.getEvents(token, 0, 50, parts.join(" and ") || undefined);
+      const result = await adminEventService.getEvents(token, targetPage, 10, parts.join(" and ") || undefined);
       setItems(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách sự kiện");
     } finally {
@@ -38,7 +43,12 @@ export default function AdminEventsPage() {
     }
   }, [token, filters]);
 
-  useEffect(() => { load(); }, [load]);
+  const handleFilterChange = useCallback((newFilters: { keyword?: string; eventType?: string }) => {
+    setFilters(newFilters);
+    setPage(0);
+  }, []);
+
+  useEffect(() => { load(0); }, [load]);
 
   const columns = useMemo(
     () => createEventColumns({
@@ -56,14 +66,25 @@ export default function AdminEventsPage() {
         </Button>
       </PageHeader>
 
-      <EventFilters onFilterChange={setFilters} />
+      <EventFilters onFilterChange={handleFilterChange} />
 
-      <DataTable columns={columns} data={items} isLoading={isLoading} emptyText="Chưa có sự kiện nào." />
+      <DataTable
+        columns={columns}
+        data={items}
+        isLoading={isLoading}
+        emptyText="Chưa có sự kiện nào."
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => { setPage(newPage); load(newPage); },
+        }}
+      />
 
       <EventFormDialog
         open={isFormOpen}
         onOpenChange={(o) => { setIsFormOpen(o); if (!o) setEditEvent(null); }}
-        onSuccess={load}
+        onSuccess={() => load(page)}
         event={editEvent}
       />
 
@@ -81,7 +102,7 @@ export default function AdminEventsPage() {
           try {
             await adminEventService.deleteEvent(token, pendingDelete.eventId);
             toast.success("Xóa sự kiện thành công");
-            load();
+            load(page);
             setPendingDelete(null);
           } catch (error) {
             toast.error(error instanceof Error ? error.message : "Lỗi khi xóa sự kiện");

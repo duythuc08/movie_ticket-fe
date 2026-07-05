@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       removeTokenCookie();
       setToken(null);
       setUser(null);
-      window.location.href = "/login";
+      window.location.href = "/login?reason=session-expired";
     };
 
     window.addEventListener("auth:token-refreshed", handleTokenRefreshed);

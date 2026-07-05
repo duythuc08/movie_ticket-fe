@@ -8,7 +8,7 @@ import { saveBookingState } from "@/components/booking/utils/bookingStorage";
 import { fetchMovieBanner } from "@/components/movie/service/movie.service";
 import { useMovieDetail } from "@/components/movie/hooks/use-movie-detail";
 import { getRatingColor, formatReleaseDate } from "@/components/movie/utils/movie.utils";
-import { AGE_RATING_LABELS } from "@/components/movie/constants/movie.constants";
+import { AGE_RATING_LABELS, GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 import { MovieReview } from "@/components/movie/components/MovieReview";
 import { toast } from "sonner";
 import { logActivity } from "@/components/activity/service/activity.service";
@@ -271,7 +271,7 @@ export default function MovieDetailsPage() {
                     key={genre}
                     className="px-3 py-1 text-xs sm:text-sm bg-white/20 backdrop-blur-sm rounded-full border border-white/30"
                   >
-                    {genre}
+                    {GENRE_LABELS[genre.toUpperCase()] ?? genre}
                   </span>
                 ))}
               </div>

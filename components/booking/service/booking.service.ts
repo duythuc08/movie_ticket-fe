@@ -113,12 +113,13 @@ export async function addFoodsToBooking(
 export async function checkoutBooking(
   token: string,
   orderId: number,
-  promotionCode?: string
+  promotionCode?: string,
+  paymentMethod: "VNPAY" | "MOMO" = "VNPAY"
 ): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number }> {
   const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/checkout`, {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ promotionCode: promotionCode ?? null }),
+    body: JSON.stringify({ promotionCode: promotionCode ?? null, paymentType: paymentMethod }),
   });
   const data = await res.json();
   if (data.code !== 1000) throw new Error(getErrorMessage(data?.code, data?.message || "Checkout thất bại"));

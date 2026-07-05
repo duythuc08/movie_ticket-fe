@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/fetchApi";
+import { getErrorMessage } from "@/lib/errors";
 import type { ApiPagedResult } from "@/types/admin.type";
 import type { AdminReview, AdminReviewInteraction } from "@/types/admin.type";
 
@@ -27,7 +28,7 @@ export async function fetchAdminReviews(
   const data = await response.json();
 
   if (data.code !== 0) {
-    throw new Error(data.message || "Không thể tải danh sách đánh giá");
+    throw new Error(getErrorMessage(data?.code, data?.message || "Không thể tải danh sách đánh giá"));
   }
 
   return data.result;
@@ -40,7 +41,7 @@ export async function approveReview(token: string, reviewId: number): Promise<Ad
   });
   const data = await response.json();
   if (data.code !== 0) {
-    throw new Error(data.message || "Không thể duyệt đánh giá");
+    throw new Error(getErrorMessage(data?.code, data?.message || "Không thể duyệt đánh giá"));
   }
   return data.result;
 }
@@ -52,7 +53,7 @@ export async function rejectReview(token: string, reviewId: number): Promise<Adm
   });
   const data = await response.json();
   if (data.code !== 0) {
-    throw new Error(data.message || "Không thể từ chối đánh giá");
+    throw new Error(getErrorMessage(data?.code, data?.message || "Không thể từ chối đánh giá"));
   }
   return data.result;
 }
@@ -64,7 +65,7 @@ export async function hideReview(token: string, reviewId: number): Promise<Admin
   });
   const data = await response.json();
   if (data.code !== 0) {
-    throw new Error(data.message || "Không thể ẩn đánh giá");
+    throw new Error(getErrorMessage(data?.code, data?.message || "Không thể ẩn đánh giá"));
   }
   return data.result;
 }
@@ -78,7 +79,7 @@ export async function fetchReviewInteractions(
   });
   const data = await response.json();
   if (data.code !== 0) {
-    throw new Error(data.message || "Không thể lấy lượt tương tác");
+    throw new Error(getErrorMessage(data?.code, data?.message || "Không thể lấy lượt tương tác"));
   }
   return data.result;
 }

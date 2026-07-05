@@ -4,11 +4,15 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { XCircle, Home, RefreshCcw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import type { AttemptedOrderInfo } from "@/components/profile/types";
 
 function PaymentFailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { id } = useParams<{ id: string }>();
+  const { token } = useAuth();
+  const [isRetrying, setIsRetrying] = useState(false);
   const [attemptedInfo] = useState<AttemptedOrderInfo | null>(() => {
     if (typeof window === "undefined") return null;
     const saved = sessionStorage.getItem("pendingOrder");
@@ -39,7 +43,23 @@ function PaymentFailContent() {
     router.push("/");
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
+    if (attemptedInfo?.paymentMethod === "MOMO" && id) {
+      setIsRetrying(true);
+      try {
+        const res = await fetch(`/api-proxy/payment/momo/retry?orderId=${id}`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const payUrl = data.result as string;
+        window.location.href = payUrl;
+      } catch {
+        setIsRetrying(false);
+      }
+      return;
+    }
     router.back();
   };
 
@@ -122,11 +142,12 @@ function PaymentFailContent() {
           </Button>
           <Button
             onClick={handleRetry}
+            disabled={isRetrying}
             size="lg"
             className="flex-1 gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 hover:-translate-y-0.5 transition-all"
           >
-            <RefreshCcw className="w-5 h-5" />
-            Thử thanh toán lại
+            <RefreshCcw className={`w-5 h-5 ${isRetrying ? "animate-spin" : ""}`} />
+            {isRetrying ? "Đang xử lý..." : "Thử thanh toán lại"}
           </Button>
         </div>
 

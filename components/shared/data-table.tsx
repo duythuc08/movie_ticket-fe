@@ -81,6 +81,13 @@ export interface FilterConfig {
   options: FilterOption[];
 }
 
+export interface ServerPaginationConfig {
+  page: number;       // 0-indexed
+  pageCount: number;
+  total: number;
+  onChange: (page: number) => void;
+}
+
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -92,6 +99,7 @@ interface DataTableProps<TData> {
   emptyText?: string;
   onResetFilters?: () => void;
   initialFilters?: ColumnFiltersState;
+  serverPagination?: ServerPaginationConfig;
   /** Slot bên phải toolbar — ví dụ nút "Thêm mới" */
   children?: React.ReactNode;
 }
@@ -109,6 +117,7 @@ export function DataTable<TData>({
   emptyText = "Không có dữ liệu.",
   onResetFilters,
   initialFilters = [],
+  serverPagination,
   children,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -119,6 +128,8 @@ export function DataTable<TData>({
   const table = useReactTable({
     data,
     columns,
+    manualPagination: !!serverPagination,
+    pageCount: serverPagination?.pageCount ?? -1,
     state: { sorting, columnFilters, globalFilter },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -127,16 +138,22 @@ export function DataTable<TData>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { 
+    initialState: {
       pagination: { pageSize: PAGE_SIZE },
       columnFilters: initialFilters,
     },
   });
 
-  const { pageIndex, pageSize } = table.getState().pagination;
-  const totalRows = table.getFilteredRowModel().rows.length;
-  const from = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
-  const to = Math.min((pageIndex + 1) * pageSize, totalRows);
+  const { pageIndex } = table.getState().pagination;
+  const clientTotalRows = table.getFilteredRowModel().rows.length;
+
+  const displayPage   = serverPagination?.page   ?? pageIndex;
+  const displayTotal  = serverPagination?.total   ?? clientTotalRows;
+  const displayPages  = serverPagination?.pageCount ?? (table.getPageCount() || 1);
+  const from = displayTotal === 0 ? 0 : displayPage * PAGE_SIZE + 1;
+  const to   = Math.min((displayPage + 1) * PAGE_SIZE, displayTotal);
+  const canPrev = serverPagination ? serverPagination.page > 0 : table.getCanPreviousPage();
+  const canNext = serverPagination ? serverPagination.page < serverPagination.pageCount - 1 : table.getCanNextPage();
 
   const handleFilterChange = (key: string, value: string) => {
     if (value === "__all__") {
@@ -160,7 +177,7 @@ export function DataTable<TData>({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         {searchKey && (
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <div className="relative flex-1 min-w-50 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
@@ -179,7 +196,7 @@ export function DataTable<TData>({
               value={currentFilterValue}
               onValueChange={(value) => handleFilterChange(filter.key, value)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder={filter.label} />
               </SelectTrigger>
               <SelectContent data-admin="">
@@ -264,28 +281,32 @@ export function DataTable<TData>({
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          {totalRows === 0
+          {displayTotal === 0
             ? "Không có kết quả"
-            : `Hiển thị ${from}–${to} trong ${totalRows} kết quả`}
+            : `Hiển thị ${from}–${to} trong ${displayTotal} kết quả`}
         </span>
 
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => serverPagination
+              ? serverPagination.onChange(serverPagination.page - 1)
+              : table.previousPage()}
+            disabled={!canPrev}
           >
             Trước
           </Button>
           <span className="text-foreground font-medium">
-            {pageIndex + 1} / {table.getPageCount() || 1}
+            {displayPage + 1} / {displayPages}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => serverPagination
+              ? serverPagination.onChange(serverPagination.page + 1)
+              : table.nextPage()}
+            disabled={!canNext}
           >
             Sau
           </Button>

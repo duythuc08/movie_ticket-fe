@@ -17,6 +17,13 @@ import { setupSeatsForRoom } from "@/services/admin/adminSeatService";
 import { fetchActiveCinemasForSelect } from "@/services/admin/adminCinemaService";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RoomFormDialog } from "@/components/admin/cinema/RoomFormDialog";
 import { RoomDetailDialog } from "@/components/admin/cinema/RoomDetailDialog";
 import { createRoomColumns } from "@/components/admin/cinema/RoomColumns";
@@ -39,7 +46,7 @@ export default function AdminRoomsPage() {
   const [rooms,         setRooms]         = useState<AdminRoom[]>([]);
   const [cinemas,       setCinemas]       = useState<AdminCinema[]>([]);
   const [isLoading,     setIsLoading]     = useState(false);
-  const [isFormOpen,    setIsFormOpen]    = useState(false);
+  const [isFormOpen,    setIsFormOpen]    = useState(() => searchParams.get("action") === "create");
   const [isDetailOpen,  setIsDetailOpen]  = useState(false);
   const [defaultEditMode, setDefaultEditMode] = useState(false);
   const [initialSetupDims, setInitialSetupDims] = useState<{ rows: number, cols: number } | undefined>();
@@ -87,15 +94,12 @@ export default function AdminRoomsPage() {
   }, [loadRooms, loadCinemas]);
 
   useEffect(() => {
-    const action = searchParams.get("action");
-    if (action === "create" && !isFormOpen) {
-      setSelectedRoom(null);
-      setIsFormOpen(true);
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete("action");
-      router.replace(`${pathname}?${newSearchParams.toString()}`);
+    if (searchParams.get("action") === "create") {
+      const cleaned = new URLSearchParams(searchParams.toString());
+      cleaned.delete("action");
+      router.replace(`${pathname}?${cleaned.toString()}`);
     }
-  }, [searchParams, isFormOpen, pathname, router]);
+  }, [searchParams, pathname, router]);
 
   function handleOpenCreate() {
     setSelectedRoom(null);
@@ -177,8 +181,9 @@ export default function AdminRoomsPage() {
     [token]
   );
 
-  const pageTitle = defaultCinemaId
-    ? `Phòng chiếu — Rạp #${defaultCinemaId}`
+  const selectedCinema = cinemas.find((c) => c.cinemaId === defaultCinemaId);
+  const pageTitle = selectedCinema
+    ? `Phòng chiếu — ${selectedCinema.name}`
     : "Quản lý Phòng chiếu";
 
   return (
@@ -204,7 +209,32 @@ export default function AdminRoomsPage() {
         }]}
         isLoading={isLoading}
         emptyText="Chưa có phòng chiếu nào."
-      />
+      >
+        <Select
+          value={cinemaIdParam ?? "__all__"}
+          onValueChange={(value) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (value === "__all__") {
+              params.delete("cinemaId");
+            } else {
+              params.set("cinemaId", value);
+            }
+            router.replace(`${pathname}?${params.toString()}`);
+          }}
+        >
+          <SelectTrigger className="w-50">
+            <SelectValue placeholder="Tất cả rạp" />
+          </SelectTrigger>
+          <SelectContent data-admin="">
+            <SelectItem value="__all__">Tất cả rạp</SelectItem>
+            {cinemas.map((c) => (
+              <SelectItem key={c.cinemaId} value={String(c.cinemaId)}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </DataTable>
 
       <RoomFormDialog
         open={isFormOpen}

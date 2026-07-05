@@ -1,3 +1,28 @@
+export const GENRE_LABELS: Record<string, string> = {
+  ACTION: "Hành Động",
+  COMEDY: "Hài Hước",
+  DRAMA: "Tâm Lý - Kịch Tính",
+  HORROR: "Kinh Dị",
+  ROMANCE: "Tình Cảm",
+  THRILLER: "Giật Gân",
+  ADVENTURE: "Phiêu Lưu",
+  ANIMATION: "Hoạt Hình",
+  "SCI-FI": "Khoa Học Viễn Tưởng",
+  SCIFI: "Khoa Học Viễn Tưởng",
+  "SCIENCE FICTION": "Khoa Học Viễn Tưởng",
+  FANTASY: "Giả Tưởng",
+  CRIME: "Tội Phạm",
+  MYSTERY: "Bí Ẩn",
+  DOCUMENTARY: "Tài Liệu",
+  FAMILY: "Gia Đình",
+  MUSICAL: "Âm Nhạc",
+  HISTORICAL: "Lịch Sử",
+  BIOGRAPHY: "Tiểu Sử",
+  WAR: "Chiến Tranh",
+  SPORT: "Thể Thao",
+  SPORTS: "Thể Thao",
+};
+
 export const STATUS_LABELS: Record<string, string> = {
   SHOWING: "Đang chiếu",
   COMING_SOON: "Sắp chiếu",

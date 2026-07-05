@@ -22,8 +22,11 @@ export default function AdminPromotionsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editPromotion, setEditPromotion] = useState<AdminPromotion | null>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [page, setPage]             = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
@@ -31,8 +34,10 @@ export default function AdminPromotionsPage() {
       if (filters.keyword) parts.push(`name~'${filters.keyword}'`);
       if (filters.status)  parts.push(`status:'${filters.status}'`);
       if (filters.type)    parts.push(`type:'${filters.type}'`);
-      const result = await adminPromotionService.getPromotions(token, 0, 50, parts.join(" and ") || undefined);
+      const result = await adminPromotionService.getPromotions(token, targetPage, 10, parts.join(" and ") || undefined);
       setItems(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách khuyến mãi");
     } finally {
@@ -40,7 +45,12 @@ export default function AdminPromotionsPage() {
     }
   }, [token, filters]);
 
-  useEffect(() => { load(); }, [load]);
+  const handleFilterChange = useCallback((newFilters: { keyword?: string; status?: string; type?: string }) => {
+    setFilters(newFilters);
+    setPage(0);
+  }, []);
+
+  useEffect(() => { load(0); }, [load]);
 
   const columns = useMemo(() => createPromotionColumns({
     onViewDetail: (p) => setDetailId(p.promotionId),
@@ -55,14 +65,25 @@ export default function AdminPromotionsPage() {
         </Button>
       </PageHeader>
 
-      <PromotionFilters onFilterChange={setFilters} />
+      <PromotionFilters onFilterChange={handleFilterChange} />
 
-      <DataTable columns={columns} data={items} isLoading={isLoading} emptyText="Chưa có khuyến mãi nào." />
+      <DataTable
+        columns={columns}
+        data={items}
+        isLoading={isLoading}
+        emptyText="Chưa có khuyến mãi nào."
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => { setPage(newPage); load(newPage); },
+        }}
+      />
 
       <PromotionFormDialog
         open={isFormOpen}
         onOpenChange={(o) => { setIsFormOpen(o); if (!o) setEditPromotion(null); }}
-        onSuccess={load}
+        onSuccess={() => load(page)}
         promotion={editPromotion}
       />
 
@@ -70,7 +91,7 @@ export default function AdminPromotionsPage() {
         open={!!detailId}
         onOpenChange={(o) => { if (!o) setDetailId(null); }}
         promotionId={detailId}
-        onRefresh={load}
+        onRefresh={() => load(page)}
       />
     </div>
   );

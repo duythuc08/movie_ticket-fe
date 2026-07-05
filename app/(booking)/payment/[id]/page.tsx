@@ -229,16 +229,38 @@ export default function PaymentPage() {
     }
 
     if (paymentMethod === "MOMO") {
-      const pendingOrder = {
-        ...bookingInfo,
-        finalPrice,
-        discountAmount: discountInfo.amount,
-        paymentMethod: "MOMO",
-      };
-      clearTimer();
-      sessionStorage.setItem("pendingOrder", JSON.stringify(pendingOrder));
-      clearBookingState();
-      router.push(`/payment-success/momo`);
+      const orderId = bookingInfo?.orderId;
+      if (!orderId) {
+        toast.error("Phiên đặt vé không hợp lệ. Vui lòng bắt đầu lại.");
+        router.push("/");
+        setLoading(false);
+        return;
+      }
+      try {
+        const result = await checkoutBooking(
+          token,
+          Number(orderId),
+          manualCode.trim() || undefined,
+          "MOMO",
+        );
+
+        const orderData = {
+          ...bookingInfo,
+          orderId,
+          finalPrice: result.finalPrice,
+          discountAmount: result.discountAmount,
+          memberDiscountAmount: result.memberDiscountAmount,
+          paymentMethod: "MOMO",
+        };
+
+        clearTimer();
+        sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
+        window.location.href = result.paymentUrl;
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || "Tạo thanh toán MoMo thất bại. Vui lòng thử lại.");
+        setLoading(false);
+      }
     }
   };
 

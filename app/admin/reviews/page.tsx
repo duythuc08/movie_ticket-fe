@@ -19,10 +19,13 @@ import { ReviewInteractionsDialog } from "@/components/admin/review/ReviewIntera
 export default function AdminReviewsPage() {
   const { token } = useAuth();
 
-  const [reviews, setReviews]   = useState<AdminReview[]>([]);
-  const [movies,  setMovies]    = useState<AdminMovie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [filters, setFilters]   = useState<{ keyword?: string; status?: string; movieId?: number }>({});
+  const [reviews, setReviews]       = useState<AdminReview[]>([]);
+  const [movies,  setMovies]        = useState<AdminMovie[]>([]);
+  const [isLoading, setIsLoading]   = useState(false);
+  const [filters, setFilters]       = useState<{ keyword?: string; status?: string; movieId?: number }>({});
+  const [page, setPage]             = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   const [isInteractionsOpen, setIsInteractionsOpen] = useState(false);
   const [selectedReview, setSelectedReview]         = useState<AdminReview | null>(null);
@@ -37,17 +40,19 @@ export default function AdminReviewsPage() {
     }
   }, [token]);
 
-  const loadReviews = useCallback(async () => {
+  const loadReviews = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
       const result = await fetchAdminReviews(token, {
-        page: 0,
+        page: targetPage,
         size: 10,
         status:  filters.status,
         movieId: filters.movieId,
       });
       setReviews(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách đánh giá");
     } finally {
@@ -55,8 +60,13 @@ export default function AdminReviewsPage() {
     }
   }, [token, filters.status, filters.movieId]);
 
-  useEffect(() => { loadMovies();  }, [loadMovies]);
-  useEffect(() => { loadReviews(); }, [loadReviews]);
+  const handleFilterChange = useCallback((newFilters: { keyword?: string; status?: string; movieId?: number }) => {
+    setFilters(newFilters);
+    setPage(0);
+  }, []);
+
+  useEffect(() => { loadMovies(); }, [loadMovies]);
+  useEffect(() => { loadReviews(0); }, [loadReviews]);
 
   const filteredReviews = useMemo(() => {
     if (!filters.keyword) return reviews;
@@ -73,7 +83,7 @@ export default function AdminReviewsPage() {
     try {
       await approveReview(token, review.reviewId);
       toast.success("Đã duyệt đánh giá");
-      loadReviews();
+      loadReviews(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lỗi duyệt đánh giá");
     }
@@ -84,7 +94,7 @@ export default function AdminReviewsPage() {
     try {
       await rejectReview(token, review.reviewId);
       toast.success("Đã từ chối đánh giá");
-      loadReviews();
+      loadReviews(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lỗi từ chối đánh giá");
     }
@@ -95,7 +105,7 @@ export default function AdminReviewsPage() {
     try {
       await hideReview(token, review.reviewId);
       toast.success("Đã ẩn đánh giá");
-      loadReviews();
+      loadReviews(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lỗi ẩn đánh giá");
     }
@@ -125,13 +135,22 @@ export default function AdminReviewsPage() {
         description="Quản lý và kiểm duyệt đánh giá phim từ người dùng"
       />
 
-      <ReviewFilters movies={movies} onFilterChange={setFilters} />
+      <ReviewFilters movies={movies} onFilterChange={handleFilterChange} />
 
       <DataTable
         columns={columns}
         data={filteredReviews}
         isLoading={isLoading}
         emptyText="Chưa có đánh giá nào."
+        serverPagination={{
+          page: page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => {
+            setPage(newPage);
+            loadReviews(newPage);
+          },
+        }}
       />
 
       <ReviewInteractionsDialog

@@ -15,7 +15,9 @@ export async function uploadFileAndGetUrl(
   });
 
   if (!response.ok) {
-    throw new Error(`Upload thất bại: ${response.status}`);
+    const data = await response.json().catch(() => ({}));
+    const { getErrorMessage } = await import("@/lib/errors");
+    throw new Error(getErrorMessage((data as any)?.code, "Tải file lên thất bại"));
   }
 
   return response.text();

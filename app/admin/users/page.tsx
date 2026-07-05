@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Search, X } from "lucide-react";
+import { Brain, Mail, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -25,35 +25,81 @@ type PendingConfirm = {
 
 export default function AdminUsersPage() {
   const { token } = useAuth();
-  const [items, setItems] = useState<AdminUser[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [keyword, setKeyword] = useState("");
+  const [items, setItems]           = useState<AdminUser[]>([]);
+  const [isLoading, setIsLoading]   = useState(false);
+  const [keyword, setKeyword]       = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage]             = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [isActioning, setIsActioning] = useState(false);
+  const [isTraining, setIsTraining]   = useState(false);
+  const [isMailing, setIsMailing]     = useState(false);
 
-  const load = useCallback(async () => {
+  const handleTrain = async () => {
+    if (!token) return;
+    setIsTraining(true);
+    try {
+      const res = await fetch("/api-proxy/recommendations/refresh", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Train CF hoàn tất");
+    } catch {
+      toast.error("Train CF thất bại");
+    } finally {
+      setIsTraining(false);
+    }
+  };
+
+  const handleSendMail = async () => {
+    if (!token) return;
+    setIsMailing(true);
+    try {
+      const res = await fetch("/api-proxy/recommendations/send-weekly-emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      toast.success(`Gửi mail hoàn tất — thành công: ${data.result?.success ?? 0}, lỗi: ${data.result?.fail ?? 0}`);
+    } catch {
+      toast.error("Gửi mail thất bại");
+    } finally {
+      setIsMailing(false);
+    }
+  };
+
+  const buildFilter = useCallback(() => {
+    const parts: string[] = [];
+    if (keyword)                parts.push(`username~'${keyword}'`);
+    if (statusFilter !== "all") parts.push(`userStatus:'${statusFilter}'`);
+    return parts.join(" and ") || undefined;
+  }, [keyword, statusFilter]);
+
+  const load = useCallback(async (targetPage: number) => {
     if (!token) return;
     setIsLoading(true);
     try {
-      const parts: string[] = [];
-      if (keyword)                parts.push(`username~'${keyword}'`);
-      if (statusFilter !== "all") parts.push(`userStatus:'${statusFilter}'`);
-      const result = await adminUserService.getUsers(token, 0, 20, parts.join(" and ") || undefined);
+      const result = await adminUserService.getUsers(token, targetPage, 10, buildFilter());
       setItems(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách người dùng");
     } finally {
       setIsLoading(false);
     }
-  }, [token, keyword, statusFilter]);
+  }, [token, buildFilter]);
 
   useEffect(() => {
-    const t = setTimeout(() => load(), 500);
+    const t = setTimeout(() => load(0), 500);
     return () => clearTimeout(t);
   }, [load]);
 
@@ -69,7 +115,7 @@ export default function AdminUsersPage() {
         if (isActive) await adminUserService.inactivateUser(token, u.userId);
         else          await adminUserService.activateUser(token, u.userId);
         toast.success(`${isActive ? "Vô hiệu hóa" : "Kích hoạt"} thành công`);
-        load();
+        load(page);
       },
     });
   };
@@ -84,7 +130,7 @@ export default function AdminUsersPage() {
         if (!token) return;
         await adminUserService.banUser(token, u.userId);
         toast.success("Khóa tài khoản thành công");
-        load();
+        load(page);
       },
     });
   };
@@ -111,10 +157,10 @@ export default function AdminUsersPage() {
             placeholder="Tìm email hoặc tên..."
             className="pl-9 bg-background"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => { setKeyword(e.target.value); setPage(0); }}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-[180px] bg-background">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
@@ -127,11 +173,32 @@ export default function AdminUsersPage() {
         </Select>
         <Button
           variant="ghost"
-          onClick={() => { setKeyword(""); setStatusFilter("all"); }}
+          onClick={() => { setKeyword(""); setStatusFilter("all"); setPage(0); }}
           className="text-muted-foreground hover:text-foreground"
         >
           <X className="w-4 h-4 mr-2" /> Xoá lọc
         </Button>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            variant="outline"
+            onClick={handleTrain}
+            disabled={isTraining}
+            className="gap-2"
+          >
+            <Brain className="w-4 h-4" />
+            {isTraining ? "Đang train..." : "Train CF"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSendMail}
+            disabled={isMailing}
+            className="gap-2"
+          >
+            <Mail className="w-4 h-4" />
+            {isMailing ? "Đang gửi..." : "Gửi mail gợi ý"}
+          </Button>
+        </div>
       </div>
 
       <DataTable
@@ -139,12 +206,18 @@ export default function AdminUsersPage() {
         data={items}
         isLoading={isLoading}
         emptyText="Không tìm thấy người dùng nào."
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => { setPage(newPage); load(newPage); },
+        }}
       />
 
       <UserFormDialog
         open={isFormOpen}
         onOpenChange={(o) => { setIsFormOpen(o); if (!o) setEditUser(null); }}
-        onSuccess={load}
+        onSuccess={() => load(page)}
         user={editUser}
       />
 

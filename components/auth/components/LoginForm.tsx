@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Film } from "lucide-react";
@@ -21,7 +22,14 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") ?? AUTH_ROUTES.HOME;
+  const reason = searchParams.get("reason");
   const { login } = useAuth();
+
+  useEffect(() => {
+    if (reason === "session-expired") {
+      toast.warning("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+    }
+  }, [reason]);
 
   const [completedFields, setCompletedFields] = useState<CompletedFields>({});
   const [form, setForm] = useState<LoginFormState>({ email: "", password: "" });
