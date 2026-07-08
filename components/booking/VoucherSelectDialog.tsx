@@ -22,6 +22,68 @@ export function estimateVoucherDiscount(v: UserVoucher, total: number): number {
   return Math.floor(d);
 }
 
+const DAY_KEYS = [
+  "SUNDAY",
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+] as const;
+
+const DAY_LABELS: Record<string, string> = {
+  MONDAY: "Thứ 2",
+  TUESDAY: "Thứ 3",
+  WEDNESDAY: "Thứ 4",
+  THURSDAY: "Thứ 5",
+  FRIDAY: "Thứ 6",
+  SATURDAY: "Thứ 7",
+  SUNDAY: "CN",
+};
+
+function getIneligibleReasons(
+  v: UserVoucher,
+  totalAmount: number,
+  movieId: number | null,
+): string[] {
+  const reasons: string[] = [];
+  const now = new Date();
+
+  if (new Date(v.endTime) < now) {
+    reasons.push("Voucher đã hết hạn sử dụng");
+  } else if (new Date(v.startTime) > now) {
+    reasons.push(
+      `Chỉ áp dụng từ ${new Date(v.startTime).toLocaleDateString("vi-VN")}`,
+    );
+  }
+
+  if (v.minOrderValue && totalAmount < v.minOrderValue) {
+    reasons.push(
+      `Đơn tối thiểu ${v.minOrderValue.toLocaleString("vi-VN")}đ (còn thiếu ${(v.minOrderValue - totalAmount).toLocaleString("vi-VN")}đ)`,
+    );
+  }
+
+  if (
+    movieId != null &&
+    v.applicableMovieIds?.length &&
+    !v.applicableMovieIds.includes(movieId)
+  ) {
+    reasons.push("Không áp dụng cho phim này");
+  }
+
+  if (v.dayOfWeek?.length && !v.dayOfWeek.includes(DAY_KEYS[now.getDay()])) {
+    reasons.push(
+      `Chỉ áp dụng vào ${v.dayOfWeek.map((d) => DAY_LABELS[d] ?? d).join(", ")}`,
+    );
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("Voucher đã hết lượt sử dụng hoặc tạm ngưng");
+  }
+  return reasons;
+}
+
 interface VoucherSelectDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -29,6 +91,7 @@ interface VoucherSelectDialogProps {
   vouchers: UserVoucher[];
   isLoading: boolean;
   selectedCode: string | null;
+  movieId?: number | null;
   onSelect: (voucher: UserVoucher | null) => void;
 }
 
@@ -39,6 +102,7 @@ export function VoucherSelectDialog({
   vouchers,
   isLoading,
   selectedCode,
+  movieId = null,
   onSelect,
 }: VoucherSelectDialogProps) {
   const [pending, setPending] = useState<string | null>(selectedCode);
@@ -102,28 +166,32 @@ export function VoucherSelectDialog({
             {vouchers.map((v) => {
               const isSelected = pending === v.code;
               const ok = v.eligible === true;
+              const reasons = ok
+                ? []
+                : getIneligibleReasons(v, totalAmount, movieId);
 
               return (
                 <button
                   key={v.voucherId}
                   type="button"
-                  disabled={!ok}
+                  aria-disabled={!ok}
                   onClick={() =>
                     ok && setPending(isSelected ? null : v.code)
                   }
                   className={cn(
-                    "w-full text-left rounded-xl border transition-all overflow-hidden relative bg-card",
+                    "w-full text-left rounded-xl border transition-all relative bg-card hover:z-30",
                     isSelected
                       ? "border-primary ring-2 ring-primary/20"
                       : ok
                         ? "border-border/50 hover:shadow-md"
-                        : "border-border/50 opacity-60 cursor-not-allowed",
+                        : "border-border/50 cursor-not-allowed",
                   )}
                 >
-                  <div className="flex items-stretch h-27.5">
+                  <div className="flex items-stretch h-27.5 rounded-xl overflow-hidden">
                     <div className={cn(
                       "w-25 shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed relative",
-                      isSelected ? "bg-primary/10 border-primary/40" : "bg-primary/5 border-border/60"
+                      isSelected ? "bg-primary/10 border-primary/40" : "bg-primary/5 border-border/60",
+                      !ok && "grayscale opacity-60"
                     )}>
                       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-muted/30 rounded-full border border-border/50" />
                       <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-card rounded-full border border-border/50 z-10" />
@@ -142,7 +210,10 @@ export function VoucherSelectDialog({
 
                     <div className="flex-1 p-3.5 flex flex-col justify-between bg-card z-0 relative">
                       <div className="space-y-1.5 pr-6">
-                        <p className="text-sm font-semibold line-clamp-2 leading-tight">
+                        <p className={cn(
+                          "text-sm font-semibold line-clamp-2 leading-tight",
+                          !ok && "text-muted-foreground"
+                        )}>
                           {v.name}
                         </p>
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -155,8 +226,15 @@ export function VoucherSelectDialog({
                             </span>
                           )}
                           {!ok && (
-                            <span className="flex items-center gap-1 text-[10px] text-destructive font-medium ml-1">
-                              <AlertCircle className="w-3 h-3" /> Không đủ ĐK
+                            <span className="group/reason relative flex items-center gap-1 text-[10px] text-destructive font-medium ml-1 cursor-help">
+                              <AlertCircle className="w-3 h-3" /> Không đủ điều kiện
+                              <span className="absolute left-0 top-full mt-1.5 z-30 hidden group-hover/reason:block w-max max-w-56 rounded-lg bg-foreground text-background px-2.5 py-2 shadow-xl text-[10px] font-normal leading-relaxed">
+                                {reasons.map((r) => (
+                                  <span key={r} className="block">
+                                    {r}
+                                  </span>
+                                ))}
+                              </span>
                             </span>
                           )}
                         </div>

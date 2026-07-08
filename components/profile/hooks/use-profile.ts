@@ -67,7 +67,10 @@ export function useProfile() {
     if (!token) return;
     fetchAllMembershipTiers(token)
       .then(setAllTiers)
-      .catch((e) => console.error("Lỗi lấy hạng thành viên:", e));
+      .catch((e) => {
+        console.error("Lỗi lấy hạng thành viên:", e);
+        toast.error(e instanceof Error ? e.message : "Lỗi máy chủ");
+      });
   }, [token]);
 
   useEffect(() => {

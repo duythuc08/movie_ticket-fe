@@ -1,6 +1,6 @@
 import type { UserInfo, MembershipTier, Order } from "@/types";
 import { getErrorMessage } from "@/lib/errors";
-import { apiFetch } from "@/lib/fetchApi";
+import { apiFetch, parseJsonSafe } from "@/lib/fetchApi";
 
 const BASE_URL = "/api-proxy";
 
@@ -13,8 +13,8 @@ function authHeaders(token: string) {
 
 export async function fetchMyInfo(token: string): Promise<UserInfo> {
   const res = await apiFetch(`${BASE_URL}/users/myInfo`, { headers: authHeaders(token) });
-  const data = await res.json();
-  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được thông tin người dùng"));
+  const data = await parseJsonSafe(res);
+  if (!res.ok || !data) throw new Error(data ? getErrorMessage(data.code, data.message || "Không lấy được thông tin người dùng") : "Lỗi máy chủ");
   return data.result as UserInfo;
 }
 
@@ -37,8 +37,8 @@ export async function updateMyInfo(
     headers: authHeaders(token),
     body: JSON.stringify(body),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Cập nhật thông tin thất bại"));
+  const data = await parseJsonSafe(res);
+  if (!res.ok || !data) throw new Error(data ? getErrorMessage(data.code, data.message || "Cập nhật thông tin thất bại") : "Lỗi máy chủ");
   return data.result as UserInfo;
 }
 
@@ -46,8 +46,9 @@ export async function fetchAllMembershipTiers(token: string): Promise<Membership
   const res = await apiFetch(`${BASE_URL}/membership-tiers/getAllMembershipTiers`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok || !data.result) return [];
+  const data = await parseJsonSafe(res);
+  if (!res.ok) throw new Error(data ? getErrorMessage(data.code, data.message || "Không lấy được danh sách hạng thành viên") : "Lỗi máy chủ");
+  if (!data?.result) return [];
   return (data.result as MembershipTier[]).sort(
     (a, b) => (a.pointsRequired || 0) - (b.pointsRequired || 0)
   );
@@ -58,8 +59,8 @@ export async function fetchMembershipTierByName(token: string, tierName: string)
     const res = await apiFetch(`${BASE_URL}/membership-tiers/getMembershipTier/${tierName}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const data = await res.json();
-    if (res.ok && data.result) return data.result as MembershipTier;
+    const data = await parseJsonSafe(res);
+    if (res.ok && data?.result) return data.result as MembershipTier;
     return null;
   } catch {
     return null;
@@ -68,8 +69,8 @@ export async function fetchMembershipTierByName(token: string, tierName: string)
 
 export async function fetchOrdersByUser(token: string, userId: string): Promise<Order[]> {
   const res = await apiFetch(`${BASE_URL}/orders/user/${userId}`, { headers: authHeaders(token) });
-  const data = await res.json();
-  if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không lấy được danh sách đơn hàng"));
+  const data = await parseJsonSafe(res);
+  if (!res.ok || !data) throw new Error(data ? getErrorMessage(data.code, data.message || "Không lấy được danh sách đơn hàng") : "Lỗi máy chủ");
   return data.result as Order[];
 }
 
@@ -77,7 +78,7 @@ export async function createVnpayRepaymentUrl(token: string, orderId: string): P
   const res = await apiFetch(`${BASE_URL}/payment/create-vnpay-url?orderId=${orderId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok || !data.result) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể lấy link thanh toán"));
+  const data = await parseJsonSafe(res);
+  if (!res.ok || !data?.result) throw new Error(data ? getErrorMessage(data.code, data.message || "Không thể lấy link thanh toán") : "Lỗi máy chủ");
   return data.result as string;
 }

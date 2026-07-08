@@ -29,6 +29,21 @@ async function shouldPassiveRefresh(response: Response): Promise<boolean> {
   }
 }
 
+/** Body chuẩn của ApiResponse từ backend */
+export type ApiBody = { code?: number; message?: string; result?: unknown } & Record<string, unknown>;
+
+/**
+ * Đọc body JSON an toàn. Trả về null nếu body không phải JSON —
+ * ví dụ BE lỗi 500 trả text thuần "Internal Server Error" làm res.json() throw.
+ */
+export async function parseJsonSafe(res: Response): Promise<ApiBody | null> {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetch wrapper với 2 tầng bảo vệ token:
  *

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { X, Star, BellRing } from "lucide-react";
 import { apiFetch } from "@/lib/fetchApi";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +15,7 @@ interface UnreviewedMovieResponse {
 
 export function ReviewNotificationBanner() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const [allUnreviewed, setAllUnreviewed] = useState<UnreviewedMovieResponse[]>([]);
   const [dismissedIds, setDismissedIds] = useState<number[]>([]);
@@ -116,6 +117,9 @@ export function ReviewNotificationBanner() {
       setIsDropdownOpen(false);
     }
   };
+
+  // Không hiển thị banner/chuông trong trang profile
+  if (pathname?.startsWith("/profile")) return null;
 
   if (!isAuthenticated && allUnreviewed.length === 0 && dismissedRecommendations.length === 0) return null;
 

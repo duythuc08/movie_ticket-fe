@@ -16,7 +16,6 @@ import {
 } from "@/components/movie/service/review.service";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -97,6 +96,35 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
     }
     run();
   }, [movieId, starFilter, loadReviews]);
+
+  // Tìm review của user trong nền nếu không có trong trang đầu tiên được tải
+  useEffect(() => {
+    if (!hasReviewed || myReview || !user || loading) return;
+    let cancelled = false;
+
+    (async () => {
+      // Nếu đang lọc theo sao, trang 0 đã bị filter — cần tìm từ đầu không có filter
+      // Ngược lại, trang 0 (không filter) đã được kiểm tra rồi, bắt đầu từ trang 1
+      let searchPage = starFilter !== null ? 0 : 1;
+      while (!cancelled) {
+        try {
+          const data = await fetchReviewsByMovie(movieId, searchPage, 10);
+          if (cancelled) break;
+          const myRev = data.content.find((r) => r.username === user.username);
+          if (myRev) {
+            setMyReview(myRev);
+            break;
+          }
+          if (data.last || data.content.length === 0) break;
+          searchPage++;
+        } catch {
+          break;
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [hasReviewed, myReview, user, loading, movieId, starFilter]);
 
   const handleSubmit = async () => {
     if (!user) { toast.error("Vui lòng đăng nhập để đánh giá"); return; }
@@ -238,42 +266,6 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
         </div>
       )}
 
-      {/* ── My Review Banner (đã đánh giá) ── */}
-      {myReview && !isEditing && (
-        <div className="px-5 py-4 border-b border-border bg-yellow-50 flex items-start justify-between gap-4">
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="warning">Đánh giá của bạn</Badge>
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3.5 h-3.5 ${i < myReview.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/20"}`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {format(new Date(myReview.createdAt), "dd/MM/yyyy")}
-              </span>
-            </div>
-            {myReview.comment && (
-              <p className="text-sm text-foreground/80 italic">&ldquo;{myReview.comment}&rdquo;</p>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setRating(myReview.rating);
-              setComment(myReview.comment ?? "");
-              setIsEditing(true);
-            }}
-            className="text-xs h-7 px-2.5 shrink-0"
-          >
-            <Edit2 className="w-3 h-3 mr-1" /> Sửa
-          </Button>
-        </div>
-      )}
 
       {/* ── Form Đánh Giá (chưa đánh giá hoặc đang chỉnh sửa) ── */}
       {(!hasReviewed || isEditing) && (
@@ -357,6 +349,19 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
           </div>
         ) : (
           <>
+            {myReview && (
+              <ReviewItem
+                key={`my-${myReview.reviewId}`}
+                review={myReview}
+                isPinned
+                onEdit={() => {
+                  setRating(myReview.rating);
+                  setComment(myReview.comment ?? "");
+                  setIsEditing(true);
+                }}
+                onInteract={(type) => handleInteraction(myReview.reviewId, type, true)}
+              />
+            )}
             {reviews.map((r) => (
               <ReviewItem
                 key={r.reviewId}
@@ -418,22 +423,31 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
 function ReviewItem({
   review,
   onInteract,
+  isPinned,
+  onEdit,
 }: {
   review: ReviewResponse;
   onInteract: (type: "LIKE" | "DISLIKE") => void;
+  isPinned?: boolean;
+  onEdit?: () => void;
 }) {
   return (
-    <div className="px-5 py-4 flex gap-3 transition-colors hover:bg-muted/30">
+    <div className={`px-5 py-4 flex gap-3 transition-colors hover:bg-muted/30 ${isPinned ? "bg-yellow-50/60 border-l-2 border-yellow-400" : ""}`}>
       <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs text-primary shrink-0 uppercase">
         {review.fullName?.trim().split(" ").pop()?.charAt(0) ?? review.username.charAt(0)}
       </div>
 
       <div className="flex-1 space-y-1.5 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <span className="font-semibold text-foreground text-xs truncate">
               {review.fullName || review.username}
             </span>
+            {isPinned && (
+              <span className="inline-flex items-center text-[10px] font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-full px-1.5 py-0.5 shrink-0">
+                Đánh giá của bạn
+              </span>
+            )}
             <div className="flex shrink-0">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
@@ -443,9 +457,20 @@ function ReviewItem({
               ))}
             </div>
           </div>
-          <span className="text-[11px] text-muted-foreground shrink-0">
-            {format(new Date(review.createdAt), "dd/MM/yyyy")}
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-muted-foreground">
+              {format(new Date(review.createdAt), "dd/MM/yyyy")}
+            </span>
+            {isPinned && onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Edit2 className="w-3 h-3" /> Sửa
+              </button>
+            )}
+          </div>
         </div>
 
         {review.comment && (

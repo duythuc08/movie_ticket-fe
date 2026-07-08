@@ -542,6 +542,7 @@ export default function PaymentPage() {
           vouchers={voucherOptions}
           isLoading={isVoucherLoading}
           selectedCode={manualCode || null}
+          movieId={bookingInfo?.movieId ?? null}
           onSelect={handleSelectVoucher}
         />
       </div>
