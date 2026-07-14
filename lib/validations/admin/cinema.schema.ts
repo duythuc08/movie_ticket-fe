@@ -12,7 +12,7 @@ export const cinemaFormSchema = z.object({
   phoneNumber: z
     .string()
     .min(1, "Số điện thoại không được để trống")
-    .regex(/^[0-9+\-\s()]{7,20}$/, "Số điện thoại không hợp lệ"),
+    .regex(/^(0[35789])[0-9]{8}$/, "Số điện thoại không hợp lệ (VD: 0901234567)"),
   email: z
     .string()
     .min(1, "Email không được để trống")

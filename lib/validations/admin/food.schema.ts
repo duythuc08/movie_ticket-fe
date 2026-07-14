@@ -3,7 +3,7 @@ import { z } from "zod";
 export const foodFormSchema = z.object({
   name: z.string().min(1, "Tên không được để trống").max(255, "Tên quá dài"),
   description: z.string().optional(),
-  price: z.number().min(0, "Giá không hợp lệ"),
+  price: z.number().min(0.01, "Giá phải lớn hơn 0"),
   imageUrl: z.string().url("URL ảnh không hợp lệ").or(z.literal("")),
   imageFile: z.any().optional(),
   isCombo: z.boolean(),

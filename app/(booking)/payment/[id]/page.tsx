@@ -48,6 +48,7 @@ export default function PaymentPage() {
   const [isVoucherOpen, setIsVoucherOpen] = useState(false);
   const [voucherOptions, setVoucherOptions] = useState<UserVoucher[]>([]);
   const [isVoucherLoading, setIsVoucherLoading] = useState(false);
+  const [isApplyingCode, setIsApplyingCode] = useState(false);
 
   // Fix hydration
   const [isMounted, setIsMounted] = useState(false);
@@ -142,11 +143,12 @@ export default function PaymentPage() {
 
   const handleApplyManual = async () => {
     const code = manualCode.trim().toUpperCase();
-    if (!code) return;
+    if (!code || isApplyingCode) return;
 
     const token = sessionStorage.getItem("token");
     if (!token) return;
 
+    setIsApplyingCode(true);
     try {
       // Vừa lưu vừa áp dụng
       await userProfileService.claimPromotionByCode(token, code);
@@ -166,6 +168,8 @@ export default function PaymentPage() {
     } catch (err: unknown) {
       const errorCode = (err as { code?: number } | null)?.code;
       toast.error(getErrorMessage(errorCode, "Mã giảm giá không hợp lệ hoặc đã hết hạn."));
+    } finally {
+      setIsApplyingCode(false);
     }
   };
 
@@ -374,10 +378,10 @@ export default function PaymentPage() {
                       type="button"
                       variant="outline"
                       onClick={handleApplyManual}
-                      disabled={!manualCode.trim()}
+                      disabled={!manualCode.trim() || isApplyingCode}
                       className="shrink-0"
                     >
-                      Áp dụng
+                      {isApplyingCode ? "Đang áp dụng..." : "Áp dụng"}
                     </Button>
                   </div>
                   <button

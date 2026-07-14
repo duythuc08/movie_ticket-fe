@@ -92,6 +92,11 @@ export const ErrorCodeMap: Record<number, string> = {
     1089: "Sai tên đăng nhập hoặc mật khẩu",
     1091: "Phòng có vé đã bán, không thể thiết lập lại sơ đồ ghế",
     1092: "Dữ liệu thiết lập ghế không hợp lệ",
+    1093: "Thời gian kết thúc khuyến mãi phải sau thời gian bắt đầu",
+    1094: "Giá trị giảm theo % không được vượt quá 100",
+    1095: "Số điện thoại rạp chiếu đã tồn tại",
+    1096: "Email rạp chiếu đã tồn tại",
+    1097: "Số điện thoại này đã được sử dụng bởi tài khoản khác",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

@@ -8,7 +8,12 @@ export const showtimePriceSchema = z.object({
 export const createShowtimeSchema = z.object({
     movieId: z.number().min(1, "Vui lòng chọn phim"),
     roomId: z.number().min(1, "Vui lòng chọn phòng chiếu"),
-    startTimes: z.array(z.string().min(1, "Định dạng giờ không hợp lệ")).min(1, "Cần ít nhất 1 giờ chiếu"),
+    startTimes: z.array(
+        z.string().min(1, "Định dạng giờ không hợp lệ").refine(
+            (v) => !v || new Date(v) > new Date(),
+            "Giờ chiếu phải ở tương lai"
+        )
+    ).min(1, "Cần ít nhất 1 giờ chiếu"),
     prices: z.array(showtimePriceSchema).min(1, "Cần thiết lập ít nhất 1 giá vé")
 });
 

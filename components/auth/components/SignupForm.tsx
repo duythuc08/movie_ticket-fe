@@ -59,11 +59,21 @@ export function SignupForm() {
       return;
     }
 
+    const phoneRegex = /^(0[35789])[0-9]{8}$/;
+    if (form.phoneNumber && !phoneRegex.test(form.phoneNumber)) {
+      setError("Số điện thoại không hợp lệ (VD: 0901234567)");
+      return;
+    }
+
     let formattedDate = form.birthday;
     if (formattedDate) {
       const dateObj = new Date(formattedDate);
       if (isNaN(dateObj.getTime())) {
         setError("Ngày sinh không hợp lệ!");
+        return;
+      }
+      if (dateObj >= new Date()) {
+        setError("Ngày sinh không được là ngày trong tương lai!");
         return;
       }
       formattedDate = dateObj.toISOString().split("T")[0];

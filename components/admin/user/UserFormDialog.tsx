@@ -42,8 +42,11 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
     roles:       user?.roles.map((r) => r.name) ?? ["USER"],
   }), [user]);
 
+  const [createEmailError, setCreateEmailError] = useState<string | null>(null);
+
   const handleCreate = async (values: CreateUserValues) => {
     if (!token) return;
+    setCreateEmailError(null);
     setIsSubmitting(true);
     try {
       await adminUserService.createUser(token, values);
@@ -51,7 +54,12 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Lỗi khi tạo tài khoản");
+      const err = error as Error & { code?: number };
+      if (err.code === 1001 || err.code === 1002) {
+        setCreateEmailError("Email này đã được sử dụng");
+      } else {
+        toast.error(err.message || "Lỗi khi tạo tài khoản");
+      }
     } finally { setIsSubmitting(false); }
   };
 
@@ -146,9 +154,12 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
         <>
           <div className="space-y-2">
             <Label>Email (Username) <span className="text-destructive">*</span></Label>
-            <Input {...form.register("username")} type="email" placeholder="user@example.com" className="bg-background" />
+            <Input {...form.register("username")} type="email" placeholder="user@example.com" className={`bg-background ${createEmailError ? "border-destructive" : ""}`} onChange={(e) => { form.register("username").onChange(e); setCreateEmailError(null); }} />
             {form.formState.errors.username && (
               <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
+            )}
+            {createEmailError && !form.formState.errors.username && (
+              <p className="text-xs text-destructive">{createEmailError}</p>
             )}
           </div>
           <div className="space-y-2">
