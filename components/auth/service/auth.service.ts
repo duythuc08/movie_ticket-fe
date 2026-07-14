@@ -10,6 +10,10 @@ export async function loginUser(username: string, password: string): Promise<Log
     body: JSON.stringify({ username, password }),
   });
 
+  if (res.status >= 500) {
+    throw new Error("Máy chủ không phản hồi");
+  }
+
   const data = await res.json();
 
   if (!res.ok) {

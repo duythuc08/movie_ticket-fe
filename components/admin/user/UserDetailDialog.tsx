@@ -1,13 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 import { adminUserService } from "@/services/admin/adminUserService";
 import { useAuth } from "@/context/AuthContext";
-import type { AdminUser, LoyaltyHistory } from "@/types/admin/user";
+import type { AdminUser, AdminUserRecommendation, LoyaltyHistory } from "@/types/admin/user";
 import type { ApiPagedResult } from "@/types/admin.type";
-import { X, User, TrendingUp, TrendingDown } from "lucide-react";
+import { X, User, TrendingUp, TrendingDown, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const USER_STATUS_LABELS: Record<string, string> = {
@@ -39,8 +41,10 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
   const [history, setHistory] = useState<LoyaltyHistory[]>([]);
   const [historyPage, setHistoryPage] = useState(0);
   const [historyTotal, setHistoryTotal] = useState(0);
+  const [recommendation, setRecommendation] = useState<AdminUserRecommendation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isRecommendLoading, setIsRecommendLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
 
   const loadUser = useCallback(async () => {
@@ -70,14 +74,22 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
     finally { setIsHistoryLoading(false); }
   }, [token, userId]);
 
-  useEffect(() => {
-    setUser(null); setHistory([]); setHistoryPage(0); setActiveTab("info");
-    if (open && userId) loadUser();
-  }, [open, userId, loadUser]);
+  const loadRecommendation = useCallback(async () => {
+    if (!token || !userId) return;
+    setIsRecommendLoading(true);
+    try {
+      setRecommendation(await adminUserService.getUserRecommendations(token, userId));
+    } catch { toast.error("Không thể tải gợi ý phim"); }
+    finally { setIsRecommendLoading(false); }
+  }, [token, userId]);
 
-  useEffect(() => {
-    if (activeTab === "loyalty" && userId && history.length === 0) loadHistory(0);
-  }, [activeTab, userId, history.length, loadHistory]);
+  useEffect(() => { loadUser(); }, [loadUser]);
+
+  function handleTabChange(key: string) {
+    setActiveTab(key);
+    if (key === "loyalty" && userId && history.length === 0) loadHistory(0);
+    if (key === "recommend" && userId && !recommendation) loadRecommendation();
+  }
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short", hour12: false });
@@ -100,7 +112,7 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                 {user && (
                   <>
                     <span className="text-xs text-muted-foreground">{user.username}</span>
-                    <Badge variant={USER_STATUS_VARIANT[user.userStatus] as any} className="text-xs">
+                    <Badge variant={USER_STATUS_VARIANT[user.userStatus] as BadgeVariant} className="text-xs">
                       {USER_STATUS_LABELS[user.userStatus]}
                     </Badge>
                     <Badge variant={user.entityStatus === "ACTIVE" ? "secondary" : "outline"} className="text-xs">
@@ -122,12 +134,13 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
           {/* TAB BAR */}
           <div className="flex border-b bg-card px-6 pt-4 shrink-0">
             {[
-              { key: "info",    label: "Thông tin" },
-              { key: "loyalty", label: "Điểm tích lũy" },
+              { key: "info",      label: "Thông tin" },
+              { key: "loyalty",   label: "Điểm tích lũy" },
+              { key: "recommend", label: "Phim phù hợp" },
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => handleTabChange(tab.key)}
                 className={cn(
                   "px-4 py-2 border-b-2 font-medium text-sm transition-colors",
                   activeTab === tab.key
@@ -177,8 +190,8 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                             ? <Badge variant="secondary">{user.memberShipTierName}</Badge>
                             : <span className="text-muted-foreground italic">Chưa có hạng</span>
                         } />
-                        <div className="pt-2">
-                          <p className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Điểm tích lũy</p>
+                        <div className="pt-2 flex justify-between items-center">
+                          <p className="text-muted-foreground text-xs uppercase tracking-wider">Điểm tích lũy</p>
                           <p className="text-3xl font-bold text-primary">
                             {user.loyaltyPoints.toLocaleString("vi-VN")}
                             <span className="text-sm font-normal text-muted-foreground ml-1">điểm</span>
@@ -186,6 +199,115 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {activeTab === "recommend" && (
+                  <div className="space-y-4">
+                    {isRecommendLoading ? (
+                      <div className="p-12 text-center text-muted-foreground">Đang tải...</div>
+                    ) : !recommendation ? null : (
+                      <>
+                        <div className="border rounded-xl bg-card shadow-sm overflow-hidden">
+                          <div className="p-4 border-b bg-muted/20 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <h3 className="text-sm font-semibold">Hồ sơ thể loại yêu thích</h3>
+                          </div>
+                          <div className="p-4">
+                            {recommendation.genreProfile.length === 0 ? (
+                              <p className="text-sm text-muted-foreground italic">Chưa có dữ liệu tương tác</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {recommendation.genreProfile.map((g, i) => (
+                                  <div key={g.genreName} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-muted/30 text-sm">
+                                    <span className="text-xs text-muted-foreground font-mono">#{i + 1}</span>
+                                    <span className="font-medium">{g.genreName}</span>
+                                    <span className="text-xs text-muted-foreground">({g.likedCount} phim · {g.weightPct}%)</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Recommendation table */}
+                        <div className="border rounded-xl bg-card shadow-sm overflow-hidden">
+                          <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Star className="w-4 h-4 text-primary" />
+                              <h3 className="text-sm font-semibold">Top phim đề xuất</h3>
+                            </div>
+                            {recommendation.usedColdStart && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                Phim nổi bật (khách hàng mới)
+                              </Badge>
+                            )}
+                          </div>
+                          {recommendation.recommendations.length === 0 ? (
+                            <div className="p-8 text-center text-muted-foreground text-sm">Chưa có phim đề xuất</div>
+                          ) : (
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50 border-b">
+                                <tr>
+                                  <th className="p-3 text-left text-xs font-medium uppercase text-muted-foreground tracking-wider">#</th>
+                                  <th className="p-3 text-left text-xs font-medium uppercase text-muted-foreground tracking-wider">Phim</th>
+                                  <th className="p-3 text-right text-xs font-medium uppercase text-muted-foreground tracking-wider">Thời lượng</th>
+                                  <th className="p-3 text-right text-xs font-medium uppercase text-muted-foreground tracking-wider">Đánh giá TB</th>
+                                  <th className="p-3 text-right text-xs font-medium uppercase text-muted-foreground tracking-wider">Điểm dự đoán</th>
+                                  <th className="p-3 text-right text-xs font-medium uppercase text-muted-foreground tracking-wider">Nguồn</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {recommendation.recommendations.map((movie, idx) => (
+                                  <tr key={movie.movieId} className="hover:bg-muted/20 transition-colors">
+                                    <td className="p-3 text-muted-foreground font-mono text-xs">{idx + 1}</td>
+                                    <td className="p-3">
+                                      <div className="flex items-center gap-3">
+                                        {movie.posterUrl ? (
+                                          <img src={movie.posterUrl} alt={movie.title} className="w-9 h-12 object-cover rounded shrink-0" />
+                                        ) : (
+                                          <div className="w-9 h-12 rounded bg-muted shrink-0" />
+                                        )}
+                                        <div className="min-w-0">
+                                          <p className="font-medium truncate max-w-40">{movie.title}</p>
+                                          {movie.genres && movie.genres.length > 0 && (
+                                            <p
+                                              className="text-xs text-muted-foreground truncate max-w-40"
+                                              title={movie.genres.join(" · ")}
+                                            >
+                                              {movie.genres.join(" · ")}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="p-3 text-right text-muted-foreground">
+                                      {movie.duration ? `${movie.duration} phút` : "—"}
+                                    </td>
+                                    <td className="p-3 text-right">
+                                      {movie.averageRating > 0 ? (
+                                        <span className="flex items-center justify-end gap-1">
+                                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                          {movie.averageRating.toFixed(1)}
+                                        </span>
+                                      ) : <span className="text-muted-foreground">—</span>}
+                                    </td>
+                                    <td className="p-3 text-right font-semibold text-primary">
+                                      {movie.predictedScore.toFixed(2)}
+                                    </td>
+                                    <td className="p-3 text-right">
+                                      <Badge variant={movie.source === "cf" ? "secondary" : "outline"} className="text-xs">
+                                        {movie.source === "cf" ? "CF" : "Nổi bật"}
+                                      </Badge>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

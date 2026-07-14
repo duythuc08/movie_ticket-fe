@@ -8,7 +8,7 @@ import type { AdminBanner } from "@/types/admin.type";
 import type { BannerFormSchema } from "@/lib/validations/admin.schemas";
 import {
   fetchAdminBanners,
-  createBanner,
+  createBannersBulk,
   updateBanner,
   deleteBanner,
   toggleBannerActive,
@@ -16,6 +16,8 @@ import {
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 import { DataTable, PageHeader, DeleteDialog } from "@/components/shared";
 import { BannerFormDialog } from "@/components/admin/banner/BannerFormDialog";
+import { BannerBulkDialog } from "@/components/admin/banner/BannerBulkDialog";
+import type { BannerBulkPayload } from "@/components/admin/banner/BannerBulkDialog";
 import { createBannerColumns } from "@/components/admin/banner/BannerColumns";
 import { Button } from "@/components/ui/button";
 
@@ -34,7 +36,8 @@ export default function AdminBannersPage() {
 
   const [banners,        setBanners]        = useState<AdminBanner[]>([]);
   const [isLoading,      setIsLoading]      = useState(false);
-  const [isFormOpen,     setIsFormOpen]     = useState(false);
+  const [isBulkOpen,     setIsBulkOpen]     = useState(false);
+  const [isEditOpen,     setIsEditOpen]     = useState(false);
   const [isDetailOpen,   setIsDetailOpen]   = useState(false);
   const [isDeleteOpen,   setIsDeleteOpen]   = useState(false);
   const [selectedBanner, setSelectedBanner] = useState<AdminBanner | null>(null);
@@ -56,11 +59,6 @@ export default function AdminBannersPage() {
 
   useEffect(() => { loadBanners(); }, [loadBanners]);
 
-  function handleOpenCreate() {
-    setSelectedBanner(null);
-    setIsFormOpen(true);
-  }
-
   function handleViewDetail(banner: AdminBanner) {
     setSelectedBanner(banner);
     setIsDetailOpen(true);
@@ -68,7 +66,7 @@ export default function AdminBannersPage() {
 
   function handleEdit(banner: AdminBanner) {
     setSelectedBanner(banner);
-    setIsFormOpen(true);
+    setIsEditOpen(true);
   }
 
   function handleDeleteClick(banner: AdminBanner) {
@@ -76,16 +74,43 @@ export default function AdminBannersPage() {
     setIsDeleteOpen(true);
   }
 
-  async function handleFormSubmit(data: BannerFormSchema) {
+  async function handleBulkSubmit(items: BannerBulkPayload[]) {
     if (!token) return;
+    setIsSubmitting(true);
+    try {
+      const payloads = await Promise.all(
+        items.map(async (item) => ({
+          imageUrl: await uploadFileAndGetUrl(token, item.imageFile),
+          title: item.title,
+          description: item.description,
+          linkUrl: item.linkUrl,
+          priority: item.priority,
+          active: item.active,
+          bannerType: item.bannerType,
+          movieId: item.movieId ?? undefined,
+          eventId: item.eventId ?? undefined,
+        }))
+      );
+      const created = await createBannersBulk(token, payloads);
+      toast.success(`Đã thêm ${created.length} banner thành công`);
+      setIsBulkOpen(false);
+      loadBanners();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Thêm banner thất bại");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleEditSubmit(data: BannerFormSchema) {
+    if (!token || !selectedBanner) return;
     setIsSubmitting(true);
     try {
       let finalImageUrl = typeof data.imageUrl === "string" ? data.imageUrl : "";
       if (data.imageUrl instanceof File) {
         finalImageUrl = await uploadFileAndGetUrl(token, data.imageUrl);
       }
-
-      const payload = {
+      await updateBanner(token, selectedBanner.id, {
         imageUrl:    finalImageUrl,
         title:       data.title,
         description: data.description || undefined,
@@ -95,17 +120,9 @@ export default function AdminBannersPage() {
         bannerType:  data.bannerType,
         movieId:     data.movieId    ?? undefined,
         eventId:     data.eventId    ?? undefined,
-      };
-
-      if (selectedBanner) {
-        await updateBanner(token, selectedBanner.id, payload);
-        toast.success(`Đã cập nhật banner "${data.title}"`);
-      } else {
-        await createBanner(token, payload);
-        toast.success(`Đã thêm banner "${data.title}"`);
-      }
-
-      setIsFormOpen(false);
+      });
+      toast.success(`Đã cập nhật banner "${data.title}"`);
+      setIsEditOpen(false);
       setSelectedBanner(null);
       loadBanners();
     } catch (error) {
@@ -160,7 +177,7 @@ export default function AdminBannersPage() {
         title="Quản lý Banner"
         description="Quản lý banner hiển thị trên trang chủ hệ thống"
       >
-        <Button onClick={handleOpenCreate} className="gap-2">
+        <Button onClick={() => setIsBulkOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Thêm Banner
         </Button>
       </PageHeader>
@@ -178,15 +195,22 @@ export default function AdminBannersPage() {
         emptyText="Chưa có banner nào."
       />
 
-      {/* Dialog tạo / chỉnh sửa */}
+      <BannerBulkDialog
+        open={isBulkOpen}
+        onOpenChange={setIsBulkOpen}
+        onSubmit={handleBulkSubmit}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Dialog chỉnh sửa */}
       <BannerFormDialog
-        open={isFormOpen}
+        open={isEditOpen}
         onOpenChange={(open) => {
-          setIsFormOpen(open);
+          setIsEditOpen(open);
           if (!open) setSelectedBanner(null);
         }}
         banner={selectedBanner}
-        onSubmit={handleFormSubmit}
+        onSubmit={handleEditSubmit}
         isSubmitting={isSubmitting}
       />
 
@@ -203,11 +227,10 @@ export default function AdminBannersPage() {
         readOnly
         onEdit={() => {
           setIsDetailOpen(false);
-          setIsFormOpen(true);
+          setIsEditOpen(true);
         }}
       />
 
-      {/* Dialog xác nhận xóa */}
       <DeleteDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}

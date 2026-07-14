@@ -222,6 +222,7 @@ export default function AdminUsersPage() {
       />
 
       <UserDetailDialog
+        key={detailUserId ?? "none"}
         open={!!detailUserId}
         onOpenChange={(o) => { if (!o) setDetailUserId(null); }}
         userId={detailUserId}

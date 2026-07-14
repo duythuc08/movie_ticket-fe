@@ -29,3 +29,28 @@ export interface LoyaltyHistory {
   createdAt: string;
   orderId?: number | null;
 }
+
+export interface GenreProfile {
+  genreName: string;
+  likedCount: number;
+  weightPct: number;
+}
+
+export interface RecommendationItem {
+  movieId: number;
+  title: string;
+  posterUrl?: string;
+  description?: string;
+  duration?: number;
+  genres?: string[];
+  predictedScore: number;
+  neighborCount: number;
+  averageRating: number;
+  source: string;
+}
+
+export interface AdminUserRecommendation {
+  genreProfile: GenreProfile[];
+  recommendations: RecommendationItem[];
+  usedColdStart: boolean;
+}

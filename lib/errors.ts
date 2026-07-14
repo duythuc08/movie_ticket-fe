@@ -63,7 +63,7 @@ export const ErrorCodeMap: Record<number, string> = {
     1060: "Không tìm thấy loại ghế",
     1061: "Tạo mã QR thất bại",
     1062: "Ngày phát hành phim không hợp lệ",
-    1063: "Phòng chiếu đang có suất chiếu hoạt động, không thể đổi loại phòng",
+    1063: "Phòng chiếu đang có suất chiếu hoạt động, không thể đổi sơ đồ ghế của phòng",
     1064: "Phòng chiếu đã được thiết lập ghế",
     1065: "Phim đã ngừng chiếu, không thể tạo suất chiếu mới",
     1066: "Thời gian bắt đầu hoặc kết thúc bị trùng lặp với một suất chiếu khác",
@@ -89,6 +89,9 @@ export const ErrorCodeMap: Record<number, string> = {
     1086: "Phim chưa được tạm dừng, không thể chiếu lại",
     1087: "Ghế đã được đặt bởi người khác",
     1088: "Đơn hàng không ở trạng thái chờ xử lý",
+    1089: "Sai tên đăng nhập hoặc mật khẩu",
+    1091: "Phòng có vé đã bán, không thể thiết lập lại sơ đồ ghế",
+    1092: "Dữ liệu thiết lập ghế không hợp lệ",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

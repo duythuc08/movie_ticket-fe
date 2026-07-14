@@ -27,6 +27,13 @@ export async function createBanner(
   return adminPost<AdminBanner>(token, "/admin/banners", payload);
 }
 
+export async function createBannersBulk(
+  token: string,
+  payloads: BannerCreatePayload[]
+): Promise<AdminBanner[]> {
+  return adminPost<AdminBanner[]>(token, "/admin/banners/bulk", payloads);
+}
+
 export async function updateBanner(
   token: string,
   id: number,

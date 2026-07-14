@@ -1,6 +1,6 @@
 import { adminGet, adminPost, adminPut, adminPutEmpty } from "./adminApiClient";
 import type { ApiPagedResult } from "@/types/admin.type";
-import type { AdminUser, LoyaltyHistory } from "@/types/admin/user";
+import type { AdminUser, AdminUserRecommendation, LoyaltyHistory } from "@/types/admin/user";
 import type { CreateUserValues, UpdateUserValues } from "@/lib/validations/admin/user.schema";
 
 export const adminUserService = {
@@ -48,4 +48,7 @@ export const adminUserService = {
     adminGet<ApiPagedResult<LoyaltyHistory>>(token, `/admin/users/${userId}/loyalty-history`, {
       page, size, sort: "createdAt,desc",
     }),
+
+  getUserRecommendations: (token: string, userId: string) =>
+    adminGet<AdminUserRecommendation>(token, `/admin/users/${userId}/recommendations`),
 };

@@ -8,13 +8,14 @@ import type { AdminPerson } from "@/types/admin.type";
 import type { PersonFormSchema } from "@/lib/validations/admin.schemas";
 import {
     fetchAdminPersons,
-    createPerson,
+    createPersonsBulk,
     updatePerson,
     togglePersonStatus,
 } from "@/services/admin/adminPersonService";
 import { fetchAdminMovies, fetchAdminMovieById } from "@/services/admin/adminMovieService";
 import { DataTable, PageHeader, SingleSelectWithSearch } from "@/components/shared";
 import { PersonFormDialog } from "@/components/admin/layout/person/PersonFormDialog";
+import { PersonBulkDialog, type PersonBulkPayload } from "@/components/admin/layout/person/PersonBulkDialog";
 import { createPersonColumns } from "@/components/admin/layout/person/PersonColumns";
 import { Button } from "@/components/ui/button";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
@@ -34,7 +35,8 @@ export default function AdminPersonsPage() {
 
     const [persons, setPersons] = useState<AdminPerson[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isBulkOpen, setIsBulkOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,19 +60,15 @@ export default function AdminPersonsPage() {
 
     useEffect(() => { loadPersons(); }, [loadPersons]);
 
-    // Load movie list for filter dropdown
     useEffect(() => {
         if (!token) return;
         fetchAdminMovies(token, { size: 200 })
             .then(res => {
-                setMovieOptions(
-                    res.content.map(m => ({ value: String(m.movieId), label: m.title }))
-                );
+                setMovieOptions(res.content.map(m => ({ value: String(m.movieId), label: m.title })));
             })
             .catch(() => {});
     }, [token]);
 
-    // When movie filter changes, fetch movie detail to get person IDs
     useEffect(() => {
         if (!movieFilterId || !token) return;
         fetchAdminMovieById(token, Number(movieFilterId))
@@ -92,52 +90,55 @@ export default function AdminPersonsPage() {
         [persons, movieFilterId, fetchedMovieId, fetchedPersonIds]
     );
 
-    function handleOpenCreate() {
-        setSelectedPerson(null);
-        setIsDialogOpen(true);
-    }
-
     function handleEdit(person: AdminPerson) {
         setSelectedPerson(person);
-        setIsDialogOpen(true);
+        setIsEditOpen(true);
     }
 
-    async function handleFormSubmit(data: PersonFormSchema) {
+    async function handleBulkSubmit(items: PersonBulkPayload[]) {
         if (!token) return;
         setIsSubmitting(true);
         try {
-            if (selectedPerson) {
-                let avatarUrl: string | undefined;
-                if (data.avatarUrl instanceof File) {
-                    avatarUrl = await uploadFileAndGetUrl(token, data.avatarUrl);
-                } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
-                    avatarUrl = data.avatarUrl;
-                }
-                const updated = await updatePerson(token, selectedPerson.id, {
-                    name: data.name,
-                    avatarUrl,
-                    movieRole: data.movieRole,
-                });
-                toast.success(`Đã cập nhật "${updated.name}" thành công`);
-            } else {
-                let avatarUrl: string | undefined;
-                if (data.avatarUrl instanceof File) {
-                    avatarUrl = await uploadFileAndGetUrl(token, data.avatarUrl);
-                } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
-                    avatarUrl = data.avatarUrl;
-                }
-
-                const created = await createPerson(token, {
-                    name: data.name,
-                    avatarUrl,
-                    movieRole: data.movieRole,
-                });
-                toast.success(`Đã thêm "${created.name}" thành công`);
-            }
-            setIsDialogOpen(false);
+            const payloads = await Promise.all(
+                items.map(async (item) => ({
+                    name: item.name,
+                    movieRole: item.movieRole,
+                    avatarUrl: item.avatarFile
+                        ? await uploadFileAndGetUrl(token, item.avatarFile)
+                        : undefined,
+                }))
+            );
+            const created = await createPersonsBulk(token, payloads);
+            toast.success(`Đã thêm ${created.length} nhân sự thành công`);
+            setIsBulkOpen(false);
             loadPersons();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Thao tác thất bại");
+            toast.error(error instanceof Error ? error.message : "Thêm nhân sự thất bại");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    async function handleEditSubmit(data: PersonFormSchema) {
+        if (!token || !selectedPerson) return;
+        setIsSubmitting(true);
+        try {
+            let avatarUrl: string | undefined;
+            if (data.avatarUrl instanceof File) {
+                avatarUrl = await uploadFileAndGetUrl(token, data.avatarUrl);
+            } else if (typeof data.avatarUrl === "string" && data.avatarUrl) {
+                avatarUrl = data.avatarUrl;
+            }
+            const updated = await updatePerson(token, selectedPerson.id, {
+                name: data.name,
+                avatarUrl,
+                movieRole: data.movieRole,
+            });
+            toast.success(`Đã cập nhật "${updated.name}" thành công`);
+            setIsEditOpen(false);
+            loadPersons();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Cập nhật thất bại");
         } finally {
             setIsSubmitting(false);
         }
@@ -170,7 +171,7 @@ export default function AdminPersonsPage() {
                 title="Diễn viên & Đạo diễn"
                 description="Quản lý thông tin diễn viên và đạo diễn trong hệ thống"
             >
-                <Button onClick={handleOpenCreate} className="gap-2">
+                <Button onClick={() => setIsBulkOpen(true)} className="gap-2">
                     <Plus className="h-4 w-4" /> Thêm mới
                 </Button>
             </PageHeader>
@@ -198,11 +199,18 @@ export default function AdminPersonsPage() {
                 />
             </DataTable>
 
+            <PersonBulkDialog
+                open={isBulkOpen}
+                onOpenChange={setIsBulkOpen}
+                onSubmit={handleBulkSubmit}
+                isSubmitting={isSubmitting}
+            />
+
             <PersonFormDialog
-                open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
                 person={selectedPerson}
-                onSubmit={handleFormSubmit}
+                onSubmit={handleEditSubmit}
                 isSubmitting={isSubmitting}
             />
         </div>

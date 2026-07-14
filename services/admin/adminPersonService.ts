@@ -49,18 +49,18 @@ export async function fetchPersonsByRoleForSelect(
   );
 }
 
-export async function fetchPersonById(
-  token: string,
-  personId: number
-): Promise<AdminPerson> {
-  return adminGet<AdminPerson>(token, `/admin/persons/${personId}`);
-}
-
 export async function createPerson(
   token: string,
   payload: PersonCreatePayload
 ): Promise<AdminPerson> {
   return adminPost<AdminPerson>(token, "/admin/persons", payload);
+}
+
+export async function createPersonsBulk(
+  token: string,
+  payloads: PersonCreatePayload[]
+): Promise<AdminPerson[]> {
+  return adminPost<AdminPerson[]>(token, "/admin/persons/bulk", payloads);
 }
 
 export async function updatePerson(
@@ -71,17 +71,11 @@ export async function updatePerson(
   return adminPut<AdminPerson>(token, `/admin/persons/${personId}`, payload);
 }
 
-export async function activatePerson(
-  token: string,
-  personId: number
-): Promise<void> {
+function activatePerson(token: string, personId: number): Promise<void> {
   return adminPutEmpty(token, `/admin/persons/${personId}/activate`);
 }
 
-export async function inactivatePerson(
-  token: string,
-  personId: number
-): Promise<void> {
+function inactivatePerson(token: string, personId: number): Promise<void> {
   return adminPutEmpty(token, `/admin/persons/${personId}/inactivate`);
 }
 
