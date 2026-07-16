@@ -110,6 +110,14 @@ export async function addFoodsToBooking(
   if (!res.ok) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể cập nhật đồ ăn"));
 }
 
+export class ApiError extends Error {
+  code: number;
+  constructor(code: number, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
 export async function checkoutBooking(
   token: string,
   orderId: number,
@@ -122,7 +130,20 @@ export async function checkoutBooking(
     body: JSON.stringify({ promotionCode: promotionCode ?? null, paymentType: paymentMethod }),
   });
   const data = await res.json();
-  if (data.code !== 1000) throw new Error(getErrorMessage(data?.code, data?.message || "Checkout thất bại"));
+  if (data.code !== 1000) throw new ApiError(data?.code ?? 0, getErrorMessage(data?.code, data?.message || "Checkout thất bại"));
+  return data.result;
+}
+
+export async function resumePayment(
+  token: string,
+  orderId: number,
+): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number }> {
+  const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/resume-payment`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  const data = await res.json();
+  if (data.code !== 1000) throw new Error(getErrorMessage(data?.code, data?.message || "Không thể lấy lại URL thanh toán"));
   return data.result;
 }
 

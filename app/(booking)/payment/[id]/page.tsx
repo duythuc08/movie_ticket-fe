@@ -1,7 +1,7 @@
 "use client";
 
 import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
-import { checkoutBooking, getApplicableVouchers } from "@/components/booking/service/booking.service";
+import { ApiError, checkoutBooking, getApplicableVouchers, resumePayment } from "@/components/booking/service/booking.service";
 import { formatCurrency } from "@/components/booking/utils/booking.utils";
 import {
   clearBookingState,
@@ -226,8 +226,19 @@ export default function PaymentPage() {
         sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
         window.location.href = result.paymentUrl;
       } catch (err) {
-        const error = err as Error;
-        toast.error(error.message || "Tạo thanh toán thất bại. Vui lòng thử lại.");
+        if (err instanceof ApiError && err.code === 1088) {
+          // Đơn đã IN_PROGRESS — lấy lại URL thanh toán
+          try {
+            const resumed = await resumePayment(token, Number(orderId));
+            sessionStorage.setItem("pendingOrder", JSON.stringify({ ...bookingInfo, orderId, paymentMethod: "VNPAY" }));
+            window.location.href = resumed.paymentUrl;
+            return;
+          } catch {
+            toast.error("Không thể lấy lại trang thanh toán. Vui lòng thử lại.");
+          }
+        } else {
+          toast.error((err as Error).message || "Tạo thanh toán thất bại. Vui lòng thử lại.");
+        }
         setLoading(false);
       }
     }
@@ -261,8 +272,19 @@ export default function PaymentPage() {
         sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
         window.location.href = result.paymentUrl;
       } catch (err) {
-        const error = err as Error;
-        toast.error(error.message || "Tạo thanh toán MoMo thất bại. Vui lòng thử lại.");
+        if (err instanceof ApiError && err.code === 1088) {
+          // Đơn đã IN_PROGRESS — lấy lại URL thanh toán
+          try {
+            const resumed = await resumePayment(token, Number(orderId));
+            sessionStorage.setItem("pendingOrder", JSON.stringify({ ...bookingInfo, orderId, paymentMethod: "MOMO" }));
+            window.location.href = resumed.paymentUrl;
+            return;
+          } catch {
+            toast.error("Không thể lấy lại trang thanh toán. Vui lòng thử lại.");
+          }
+        } else {
+          toast.error((err as Error).message || "Tạo thanh toán MoMo thất bại. Vui lòng thử lại.");
+        }
         setLoading(false);
       }
     }
