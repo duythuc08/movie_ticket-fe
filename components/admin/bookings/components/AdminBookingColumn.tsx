@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { AdminOrderSummaryResponse } from "@/types";
 import { ActionMenu, ColumnHeader } from "@/components/shared";
-import { Eye, QrCode } from "lucide-react";
+import { Eye } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; style: string }> = {
   PENDING: { label: "Chờ thanh toán", style: "bg-amber-500/20 text-amber-500 border-amber-500/30" },
@@ -27,7 +27,6 @@ function fdt(dStr: string) {
 
 interface AdminBookingColumnActions {
   onViewDetail: (orderId: number) => void;
-  onCheckin: (orderId: number) => void;
 }
 
 export function createAdminBookingColumns(
@@ -102,9 +101,6 @@ export function createAdminBookingColumns(
           <ActionMenu
             actions={[
               { label: "Xem chi tiết", icon: Eye, onClick: () => actions.onViewDetail(order.orderId) },
-              ...(order.orderStatus === "PAID"
-                ? [{ label: "Check-in", icon: QrCode, onClick: () => actions.onCheckin(order.orderId), variant: "default" as const }]
-                : [])
             ]}
           />
         );

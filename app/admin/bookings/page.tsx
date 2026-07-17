@@ -8,15 +8,11 @@ import { createAdminBookingColumns } from "@/components/admin/bookings/component
 import { AdminBookingStats } from "@/components/admin/bookings/components/AdminBookingStats";
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { AdminBookingDetailDialog } from "@/components/admin/bookings/components/AdminBookingDetailDialog";
-import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
+import { QrCheckinDialog } from "@/components/admin/bookings/components/QrCheckinDialog";
 import { Input } from "@/components/ui/input";
 import { adminBookingService } from "@/services/admin/admin-booking";
 import type { AdminOrderSummaryResponse, Order } from "@/types";
-import { z } from "zod";
 
-const checkinSchema = z.object({
-  qrCode: z.string().min(1, "Vui lòng nhập mã QR"),
-});
 
 export default function AdminBookingsPage() {
   const [orders, setOrders] = useState<AdminOrderSummaryResponse[]>([]);
@@ -32,8 +28,7 @@ export default function AdminBookingsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Check-in
-  const [checkinOrderId, setCheckinOrderId] = useState<number | null>(null);
-  const [isCheckinLoading, setIsCheckinLoading] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -71,27 +66,14 @@ export default function AdminBookingsPage() {
     }
   };
 
-  const handleCheckinSubmit = async (values: { qrCode: string }) => {
-    if (!checkinOrderId) {
-      return;
-    }
-    try {
-      setIsCheckinLoading(true);
-      const token = getStoredToken() ?? "";
-      await adminBookingService.checkinOrder(token, checkinOrderId, values.qrCode);
-      toast.success("Check-in thành công!");
-      setCheckinOrderId(null);
-      fetchOrders();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsCheckinLoading(false);
-    }
+  const handleCheckinScan = async (qrCode: string) => {
+    const token = getStoredToken() ?? "";
+    await adminBookingService.checkinOrder(token, qrCode);
+    fetchOrders();
   };
 
   const columns = React.useMemo(() => createAdminBookingColumns({
     onViewDetail: handleViewDetail,
-    onCheckin: (id) => { setCheckinOrderId(id); },
   }), []);
 
   return (
@@ -101,6 +83,13 @@ export default function AdminBookingsPage() {
           <Ticket className="w-6 h-6 text-admin-accent" />
           Quản lý Đơn hàng
         </h1>
+        <button
+          onClick={() => setIsCheckinOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-admin-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          <QrCode className="w-4 h-4" />
+          Quét QR Check-in
+        </button>
       </div>
 
       <DataTable
@@ -152,34 +141,11 @@ export default function AdminBookingsPage() {
         order={selectedOrder}
       />
 
-      <AdminFormDialog
-        open={!!checkinOrderId}
-        onOpenChange={(open) => !open && setCheckinOrderId(null)}
-        title="Check-in Đơn vé"
-        subtitle={`Nhập mã QR của đơn hàng #${checkinOrderId} để xác nhận:`}
-        schema={checkinSchema}
-        defaultValues={{ qrCode: "" }}
-        onSubmit={handleCheckinSubmit}
-        isSubmitting={isCheckinLoading}
-        submitLabel="Xác nhận"
-        maxWidth="max-w-md"
-      >
-        {(form) => (
-          <div className="space-y-4">
-            <div>
-              <Input
-                {...form.register("qrCode")}
-                placeholder="VD: INF-123-4567..."
-                className="bg-admin-surface-2 border-admin-border-2 text-admin placeholder:text-admin-4"
-                autoFocus
-              />
-              {form.formState.errors.qrCode && (
-                <p className="text-sm text-admin-danger mt-1">{form.formState.errors.qrCode.message}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </AdminFormDialog>
+      <QrCheckinDialog
+        open={isCheckinOpen}
+        onClose={() => setIsCheckinOpen(false)}
+        onScan={handleCheckinScan}
+      />
 
     </div>
   );

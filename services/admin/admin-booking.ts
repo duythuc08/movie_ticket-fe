@@ -41,8 +41,8 @@ export const adminBookingService = {
     return adminGet<Order>(token, `/admin/orders/${orderId}`);
   },
 
-  checkinOrder: async (token: string, orderId: number, qrCode: string): Promise<string> => {
-    return adminPost<string>(token, `/admin/orders/${orderId}/checkin?qrCode=${encodeURIComponent(qrCode)}`, undefined);
+  checkinOrder: async (token: string, qrCode: string): Promise<string> => {
+    return adminPost<string>(token, `/admin/orders/checkin?qrCode=${encodeURIComponent(qrCode)}`, undefined);
   },
 
   getAdminOrderStats: async (token: string, from?: string, to?: string): Promise<AdminOrderStatsResponse> => {
