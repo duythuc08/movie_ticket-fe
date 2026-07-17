@@ -18,75 +18,64 @@ export function QrCheckinDialog({ open, onClose, onScan }: Props) {
   const [scanState, setScanState] = useState<ScanState>("scanning");
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
+  const stopScanner = async () => {
+    const s = scannerRef.current;
+    if (!s) return;
+    try {
+      if (s.isScanning) await s.stop();
+      await s.clear();
+    } catch {}
+    scannerRef.current = null;
+  };
 
-    setScanState("scanning");
-    setErrorMessage("");
-
-    const scannerId = "qr-checkin-reader";
-    const scanner = new Html5Qrcode(scannerId);
-    scannerRef.current = scanner;
-
-    scanner
-      .start(
+  const startScanner = async (onDecoded: (text: string) => void) => {
+    await stopScanner();
+    const s = new Html5Qrcode("qr-checkin-reader");
+    scannerRef.current = s;
+    try {
+      await s.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText) => {
-          await scanner.stop();
-          setScanState("loading");
-          try {
-            await onScan(decodedText);
-            setScanState("success");
-          } catch (err: any) {
-            setErrorMessage(err?.message || "Check-in thất bại");
-            setScanState("error");
-          }
-        },
+        onDecoded,
         () => {}
-      )
-      .catch(() => {
-        setErrorMessage("Không thể truy cập camera");
-        setScanState("error");
-      });
+      );
+    } catch {
+      setErrorMessage("Không thể truy cập camera");
+      setScanState("error");
+    }
+  };
 
-    return () => {
-      scanner.stop().catch(() => {});
-    };
+  const handleDecoded = async (decodedText: string) => {
+    await stopScanner();
+    setScanState("loading");
+    try {
+      await onScan(decodedText);
+      setScanState("success");
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Check-in thất bại");
+      setScanState("error");
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    setScanState("scanning");
+    setErrorMessage("");
+    startScanner(handleDecoded);
+    return () => { stopScanner(); };
   }, [open]);
 
-  const handleClose = () => {
-    scannerRef.current?.stop().catch(() => {});
+  const handleClose = async () => {
+    await stopScanner();
+    setScanState("scanning");
+    setErrorMessage("");
     onClose();
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setScanState("scanning");
     setErrorMessage("");
-    const scannerId = "qr-checkin-reader";
-    const scanner = new Html5Qrcode(scannerId);
-    scannerRef.current = scanner;
-    scanner
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        async (decodedText) => {
-          await scanner.stop();
-          setScanState("loading");
-          try {
-            await onScan(decodedText);
-            setScanState("success");
-          } catch (err: any) {
-            setErrorMessage(err?.message || "Check-in thất bại");
-            setScanState("error");
-          }
-        },
-        () => {}
-      )
-      .catch(() => {
-        setErrorMessage("Không thể truy cập camera");
-        setScanState("error");
-      });
+    await startScanner(handleDecoded);
   };
 
   return (
@@ -106,11 +95,15 @@ export function QrCheckinDialog({ open, onClose, onScan }: Props) {
         </div>
 
         <div className="p-5 flex flex-col items-center gap-4 min-h-[320px] justify-center">
+          {/* Luôn render div này để html5-qrcode có DOM node để mount vào */}
+          <div
+            id="qr-checkin-reader"
+            className="w-full rounded-xl overflow-hidden [&_video]:scale-x-[-1]"
+            style={{ display: scanState === "scanning" ? "block" : "none" }}
+          />
+
           {scanState === "scanning" && (
-            <>
-              <div id="qr-checkin-reader" className="w-full rounded-xl overflow-hidden" />
-              <p className="text-xs text-admin-4 text-center">Hướng camera vào mã QR trên vé của khách</p>
-            </>
+            <p className="text-xs text-admin-4 text-center">Hướng camera vào mã QR trên vé của khách</p>
           )}
 
           {scanState === "loading" && (

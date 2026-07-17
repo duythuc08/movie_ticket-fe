@@ -149,7 +149,7 @@ export function DataTable<TData>({
 
   const displayPage   = serverPagination?.page   ?? pageIndex;
   const displayTotal  = serverPagination?.total   ?? clientTotalRows;
-  const displayPages  = serverPagination?.pageCount ?? (table.getPageCount() || 1);
+  const displayPages  = serverPagination?.pageCount ?? Math.max(table.getPageCount(), 1);
   const from = displayTotal === 0 ? 0 : displayPage * PAGE_SIZE + 1;
   const to   = Math.min((displayPage + 1) * PAGE_SIZE, displayTotal);
   const canPrev = serverPagination ? serverPagination.page > 0 : table.getCanPreviousPage();

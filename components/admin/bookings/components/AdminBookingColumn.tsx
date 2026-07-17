@@ -76,8 +76,8 @@ export function createAdminBookingColumns(
       header: "Trạng Thái",
       filterFn: (row, columnId, filterValue) => {
         const val = row.getValue(columnId) as string;
-        if (filterValue === "PENDING_OR_PAID") {
-          return val === "PENDING" || val === "PAID" || val === "IN_PROGRESS";
+        if (filterValue === "PENDING_OR_PAID_OR_USED") {
+          return val === "PENDING" || val === "PAID" || val === "IN_PROGRESS" || val === "USED";
         }
         return val === filterValue;
       },

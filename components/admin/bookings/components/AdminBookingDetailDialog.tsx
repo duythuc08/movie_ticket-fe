@@ -86,7 +86,7 @@ export function AdminBookingDetailDialog({ order, open, onClose }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-[1fr_200px] max-h-[55vh] overflow-y-auto">
+        <div className="grid grid-cols-[1fr_240px] max-h-[55vh] overflow-y-auto">
           <div className="p-5 border-r border-admin-border">
             <div className="mb-4">
               <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-admin-4 mb-3">
@@ -136,7 +136,9 @@ export function AdminBookingDetailDialog({ order, open, onClose }: Props) {
                   />
                 </div>
                 <p className="text-xs text-admin-4 uppercase tracking-widest mb-1">Mã QR</p>
-                <p className="text-sm  font-bold text-admin-2">{order.qrCode}</p>
+                <p className="text-sm font-bold text-admin-2">
+                  {(() => { try { return JSON.parse(order.qrCode || "").code; } catch { return order.qrCode; } })()}
+                </p>
               </div>
             ) : (
               <div className="text-center text-admin-4">

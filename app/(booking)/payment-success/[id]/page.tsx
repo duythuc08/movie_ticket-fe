@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Download, Home, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ function PaymentSuccessContent() {
   const [extraInfo, setExtraInfo] = useState<OrderExtraInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const ticketRef = useRef<HTMLDivElement>(null);
 
   const orderIdFromUrl = searchParams.get("orderId") || (pathId !== "momo" ? pathId : null);
 
@@ -85,6 +86,31 @@ function PaymentSuccessContent() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDownloadTicket = async () => {
+    if (!ticketRef.current) return;
+    const html2canvas = (await import("html2canvas")).default;
+    const el = ticketRef.current;
+    const prev = el.style.cssText;
+    el.style.backgroundColor = "#1a1a2e";
+    el.style.color = "#ffffff";
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: "#1a1a2e",
+      foreignObjectRendering: false,
+      ignoreElements: (node) => node.tagName === "BUTTON",
+    });
+    el.style.cssText = prev;
+    const link = document.createElement("a");
+    link.download = `ve-${orderData?.orderId || "cinema"}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
+  const getBookingCode = () => {
+    try { return JSON.parse(orderData?.qrCode || "").code as string; } catch { return null; }
   };
 
   const getSeatList = () => {
@@ -160,7 +186,7 @@ function PaymentSuccessContent() {
 
 
         {/* Boarding Pass Ticket UI */}
-        <div className="relative mx-auto w-full max-w-4xl flex flex-col md:flex-row bg-card rounded-3xl overflow-hidden shadow-2xl border border-border mt-4">
+        <div ref={ticketRef} data-ticket="" className="relative mx-auto w-full max-w-4xl flex flex-col md:flex-row bg-card rounded-3xl overflow-hidden shadow-2xl border border-border mt-4">
           
           {/* Left part: Movie Details */}
           <div className="flex-1 p-8 md:border-r-[3px] md:border-dashed border-border relative">
@@ -226,7 +252,7 @@ function PaymentSuccessContent() {
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ghế ngồi</p>
                 <p className="text-2xl font-black tracking-widest text-primary break-all">{getSeatList()}</p>
               </div>
-              <Button className="hidden sm:flex gap-2 hover:-translate-y-0.5 transition-all shadow-lg rounded-xl h-12 px-6">
+              <Button onClick={handleDownloadTicket} className="hidden sm:flex gap-2 hover:-translate-y-0.5 transition-all shadow-lg rounded-xl h-12 px-6">
                 <Download className="w-4 h-4" /> Lưu vé
               </Button>
             </div>
@@ -250,6 +276,10 @@ function PaymentSuccessContent() {
                 }
               />
             </div>
+
+            {getBookingCode() && (
+              <p className="font-mono font-bold text-sm text-foreground tracking-widest mb-6">{getBookingCode()}</p>
+            )}
 
             <div className="w-full text-center mb-6">
                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Tổng thanh toán</p>
