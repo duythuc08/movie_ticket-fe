@@ -22,6 +22,7 @@ const SETUP_CELL_CLASSES: Record<string, string> = {
   STANDARD: "bg-slate-200 border-slate-300 text-slate-800",
   VIP:      "bg-amber-200 border-amber-300 text-amber-800",
   COUPLE:   "bg-rose-200 border-rose-300 text-rose-800",
+  AISLE:    "bg-muted/40 border-border border-dashed text-muted-foreground hover:bg-muted",
 };
 
 interface SeatSetupDialogProps {
@@ -31,7 +32,7 @@ interface SeatSetupDialogProps {
   roomName: string;
   initialRows?: number;
   initialCols?: number;
-  onSetupComplete: (rows: number, cols: number, seatTypes: (SeatType | null)[][]) => Promise<void>;
+  onSetupComplete: (rows: number, cols: number, seatTypes: SeatType[][]) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -49,7 +50,7 @@ export function SeatSetupDialog({
   const [dims, setDims] = useState<SeatSetupDimensionSchema | null>(null);
   
   // Paint tool state
-  const [activeTool, setActiveTool] = useState<SeatType>("STANDARD");
+  const [activeTool, setActiveTool] = useState<SeatType | "AISLE">("STANDARD");
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<"PAINT" | "ERASE" | null>(null);
 
@@ -93,7 +94,7 @@ export function SeatSetupDialog({
   const applyActionToCell = useCallback((r: number, c: number, currentGrid: (SeatType | null)[][], mode: "PAINT" | "ERASE") => {
     if (!dims) return currentGrid;
     const next = currentGrid.map((row) => [...row]);
-    
+
     if (mode === "ERASE") {
       if (next[r][c] === "COUPLE") {
         next[r][c] = null;
@@ -102,6 +103,11 @@ export function SeatSetupDialog({
       } else {
         next[r][c] = null;
       }
+      return next;
+    }
+
+    if (activeTool === "AISLE") {
+      next[r][c] = null;
       return next;
     }
 
@@ -142,7 +148,8 @@ export function SeatSetupDialog({
 
   async function handleSubmitSetup() {
     if (!dims) return;
-    await onSetupComplete(dims.rows, dims.cols, grid);
+    const gridWithAisle = grid.map(row => row.map(cell => cell ?? ("AISLE" as SeatType)));
+    await onSetupComplete(dims.rows, dims.cols, gridWithAisle);
   }
 
   const rowLabels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -189,7 +196,7 @@ export function SeatSetupDialog({
                     <MousePointer2 className="w-3.5 h-3.5" />
                     Công cụ vẽ:
                   </span>
-                  {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((t) => {
+                  {(["STANDARD", "VIP", "COUPLE", "AISLE"] as (SeatType | "AISLE")[]).map((t) => {
                     const isActive = activeTool === t;
                     return (
                       <button
@@ -198,13 +205,13 @@ export function SeatSetupDialog({
                         onClick={() => setActiveTool(t)}
                         className={cn(
                           "flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all border",
-                          isActive 
-                            ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
+                          isActive
+                            ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5"
                             : "border-transparent hover:bg-muted"
                         )}
                       >
                         <span className={cn("h-4 w-4 border block", SETUP_CELL_CLASSES[t])} />
-                        {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : "Đôi"}
+                        {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : t === "COUPLE" ? "Đôi" : "Lối đi"}
                       </button>
                     );
                   })}

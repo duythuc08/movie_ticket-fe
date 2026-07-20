@@ -35,7 +35,13 @@ export function SeatMap({
         (s.seatRow === seat.seatRow && s.seatNumber === seat.seatNumber)
     );
 
-  const rows = Object.keys(seatData).sort((a, b) => a.localeCompare(b));
+  const presentRows = Object.keys(seatData).sort((a, b) => a.localeCompare(b));
+  const rows: string[] = [];
+  if (presentRows.length > 0) {
+    const first = presentRows[0].charCodeAt(0);
+    const last = presentRows[presentRows.length - 1].charCodeAt(0);
+    for (let i = first; i <= last; i++) rows.push(String.fromCharCode(i));
+  }
 
   let maxCol = 0;
   for (const row of rows) {
@@ -64,6 +70,15 @@ export function SeatMap({
       <div className="w-fit mx-auto relative flex flex-col gap-1.5">
         {rows.map((rowLabel) => {
           const rowSeats = seatData[rowLabel];
+          if (!rowSeats || rowSeats.length === 0) {
+            return (
+              <div key={rowLabel} className="flex items-center gap-1.5" style={{ height: "2rem" }}>
+                <span className="w-6 sm:w-7 text-center text-xs font-bold text-muted-foreground/30 shrink-0 select-none">{rowLabel}</span>
+                <div className="flex-1 border-t border-dashed border-muted-foreground/20 mx-1" />
+                <span className="w-6 sm:w-7 shrink-0 select-none" />
+              </div>
+            );
+          }
           return (
             <div key={rowLabel} className="flex items-center gap-1.5">
               <span className="w-6 sm:w-7 text-center text-xs font-bold text-muted-foreground flex-shrink-0 select-none">

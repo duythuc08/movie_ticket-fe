@@ -3,7 +3,7 @@ import type { EntityStatus, AdminListQuery } from "./common";
 export type CinemaStatus = "OPERATIONAL" | "TEMPORARILY_CLOSED";
 export type RoomType = "STANDARD" | "VIP" | "IMAX" | "THREE_D";
 export type RoomStatus = "OPERATIONAL" | "MAINTENANCE" | "CLEANING";
-export type SeatType = "STANDARD" | "VIP" | "COUPLE";
+export type SeatType = "STANDARD" | "VIP" | "COUPLE" | "AISLE";
 export type SeatStatus = "NORMAL" | "BROKEN" | "MAINTENANCE";
 
 export interface AdminCinema {
@@ -99,7 +99,7 @@ export interface RoomUpdatePayload {
 export interface SeatSetupPayload {
   rows: number;
   cols: number;
-  seatTypes: (SeatType | null)[][];
+  seatTypes: SeatType[][];
 }
 
 export interface SeatUpdatePayload {

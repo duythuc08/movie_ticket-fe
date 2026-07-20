@@ -130,6 +130,7 @@ export function DataTable<TData>({
     columns,
     manualPagination: !!serverPagination,
     pageCount: serverPagination?.pageCount ?? -1,
+    autoResetPageIndex: !serverPagination,
     state: { sorting, columnFilters, globalFilter },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -144,14 +145,16 @@ export function DataTable<TData>({
     },
   });
 
-  const { pageIndex } = table.getState().pagination;
+  const { pageIndex, pageSize } = table.getState().pagination;
   const clientTotalRows = table.getFilteredRowModel().rows.length;
+  const clientTotalPages = Math.ceil(clientTotalRows / pageSize) || 1;
+  const safePageIndex = Math.min(pageIndex, clientTotalPages - 1);
 
-  const displayPage   = serverPagination?.page   ?? pageIndex;
+  const displayPage   = serverPagination?.page   ?? safePageIndex;
   const displayTotal  = serverPagination?.total   ?? clientTotalRows;
-  const displayPages  = serverPagination?.pageCount ?? Math.max(table.getPageCount(), 1);
-  const from = displayTotal === 0 ? 0 : displayPage * PAGE_SIZE + 1;
-  const to   = Math.min((displayPage + 1) * PAGE_SIZE, displayTotal);
+  const displayPages  = serverPagination?.pageCount ?? clientTotalPages;
+  const from = displayTotal === 0 ? 0 : displayPage * pageSize + 1;
+  const to   = Math.min((displayPage + 1) * pageSize, displayTotal);
   const canPrev = serverPagination ? serverPagination.page > 0 : table.getCanPreviousPage();
   const canNext = serverPagination ? serverPagination.page < serverPagination.pageCount - 1 : table.getCanNextPage();
 

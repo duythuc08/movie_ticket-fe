@@ -44,6 +44,7 @@ const SETUP_CELL_CLASSES: Record<SeatType, string> = {
   STANDARD: "bg-blue-100 border-blue-300 text-blue-800",
   VIP: "bg-purple-100 border-purple-300 text-purple-800",
   COUPLE: "bg-pink-100 border-pink-300 text-pink-800",
+  AISLE: "bg-muted/40 border-border border-dashed text-muted-foreground",
 };
 
 interface RoomDetailDialogProps {
@@ -75,7 +76,7 @@ export function RoomDetailDialog({
   const [dims, setDims] = useState<{ rows: number; cols: number }>({ rows: 0, cols: 0 });
   const [inputRows, setInputRows] = useState(8);
   const [inputCols, setInputCols] = useState(10);
-  const [activeTool, setActiveTool] = useState<SeatType>("STANDARD");
+  const [activeTool, setActiveTool] = useState<SeatType | "AISLE">("STANDARD");
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<"PAINT" | "ERASE" | null>(null);
   const [dragStart, setDragStart] = useState<{ r: number; c: number } | null>(null);
@@ -292,6 +293,12 @@ export function RoomDetailDialog({
       return next;
     }
 
+    if (activeTool === "AISLE") {
+      next[r][c] = null;
+      if (couplePartnerCol !== -1) next[r][couplePartnerCol] = null;
+      return next;
+    }
+
     if (activeTool === "COUPLE") {
       if (currentGrid[r][c] === "COUPLE") return currentGrid;
 
@@ -383,21 +390,8 @@ export function RoomDetailDialog({
     if (!token || !room) return;
     setIsSettingUp(true);
     try {
-      await setupSeatsForRoom(token, room.roomId, { rows: dims.rows, cols: dims.cols, seatTypes: grid });
-      
-      let validCount = 0;
-      for (let r = 0; r < dims.rows; r++) {
-        for (let c = 0; c < dims.cols; c++) {
-          if (grid[r][c] !== null) validCount++;
-        }
-      }
-
-      await updateAdminRoom(token, room.roomId, {
-        name: room.name,
-        capacity: validCount,
-        roomType: room.roomType,
-        roomStatus: room.roomStatus
-      });
+      const gridWithAisle = grid.map(row => row.map(cell => cell ?? ("AISLE" as SeatType)));
+      await setupSeatsForRoom(token, room.roomId, { rows: dims.rows, cols: dims.cols, seatTypes: gridWithAisle });
 
       toast.success("Thiết lập sơ đồ ghế và cập nhật sức chứa thành công");
       setIsEditMode(false);
@@ -525,7 +519,7 @@ export function RoomDetailDialog({
                     <div className="flex-1" />
                     
                     <div className="flex bg-background p-1 shadow-sm border shrink-0 h-9 mb-[1px]">
-                      {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((t) => {
+                      {(["STANDARD", "VIP", "COUPLE", "AISLE"] as (SeatType | "AISLE")[]).map((t) => {
                         const isActive = activeTool === t;
                         return (
                           <button
@@ -534,13 +528,13 @@ export function RoomDetailDialog({
                             onClick={() => setActiveTool(t)}
                             className={cn(
                               "flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all border",
-                              isActive 
-                                ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5" 
+                              isActive
+                                ? "ring-2 ring-primary ring-offset-1 border-primary bg-primary/5"
                                 : "border-transparent hover:bg-muted text-muted-foreground"
                             )}
                           >
                             <span className={cn("h-4 w-4 border block", SETUP_CELL_CLASSES[t])} />
-                            {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : "Đôi"}
+                            {t === "STANDARD" ? "Thường" : t === "VIP" ? "VIP" : t === "COUPLE" ? "Đôi" : "Lối đi"}
                           </button>
                         );
                       })}

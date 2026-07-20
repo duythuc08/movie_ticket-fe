@@ -20,6 +20,7 @@ const SEAT_TYPE_CLASSES: Record<SeatType, string> = {
   STANDARD: "bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-700",
   VIP: "bg-amber-200 hover:bg-amber-300 border border-amber-300 text-amber-800",
   COUPLE: "bg-rose-200 hover:bg-rose-300 border border-rose-300 text-rose-800",
+  AISLE: "",
 };
 
 const SEAT_STATUS_CLASSES: Record<SeatStatus, string> = {
@@ -63,6 +64,15 @@ export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
     row.sort((a, b) => a.seatNumber - b.seatNumber);
   }
 
+  const allRowLabels: string[] = [];
+  if (sortedRows.length > 0) {
+    const first = sortedRows[0][0];
+    const last = sortedRows[sortedRows.length - 1][0];
+    for (let i = first.charCodeAt(0); i <= last.charCodeAt(0); i++) {
+      allRowLabels.push(String.fromCharCode(i));
+    }
+  }
+
   return (
     <div className="overflow-x-auto w-full">
       <div className="w-max mx-auto flex flex-col gap-1.5 pb-8 relative">
@@ -71,7 +81,18 @@ export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
             Màn hình
           </span>
         </div>
-        {sortedRows.map(([rowLabel, rowSeats]) => (
+        {allRowLabels.map((rowLabel) => {
+          const rowSeats = rowMap.get(rowLabel) ?? [];
+          const isAisleRow = rowSeats.length === 0 || rowSeats.every(s => s.seatType === "AISLE");
+          if (isAisleRow) {
+            return (
+              <div key={rowLabel} className="flex items-center gap-1" style={{ height: "2rem" }}>
+                <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground/40">{rowLabel}</span>
+                <div className="flex-1 border-t border-dashed border-muted-foreground/20 mx-1" />
+              </div>
+            );
+          }
+          return (
           <div key={rowLabel} className="flex items-center gap-1">
             <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground">
               {rowLabel}
@@ -81,6 +102,15 @@ export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
               style={{ gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))` }}
             >
               {rowSeats.map((seat, index) => {
+                if (seat.seatType === "AISLE") {
+                  return (
+                    <div
+                      key={seat.seatId}
+                      style={{ gridColumn: seat.seatNumber }}
+                      className="h-8 w-8"
+                    />
+                  );
+                }
                 const isInactive = seat.entityStatus === "INACTIVE";
                 const statusClass = SEAT_STATUS_CLASSES[seat.seatStatus];
                 const typeClass = SEAT_TYPE_CLASSES[seat.seatType];
@@ -164,7 +194,8 @@ export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
             </div>
             <span className="w-6 shrink-0 ml-1 opacity-0 pointer-events-none" />
           </div>
-        ))}
+          );
+        })}
 
         <div className="mt-3 flex flex-wrap justify-center gap-4 border-t pt-4">
           {(["STANDARD", "VIP", "COUPLE"] as SeatType[]).map((type) => {
