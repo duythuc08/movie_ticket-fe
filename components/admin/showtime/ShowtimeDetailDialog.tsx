@@ -70,6 +70,26 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
     }
   }, [activeTab, loadSeats, seatData]);
 
+  // SSE — cập nhật sơ đồ ghế real-time khi tab "Sơ đồ ghế" đang mở
+  useEffect(() => {
+    if (!open || activeTab !== "seats" || !showTimeId) return;
+
+    const es = new EventSource(`/api-proxy/seatShowTimes/selection/${showTimeId}/stream`);
+
+    es.addEventListener("seat-update", (e: MessageEvent) => {
+      try {
+        const seats = JSON.parse(e.data);
+        setSeatData((prev) => prev ? { ...prev, seats } : prev);
+      } catch {
+        // silent
+      }
+    });
+
+    es.onerror = () => es.close();
+
+    return () => es.close();
+  }, [open, activeTab, showTimeId]);
+
   const handleCancelShowtime = () => setConfirmCancel(true);
 
   const pieData = useMemo(() => {

@@ -147,6 +147,8 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
     } catch (error) {
       if (error instanceof ApiError && error.code === 1081) {
         setShowUnwatchedDialog(true);
+      } else if (error instanceof ApiError && error.code === 1083) {
+        toast.warning("Bạn đã đặt vé nhưng chưa xem phim. Vui lòng trải nghiệm bộ phim trước khi đánh giá.");
       } else {
         toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
       }

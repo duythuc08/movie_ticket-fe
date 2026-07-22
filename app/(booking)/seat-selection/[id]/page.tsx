@@ -97,17 +97,17 @@ export default function SeatSelectionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Short-polling mỗi 5s để cập nhật trạng thái ghế theo thời gian thực
+  // SSE — nhận cập nhật ghế real-time thay vì polling mỗi 5s
   useEffect(() => {
     if (loading) return;
-    const token = sessionStorage.getItem("token");
-    if (!token) return;
 
-    const pollId = setInterval(async () => {
+    const es = new EventSource(`/api-proxy/seatShowTimes/selection/${showTimeId}/stream`);
+
+    es.addEventListener("seat-update", (e: MessageEvent) => {
       try {
-        const res = await fetchSeatSelection(showTimeId, token);
-        processSeatData(res.seats || []);
-        const nowOccupied = (res.seats || [])
+        const seats: SeatShowTime[] = JSON.parse(e.data);
+        processSeatData(seats);
+        const nowOccupied = seats
           .filter((s) => s.seatShowTimeStatus !== "AVAILABLE")
           .map((s) => s.seatId);
         setSelectedSeats((prev) => {
@@ -119,11 +119,13 @@ export default function SeatSelectionPage() {
           return prev;
         });
       } catch {
-        // silent — không làm gián đoạn UX khi poll thất bại
+        // silent — không làm gián đoạn UX khi parse thất bại
       }
-    }, 5000);
+    });
 
-    return () => clearInterval(pollId);
+    es.onerror = () => es.close();
+
+    return () => es.close();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, showTimeId]);
 
