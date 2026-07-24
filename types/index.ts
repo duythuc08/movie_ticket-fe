@@ -162,6 +162,7 @@ export interface SeatShowTime {
   seatShowTimeStatus: string;
   seatShowTimeId?: number;
   partnerId?: number;
+  userId?: string | null;
 }
 
 export interface SuggestedSeat {

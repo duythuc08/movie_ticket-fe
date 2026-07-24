@@ -14,18 +14,22 @@ import {
   adminPut,
   adminPutEmpty,
   buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
 } from "./adminApiClient";
 
 export async function fetchAdminCinemas(
   token: string,
   query: CinemaListQuery = {}
 ): Promise<ApiPagedResult<AdminCinema>> {
-  const { page = 0, size = 10, cinemaStatus, entityStatus } = query;
+  const { page = 0, size = 10, cinemaStatus, entityStatus, name } = query;
 
   const filterString = buildFilterString({
     cinemaStatus: cinemaStatus,
     entityStatus: entityStatus,
   });
+  const nameFilterString = name ? buildLikeFilterString({ name }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, nameFilterString);
 
   const params: Record<string, string | number | undefined> = {
     page,
@@ -33,7 +37,7 @@ export async function fetchAdminCinemas(
     sort: "createdAt,desc",
   };
 
-  if (filterString) params.filter = filterString;
+  if (combinedFilter) params.filter = combinedFilter;
 
   return adminGet<ApiPagedResult<AdminCinema>>(token, "/admin/cinemas", params);
 }

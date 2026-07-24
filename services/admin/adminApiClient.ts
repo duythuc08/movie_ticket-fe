@@ -167,3 +167,33 @@ export function buildFilterString(
 
   return parts.join(" and ");
 }
+
+/** Escape dấu nháy đơn để tránh vỡ cú pháp filter khi build chuỗi LIKE */
+function escapeFilterValue(value: string): string {
+  return value.replace(/'/g, "\\'");
+}
+
+/**
+ * Build chuỗi filter dạng "chứa" (LIKE, không phân biệt hoa thường) theo cú
+ * pháp spring-filter: key~~'value' (toán tử ~~ = ilike). Nếu value không chứa
+ * ký tự wildcard, spring-filter tự bọc "%value%" (xem LikeOperationExpressionProcessor),
+ * nên không cần tự thêm % ở đây.
+ */
+export function buildLikeFilterString(
+  filters: Record<string, string | undefined | null>
+): string {
+  const parts: string[] = [];
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      parts.push(`${key}~~'${escapeFilterValue(value)}'`);
+    }
+  });
+
+  return parts.join(" and ");
+}
+
+/** Gộp nhiều chuỗi filter (equals + like) bằng "and", bỏ qua chuỗi rỗng */
+export function combineFilterStrings(...filterStrings: (string | undefined)[]): string {
+  return filterStrings.filter((f) => !!f).join(" and ");
+}

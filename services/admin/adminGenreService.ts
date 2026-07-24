@@ -10,15 +10,19 @@ import {
   adminPost,
   adminPutEmpty,
   buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
 } from "./adminApiClient";
 
 export async function fetchAdminGenres(
   token: string,
   query: GenreListQuery = {}
 ): Promise<ApiPagedResult<AdminGenre>> {
-  const { page = 0, size = 10, entityStatus } = query;
+  const { page = 0, size = 10, entityStatus, name } = query;
 
   const filterString = buildFilterString({ entityStatus });
+  const nameFilterString = name ? buildLikeFilterString({ name }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, nameFilterString);
 
   const params: Record<string, string | number | undefined> = {
     page,
@@ -26,8 +30,8 @@ export async function fetchAdminGenres(
     sort: "createdAt,desc",
   };
 
-  if (filterString) {
-    params.filter = filterString;
+  if (combinedFilter) {
+    params.filter = combinedFilter;
   }
 
   return adminGet<ApiPagedResult<AdminGenre>>(token, "/admin/genres", params);

@@ -3,21 +3,41 @@ import type {
   ApiPagedResult,
   BannerCreatePayload,
   BannerUpdatePayload,
-  AdminListQuery,
+  BannerListQuery,
 } from "@/types/admin.type";
-import { adminGet, adminPost, adminPut, adminPutEmpty, adminDelete } from "./adminApiClient";
+import {
+  adminGet,
+  adminPost,
+  adminPut,
+  adminPutEmpty,
+  adminDelete,
+  buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
+} from "./adminApiClient";
 
 export async function fetchAdminBanners(
   token: string,
-  query: AdminListQuery = {}
+  query: BannerListQuery = {}
 ): Promise<ApiPagedResult<AdminBanner>> {
-  const { page = 0, size = 10 } = query;
+  const { page = 0, size = 10, bannerType, active, title } = query;
 
-  return adminGet<ApiPagedResult<AdminBanner>>(token, "/admin/banners", {
+  const filterString = buildFilterString({
+    bannerType,
+    active: active !== undefined ? String(active) : undefined,
+  });
+  const titleFilterString = title ? buildLikeFilterString({ title }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, titleFilterString);
+
+  const params: Record<string, string | number | undefined> = {
     page,
     size,
     sort: "priority,asc",
-  });
+  };
+
+  if (combinedFilter) params.filter = combinedFilter;
+
+  return adminGet<ApiPagedResult<AdminBanner>>(token, "/admin/banners", params);
 }
 
 export async function createBanner(

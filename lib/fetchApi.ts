@@ -97,5 +97,9 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     }
   }
 
+  if (response.status >= 500) {
+    throw new Error("Máy chủ không phản hồi");
+  }
+
   return response;
 }

@@ -1,3 +1,5 @@
+import type { AdminListQuery } from "./common";
+
 export type BannerType = "MOVIE" | "EVENT";
 
 export interface AdminBannerMovie {
@@ -47,4 +49,10 @@ export interface BannerUpdatePayload {
   movieId?: number | null;
   eventId?: number | null;
   bannerType?: BannerType;
+}
+
+export interface BannerListQuery extends AdminListQuery {
+  bannerType?: BannerType;
+  active?: boolean;
+  title?: string;
 }

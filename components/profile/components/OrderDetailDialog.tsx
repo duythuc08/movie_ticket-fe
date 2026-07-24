@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge, BadgeProps } from "@/components/ui/badge";
-import { createVnpayRepaymentUrl } from "@/components/profile/service/user.service";
+import { retryPaymentUrl } from "@/components/profile/service/user.service";
 import type { Order } from "@/types";
 
 interface Props {
@@ -19,8 +19,11 @@ interface Props {
 
 const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"] }> = {
   PENDING: { label: "Chờ thanh toán", variant: "pending" },
+  IN_PROGRESS: { label: "Đang xử lý", variant: "in_progress" },
   CANCELLED: { label: "Đã hủy", variant: "cancelled" },
   PAID: { label: "Đã thanh toán", variant: "paid" },
+  EXPIRED: { label: "Hết hạn", variant: "expired" },
+  USED: { label: "Đã sử dụng", variant: "used" },
 };
 
 const SEAT_TYPE_STYLE: Record<string, string> = {
@@ -48,7 +51,7 @@ const fShowtime = (v?: string | null) => {
   return `${d.toLocaleDateString("vi-VN")} – ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
 };
 
-const isCompleted = (s: string) => s !== "PENDING" && s !== "CANCELLED";
+const isCompleted = (s: string) => s !== "PENDING" && s !== "IN_PROGRESS" && s !== "CANCELLED";
 
 /** Group tickets by seatType — seats same type share one row */
 function groupTicketsByType(tickets?: Order["tickets"]) {
@@ -94,10 +97,10 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
 
   const totalDiscount = (order.discountAmount || 0) + (order.memberDiscountAmount || 0);
 
-  const handleRePayment = async () => {
+  const handleRePayment = async (method: "VNPAY" | "MOMO") => {
     try {
       const token = getStoredToken() ?? "";
-      const url = await createVnpayRepaymentUrl(token, String(order.orderId));
+      const url = await retryPaymentUrl(token, String(order.orderId), method);
       window.location.href = url;
     } catch {
       toast.error("Không thể kết nối đến máy chủ thanh toán.");
@@ -264,14 +267,23 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
             )}
           </div>
 
-          {order.orderStatus === "PENDING" && (
-            <Button
-              size="sm"
-              onClick={handleRePayment}
-              className="cursor-pointer font-bold rounded-xl hover:-translate-y-0.5 transition-all shadow-md shadow-primary/20 shrink-0"
-            >
-              Thanh toán ngay
-            </Button>
+          {(order.orderStatus === "PENDING" || order.orderStatus === "IN_PROGRESS") && (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleRePayment("MOMO")}
+                className="cursor-pointer font-bold rounded-xl hover:-translate-y-0.5 transition-all shadow-md bg-[#d82d8b] hover:bg-[#d82d8b]/90 text-white shrink-0"
+              >
+                TT MoMo
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleRePayment("VNPAY")}
+                className="cursor-pointer font-bold rounded-xl hover:-translate-y-0.5 transition-all shadow-md bg-[#0066b3] hover:bg-[#0066b3]/90 text-white shrink-0"
+              >
+                TT VNPAY
+              </Button>
+            </div>
           )}
         </div>
 

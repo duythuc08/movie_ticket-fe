@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import type { SortingState } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -20,6 +21,9 @@ import { MovieFormDialog } from "@/components/admin/movie/MovieFormDialog";
 import { MovieDetailDialog } from "@/components/admin/movie/MovieDetailDialog";
 import { createMovieColumns } from "@/components/admin/movie/MovieColumns";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
 
 const MOVIE_STATUS_FILTER = [
   { label: "Đang chiếu",  value: "NOW_SHOWING" },
@@ -27,11 +31,8 @@ const MOVIE_STATUS_FILTER = [
   { label: "Ngừng chiếu", value: "STOPPED"     },
 ];
 
-const MOVIE_STATUS_ORDER: Record<string, number> = {
-  NOW_SHOWING: 0,
-  COMING_SOON: 1,
-  STOPPED: 2,
-};
+const PAGE_SIZE = 10;
+const DEFAULT_SORT = "createdAt,desc";
 
 export default function AdminMoviesPage() {
   const { token } = useAuth();
@@ -43,23 +44,49 @@ export default function AdminMoviesPage() {
   const [selectedMovie, setSelectedMovie] = useState<AdminMovie | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadMovies = useCallback(async () => {
+  const [page,          setPage]          = useState(0);
+  const [totalPages,    setTotalPages]    = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [sort,          setSort]          = useState(DEFAULT_SORT);
+  const [movieStatus,   setMovieStatus]   = useState<string | undefined>(undefined);
+  const [keywordInput,  setKeywordInput]  = useState("");
+  const [keyword,       setKeyword]       = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setKeyword(keywordInput), 500);
+    return () => clearTimeout(t);
+  }, [keywordInput]);
+
+  const loadMovies = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
-      const result = await fetchAdminMovies(token, { page: 0, size: 999 });
-      const sorted = [...result.content].sort(
-        (a, b) => (MOVIE_STATUS_ORDER[a.movieStatus] ?? 99) - (MOVIE_STATUS_ORDER[b.movieStatus] ?? 99)
-      );
-      setMovies(sorted);
+      const result = await fetchAdminMovies(token, {
+        page: targetPage,
+        size: PAGE_SIZE,
+        sort,
+        movieStatus: movieStatus as AdminMovie["movieStatus"] | undefined,
+        title: keyword || undefined,
+      });
+      setMovies(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách phim");
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, sort, movieStatus, keyword]);
 
-  useEffect(() => { loadMovies(); }, [loadMovies]);
+  useEffect(() => { setPage(0); loadMovies(0); }, [loadMovies]);
+
+  const handleSortingChange = useCallback((sorting: SortingState) => {
+    if (sorting.length === 0) {
+      setSort(DEFAULT_SORT);
+    } else {
+      setSort(`${sorting[0].id},${sorting[0].desc ? "desc" : "asc"}`);
+    }
+  }, []);
 
   function handleOpenCreate() {
     setSelectedMovie(null);
@@ -109,7 +136,7 @@ export default function AdminMoviesPage() {
 
       setIsFormOpen(false);
       setSelectedMovie(null);
-      loadMovies();
+      loadMovies(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lưu phim thất bại");
     } finally {
@@ -128,7 +155,7 @@ export default function AdminMoviesPage() {
     try {
       await toggleMovieEntityStatus(token, movie.movieId, movie.entityStatus);
       toast.success(`Đã ${action} phim "${movie.title}"`);
-      loadMovies();
+      loadMovies(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Không thể ${action} phim`);
     }
@@ -139,7 +166,7 @@ export default function AdminMoviesPage() {
     try {
       await stopAdminMovie(token, movie.movieId);
       toast.success(`Đã tạm dừng phim "${movie.title}"`);
-      loadMovies();
+      loadMovies(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể tạm dừng phim");
     }
@@ -150,7 +177,7 @@ export default function AdminMoviesPage() {
     try {
       await replayAdminMovie(token, movie.movieId);
       toast.success(`Đã chiếu lại phim "${movie.title}"`);
-      loadMovies();
+      loadMovies(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể chiếu lại phim");
     }
@@ -179,18 +206,50 @@ export default function AdminMoviesPage() {
         </Button>
       </PageHeader>
 
+      <div className="flex flex-wrap items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tên phim..."
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select
+          value={movieStatus ?? "__all__"}
+          onValueChange={(value) => setMovieStatus(value === "__all__" ? undefined : value)}
+        >
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Trạng thái chiếu" />
+          </SelectTrigger>
+          <SelectContent data-admin="">
+            {MOVIE_STATUS_FILTER.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="__all__">Tất cả</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <DataTable
         columns={columns}
         data={movies}
-        searchKey="title"
-        searchPlaceholder="Tìm theo tên phim..."
-        filters={[{
-          key:     "movieStatus",
-          label:   "Trạng thái chiếu",
-          options: MOVIE_STATUS_FILTER,
-        }]}
         isLoading={isLoading}
         emptyText="Chưa có phim nào."
+        onSortingChange={handleSortingChange}
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => {
+            setPage(newPage);
+            loadMovies(newPage);
+          },
+        }}
       />
 
       {/* Dialog tạo / chỉnh sửa */}

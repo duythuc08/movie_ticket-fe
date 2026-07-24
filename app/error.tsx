@@ -26,13 +26,8 @@ export default function ErrorPage({
         <p className="text-muted-foreground text-lg">
           Rất tiếc, có lỗi xảy ra khi tải trang này. Vui lòng thử lại.
         </p>
-        {error.message && (
-          <p className="text-red-400/80 text-sm  bg-red-950/20 border border-red-900/30 px-4 py-2 rounded-md">
-            {error.message}
-          </p>
-        )}
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          <Button onClick={() => router.push("/")} variant="outline" className="gap-2">
+          <Button onClick={() => window.location.href = "/"} variant="outline" className="gap-2">
             <Home className="w-4 h-4" /> Về trang chủ
           </Button>
           <Button onClick={reset} className="gap-2">

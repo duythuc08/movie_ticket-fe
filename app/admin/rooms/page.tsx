@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import type { AdminRoom, AdminCinema } from "@/types/admin.type";
 import type { RoomFormSchema } from "@/lib/validations/admin.schemas";
@@ -17,6 +17,7 @@ import { setupSeatsForRoom } from "@/services/admin/adminSeatService";
 import { fetchActiveCinemasForSelect } from "@/services/admin/adminCinemaService";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ const ROOM_TYPE_FILTER = [
   { label: "Phòng IMAX",   value: "IMAX"     },
   { label: "Phòng 3D",     value: "THREE_D"  },
 ];
+
+const PAGE_SIZE = 10;
 
 export default function AdminRoomsPage() {
   const { token } = useAuth();
@@ -53,19 +56,35 @@ export default function AdminRoomsPage() {
   const [selectedRoom,  setSelectedRoom]  = useState<AdminRoom | null>(null);
   const [isSubmitting,  setIsSubmitting]  = useState(false);
 
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [roomType, setRoomType] = useState<string | undefined>(undefined);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
+
   const defaultCinemaId = cinemaIdParam ? Number(cinemaIdParam) : null;
 
-  const loadRooms = useCallback(async () => {
+  useEffect(() => {
+    const t = setTimeout(() => setKeyword(keywordInput), 500);
+    return () => clearTimeout(t);
+  }, [keywordInput]);
+
+  const loadRooms = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
-      const result = await fetchAdminRooms(token, { 
-        page: 0, 
-        size: 999, 
-        cinemaId: defaultCinemaId ?? undefined 
+      const result = await fetchAdminRooms(token, {
+        page: targetPage,
+        size: PAGE_SIZE,
+        cinemaId: defaultCinemaId ?? undefined,
+        roomType: roomType as AdminRoom["roomType"] | undefined,
+        name: keyword || undefined,
       });
       setRooms(result.content);
-      
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
+
       setSelectedRoom((prev) => {
         if (!prev) return null;
         const updated = result.content.find((r) => r.roomId === prev.roomId);
@@ -76,7 +95,7 @@ export default function AdminRoomsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, defaultCinemaId]);
+  }, [token, defaultCinemaId, roomType, keyword]);
 
   const loadCinemas = useCallback(async () => {
     if (!token) return;
@@ -89,7 +108,8 @@ export default function AdminRoomsPage() {
   }, [token]);
 
   useEffect(() => {
-    loadRooms();
+    setPage(0);
+    loadRooms(0);
     loadCinemas();
   }, [loadRooms, loadCinemas]);
 
@@ -131,7 +151,7 @@ export default function AdminRoomsPage() {
         toast.success(`Đã cập nhật phòng "${data.name}"`);
         setIsFormOpen(false);
         setSelectedRoom(null);
-        loadRooms();
+        loadRooms(page);
       } else {
         const created = await createAdminRoom(token, {
           name:       data.name,
@@ -143,7 +163,7 @@ export default function AdminRoomsPage() {
         toast.success(`Đã thêm phòng "${data.name}"`);
         setIsFormOpen(false);
         setSelectedRoom(null);
-        loadRooms();
+        loadRooms(page);
 
         if (data.rowCount && data.columnCount) {
           setInitialSetupDims({ rows: data.rowCount, cols: data.columnCount });
@@ -165,7 +185,7 @@ export default function AdminRoomsPage() {
     try {
       await toggleRoomEntityStatus(token, room.roomId, room.entityStatus);
       toast.success(`Đã ${action} phòng "${room.name}"`);
-      loadRooms();
+      loadRooms(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Không thể ${action} phòng`);
     }
@@ -197,19 +217,34 @@ export default function AdminRoomsPage() {
         </Button>
       </PageHeader>
 
-      <DataTable
-        columns={columns}
-        data={rooms}
-        searchKey="name"
-        searchPlaceholder="Tìm theo tên phòng..."
-        filters={[{
-          key:     "roomType",
-          label:   "Loại phòng",
-          options: ROOM_TYPE_FILTER,
-        }]}
-        isLoading={isLoading}
-        emptyText="Chưa có phòng chiếu nào."
-      >
+      <div className="flex flex-wrap items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tên phòng..."
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select
+          value={roomType ?? "__all__"}
+          onValueChange={(value) => setRoomType(value === "__all__" ? undefined : value)}
+        >
+          <SelectTrigger className="w-45">
+            <SelectValue placeholder="Loại phòng" />
+          </SelectTrigger>
+          <SelectContent data-admin="">
+            {ROOM_TYPE_FILTER.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="__all__">Tất cả</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select
           value={cinemaIdParam ?? "__all__"}
           onValueChange={(value) => {
@@ -234,7 +269,23 @@ export default function AdminRoomsPage() {
             ))}
           </SelectContent>
         </Select>
-      </DataTable>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={rooms}
+        isLoading={isLoading}
+        emptyText="Chưa có phòng chiếu nào."
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => {
+            setPage(newPage);
+            loadRooms(newPage);
+          },
+        }}
+      />
 
       <RoomFormDialog
         open={isFormOpen}

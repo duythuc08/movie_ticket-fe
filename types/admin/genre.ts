@@ -14,6 +14,7 @@ export interface GenreCreatePayload {
 
 export interface GenreListQuery extends AdminListQuery {
   entityStatus?: EntityStatus;
+  name?: string;
 }
 
 export interface GenreFormValues {

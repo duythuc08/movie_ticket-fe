@@ -58,6 +58,7 @@ export interface MovieUpdatePayload {
 export interface MovieListQuery extends AdminListQuery {
   movieStatus?: MovieStatus;
   genreName?: string;
+  title?: string;
 }
 
 export interface MovieFormValues {

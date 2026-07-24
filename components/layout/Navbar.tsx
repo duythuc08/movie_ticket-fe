@@ -17,6 +17,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMovieMenu, setShowMovieMenu] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
@@ -89,6 +90,7 @@ export function Navbar() {
   }, [lastScrollY]);
 
   const isActive = (path: string) => pathname === path;
+  const isActiveMovies = pathname.startsWith("/movies");
 
   const BOOKING_PREFIXES = ["/seat-selection/", "/food-selection/", "/payment/"];
   if (pathname === "/login" || pathname === "/signup") return null;
@@ -110,16 +112,47 @@ export function Navbar() {
             </Link>
 
             <div className="hidden md:flex items-center gap-6">
-              {(["/", "/event"] as const).map((path) => (
-                <Link
-                  key={path}
-                  href={path}
-                  className={`text-base font-medium transition-colors hover:text-primary ${isActive(path) ? "text-primary" : "text-white"
+              <Link
+                href="/"
+                className={`text-base font-medium transition-colors hover:text-primary ${isActive("/") ? "text-primary" : "text-white"
+                  }`}
+              >
+                Trang Chủ
+              </Link>
+
+              <div
+                className="relative"
+                onMouseEnter={() => setShowMovieMenu(true)}
+                onMouseLeave={() => setShowMovieMenu(false)}
+              >
+                <span
+                  className={`cursor-pointer text-base font-medium transition-colors hover:text-primary ${isActiveMovies ? "text-primary" : "text-white"
                     }`}
                 >
-                  {path === "/" ? "Trang Chủ" : "Sự kiện"}
-                </Link>
-              ))}
+                  Phim
+                </span>
+
+                {showMovieMenu && (
+                  <div className="absolute left-0 top-full pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl">
+                      <div className="p-1">
+                        <Link
+                          href="/movies?status=showing"
+                          className="block w-full px-3 py-2 text-left text-base text-white hover:bg-white/10 rounded-md transition-colors"
+                        >
+                          Phim đang chiếu
+                        </Link>
+                        <Link
+                          href="/movies?status=comingSoon"
+                          className="block w-full px-3 py-2 text-left text-base text-white hover:bg-white/10 rounded-md transition-colors"
+                        >
+                          Phim sắp chiếu
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

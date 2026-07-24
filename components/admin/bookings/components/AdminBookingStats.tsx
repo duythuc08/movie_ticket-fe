@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Ticket, DollarSign, CheckCircle2, XCircle, Clock, CalendarX2 } from "lucide-react";
+import { Ticket, DollarSign, CheckCircle2, CalendarX2 } from "lucide-react";
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { adminBookingService } from "../../../../services/admin/admin-booking";
 import type { AdminOrderStatsResponse } from "@/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { getDaysInMonth } from "date-fns";
 
 function formatVND(amount: number): string {
   return new Intl.NumberFormat("vi-VN", {
@@ -20,32 +23,44 @@ interface StatCardProps {
   value: string;
   icon: React.ReactNode;
   color: string;
+  className?: string;
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
+function StatCard({ title, value, icon, color, className }: StatCardProps) {
   return (
-    <div className="rounded-xl border border-admin-border bg-admin-surface-2 p-5 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-admin-3">{title}</p>
-          <p className="mt-2 text-2xl font-bold text-admin">{value}</p>
+    <Card className={cn("overflow-hidden border-admin-border bg-admin-surface-2 transition-all hover:scale-[1.02] hover:shadow-lg", className)}>
+      <CardContent className="p-5 flex items-start justify-between relative">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-bl-full opacity-20 pointer-events-none" />
+        <div className="z-10">
+          <p className="text-sm font-medium text-admin-3 mb-1">{title}</p>
+          <p className="text-2xl font-bold text-admin tracking-tight">{value}</p>
         </div>
-        <div className={`rounded-lg p-2.5 ${color}`}>{icon}</div>
-      </div>
-    </div>
+        <div className={`rounded-xl p-3 z-10 shadow-inner ${color}`}>
+          {icon}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-export function AdminBookingStats() {
+export function AdminBookingStats({ year, month }: { year: number; month: number }) {
   const [stats, setStats] = useState<AdminOrderStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentMonthDays = getDaysInMonth(new Date(year, month - 1));
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
         const token = getStoredToken();
         if (!token) return;
-        const data = await adminBookingService.getAdminOrderStats(token);
+        
+        // format dates
+        const fromDateStr = `${year}-${String(month).padStart(2, '0')}-01`;
+        const toDateStr = `${year}-${String(month).padStart(2, '0')}-${currentMonthDays}`;
+        
+        const data = await adminBookingService.getAdminOrderStats(token, fromDateStr, toDateStr);
         setStats(data);
       } catch (error: any) {
         toast.error(error.message || "Lỗi tải thống kê đơn hàng");
@@ -54,13 +69,13 @@ export function AdminBookingStats() {
       }
     };
     fetchStats();
-  }, []);
+  }, [year, month, currentMonthDays]);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 animate-pulse">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-24 rounded-xl bg-admin-surface-3 border border-admin-border"></div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-pulse">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-28 rounded-xl bg-admin-surface-3 border border-admin-border"></div>
         ))}
       </div>
     );
@@ -70,42 +85,34 @@ export function AdminBookingStats() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-admin flex items-center gap-2">
-        <Ticket className="w-5 h-5 text-admin-accent" />
-        Thống kê Vé & Đơn hàng (30 ngày qua)
+      <h2 className="text-xl font-semibold text-admin flex items-center gap-2 mb-4">
+        <Ticket className="w-5 h-5 text-indigo-400" />
+        Thống kê Đơn hàng (từ ngày 1 đến {currentMonthDays} tháng {month})
       </h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2">
-          <StatCard
-            title="Tổng Doanh Thu"
-            value={formatVND(stats.totalRevenue)}
-            icon={<DollarSign size={20} className="text-emerald-300" />}
-            color="bg-emerald-600/20"
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Tổng Doanh Thu"
+          value={formatVND(stats.totalRevenue)}
+          icon={<DollarSign size={24} className="text-emerald-400" />}
+          color="bg-emerald-500/20 ring-1 ring-emerald-500/30"
+        />
         <StatCard
           title="Tổng Đơn"
           value={String(stats.totalOrders)}
-          icon={<Ticket size={20} className="text-indigo-300" />}
-          color="bg-indigo-600/20"
+          icon={<Ticket size={24} className="text-indigo-400" />}
+          color="bg-indigo-500/20 ring-1 ring-indigo-500/30"
         />
         <StatCard
           title="Đã Thanh Toán"
           value={String(stats.paidOrders)}
-          icon={<CheckCircle2 size={20} className="text-blue-300" />}
-          color="bg-blue-600/20"
-        />
-        <StatCard
-          title="Chờ Thanh Toán"
-          value={String(stats.pendingOrders)}
-          icon={<Clock size={20} className="text-amber-300" />}
-          color="bg-amber-600/20"
+          icon={<CheckCircle2 size={24} className="text-blue-400" />}
+          color="bg-blue-500/20 ring-1 ring-blue-500/30"
         />
         <StatCard
           title="Đã Hủy/Hết Hạn"
           value={String(stats.cancelledOrders + stats.expiredOrders)}
-          icon={<CalendarX2 size={20} className="text-rose-300" />}
-          color="bg-rose-600/20"
+          icon={<CalendarX2 size={24} className="text-rose-400" />}
+          color="bg-rose-500/20 ring-1 ring-rose-500/30"
         />
       </div>
     </div>

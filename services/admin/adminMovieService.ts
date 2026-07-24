@@ -12,13 +12,15 @@ import {
   adminPut,
   adminPutEmpty,
   buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
 } from "./adminApiClient";
 
 export async function fetchAdminMovies(
   token: string,
   query: MovieListQuery = {}
 ): Promise<ApiPagedResult<AdminMovie>> {
-  const { page = 0, size = 10, movieStatus, genreName } = query;
+  const { page = 0, size = 10, sort = "createdAt,desc", movieStatus, genreName, title } = query;
 
   const filterParts: Record<string, string | undefined> = {};
 
@@ -26,15 +28,17 @@ export async function fetchAdminMovies(
   if (genreName) filterParts["genre.name"] = genreName;
 
   const filterString = buildFilterString(filterParts);
+  const titleFilterString = title ? buildLikeFilterString({ title }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, titleFilterString);
 
   const params: Record<string, string | number | undefined> = {
     page,
     size,
-    sort: "createdAt,desc",
+    sort,
   };
 
-  if (filterString) {
-    params.filter = filterString;
+  if (combinedFilter) {
+    params.filter = combinedFilter;
   }
 
   return adminGet<ApiPagedResult<AdminMovie>>(token, "/admin/movies", params);

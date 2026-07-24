@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createVnpayRepaymentUrl } from "@/components/profile/service/user.service";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { retryPaymentUrl } from "@/components/profile/service/user.service";
 import type { Order } from "@/types";
+import { useState } from "react";
 
 interface Props {
   orders: Order[];
@@ -16,18 +18,12 @@ interface Props {
 }
 
 const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"] }> = {
-  PENDING: {
-    label: "Chờ thanh toán",
-    variant: "pending",
-  },
-  CANCELLED: {
-    label: "Đã hủy",
-    variant: "cancelled",
-  },
-  PAID: {
-    label: "Đã thanh toán",
-    variant: "paid",
-  },
+  PENDING: { label: "Chờ thanh toán", variant: "pending" },
+  IN_PROGRESS: { label: "Đang xử lý", variant: "in_progress" },
+  CANCELLED: { label: "Đã hủy", variant: "cancelled" },
+  PAID: { label: "Đã thanh toán", variant: "paid" },
+  EXPIRED: { label: "Hết hạn", variant: "expired" },
+  USED: { label: "Đã sử dụng", variant: "used" },
 };
 
 const getStatus = (status: string) =>
@@ -49,13 +45,21 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
     (a, b) => new Date(b.bookingTime).getTime() - new Date(a.bookingTime).getTime()
   );
 
-  const handleRepayment = async (orderId: number) => {
+  const [retryOrder, setRetryOrder] = useState<Order | null>(null);
+  const [retryMethod, setRetryMethod] = useState<"VNPAY" | "MOMO">("MOMO");
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRepayment = async () => {
+    if (!retryOrder) return;
+    setIsRetrying(true);
     try {
       const token = getStoredToken() ?? "";
-      const url = await createVnpayRepaymentUrl(token, String(orderId));
+      const url = await retryPaymentUrl(token, String(retryOrder.orderId), retryMethod);
       window.location.href = url;
     } catch {
       toast.error("Không thể kết nối đến máy chủ thanh toán. Vui lòng thử lại.");
+      setIsRetrying(false);
+      setRetryOrder(null);
     }
   };
 
@@ -163,11 +167,11 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                       </td>
                       <td className="py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {order.orderStatus === "PENDING" && (
+                          {(order.orderStatus === "PENDING" || order.orderStatus === "IN_PROGRESS") && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRepayment(order.orderId)}
+                              onClick={() => setRetryOrder(order)}
                               className="cursor-pointer text-yellow-700 hover:text-yellow-800 hover:bg-yellow-500/10 dark:text-yellow-400 dark:hover:text-yellow-300 rounded-lg font-semibold text-xs shrink-0"
                             >
                               Thanh toán
@@ -191,6 +195,35 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
           </div>
         )}
       </div>
+
+      <Dialog open={!!retryOrder} onOpenChange={(o) => !o && setRetryOrder(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">Vui lòng chọn cổng thanh toán bạn muốn sử dụng để hoàn tất đơn hàng này.</p>
+            <div className="space-y-3">
+              <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${retryMethod === "MOMO" ? "border-[#d82d8b] bg-[#d82d8b]/10" : "border-border hover:bg-secondary"}`}>
+                <input type="radio" className="hidden" checked={retryMethod === "MOMO"} onChange={() => setRetryMethod("MOMO")} />
+                <div className="w-10 h-10 rounded-lg bg-[#d82d8b]/20 flex items-center justify-center font-bold text-[#d82d8b]">M</div>
+                <div className="font-semibold text-[#d82d8b]">Ví MoMo</div>
+              </label>
+              <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${retryMethod === "VNPAY" ? "border-[#0066b3] bg-[#0066b3]/10" : "border-border hover:bg-secondary"}`}>
+                <input type="radio" className="hidden" checked={retryMethod === "VNPAY"} onChange={() => setRetryMethod("VNPAY")} />
+                <div className="w-10 h-10 rounded-lg bg-[#0066b3]/20 flex items-center justify-center font-bold text-[#0066b3]">V</div>
+                <div className="font-semibold text-[#0066b3]">VNPAY (ATM/QR)</div>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRetryOrder(null)} disabled={isRetrying}>Hủy</Button>
+            <Button onClick={handleRepayment} disabled={isRetrying} className="bg-primary text-primary-foreground">
+              {isRetrying ? "Đang xử lý..." : "Tiếp tục thanh toán"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

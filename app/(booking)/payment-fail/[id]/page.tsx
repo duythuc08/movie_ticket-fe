@@ -12,7 +12,7 @@ function PaymentFailContent() {
   const searchParams = useSearchParams();
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryingMethod, setRetryingMethod] = useState<"MOMO" | "VNPAY" | null>(null);
   const [attemptedInfo] = useState<AttemptedOrderInfo | null>(() => {
     if (typeof window === "undefined") return null;
     const saved = sessionStorage.getItem("pendingOrder");
@@ -43,24 +43,21 @@ function PaymentFailContent() {
     router.push("/");
   };
 
-  const handleRetry = async () => {
-    if (attemptedInfo?.paymentMethod === "MOMO" && id) {
-      setIsRetrying(true);
-      try {
-        const res = await fetch(`/api-proxy/payment/momo/retry?orderId=${id}`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const payUrl = data.result as string;
-        window.location.href = payUrl;
-      } catch {
-        setIsRetrying(false);
-      }
-      return;
+  const handleRetry = async (method: "MOMO" | "VNPAY") => {
+    if (!id) return;
+    setRetryingMethod(method);
+    try {
+      const res = await fetch(`/api-proxy/payment/retry?orderId=${id}&method=${method}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const payUrl = data.result as string;
+      window.location.href = payUrl;
+    } catch {
+      setRetryingMethod(null);
     }
-    router.back();
   };
 
   return (
@@ -130,7 +127,7 @@ function PaymentFailContent() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xl">
           <Button
             onClick={handleGoHome}
             variant="outline"
@@ -141,13 +138,22 @@ function PaymentFailContent() {
             Về trang chủ
           </Button>
           <Button
-            onClick={handleRetry}
-            disabled={isRetrying}
+            onClick={() => handleRetry("VNPAY")}
+            disabled={retryingMethod !== null}
             size="lg"
-            className="flex-1 gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 hover:-translate-y-0.5 transition-all"
+            className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 transition-all"
           >
-            <RefreshCcw className={`w-5 h-5 ${isRetrying ? "animate-spin" : ""}`} />
-            {isRetrying ? "Đang xử lý..." : "Thử thanh toán lại"}
+            <RefreshCcw className={`w-4 h-4 ${retryingMethod === "VNPAY" ? "animate-spin" : ""}`} />
+            {retryingMethod === "VNPAY" ? "Đang chờ..." : "Thử bằng VNPay"}
+          </Button>
+          <Button
+            onClick={() => handleRetry("MOMO")}
+            disabled={retryingMethod !== null}
+            size="lg"
+            className="flex-1 gap-2 bg-[#A50064] hover:bg-[#80004d] text-white shadow-lg shadow-[#A50064]/30 hover:-translate-y-0.5 transition-all"
+          >
+            <RefreshCcw className={`w-4 h-4 ${retryingMethod === "MOMO" ? "animate-spin" : ""}`} />
+            {retryingMethod === "MOMO" ? "Đang chờ..." : "Thử bằng MoMo"}
           </Button>
         </div>
 

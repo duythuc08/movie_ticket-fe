@@ -100,6 +100,8 @@ interface DataTableProps<TData> {
   onResetFilters?: () => void;
   initialFilters?: ColumnFiltersState;
   serverPagination?: ServerPaginationConfig;
+  /** Khi truyền, sort do server xử lý — DataTable báo lại thay đổi qua callback này thay vì tự sort client-side */
+  onSortingChange?: (sorting: SortingState) => void;
   /** Slot bên phải toolbar — ví dụ nút "Thêm mới" */
   children?: React.ReactNode;
 }
@@ -118,6 +120,7 @@ export function DataTable<TData>({
   onResetFilters,
   initialFilters = [],
   serverPagination,
+  onSortingChange,
   children,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -125,14 +128,23 @@ export function DataTable<TData>({
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [filterKey, setFilterKey] = React.useState(0);
 
+  const handleSortingChange: typeof setSorting = (updaterOrValue) => {
+    setSorting((prev) => {
+      const next = typeof updaterOrValue === "function" ? updaterOrValue(prev) : updaterOrValue;
+      onSortingChange?.(next);
+      return next;
+    });
+  };
+
   const table = useReactTable({
     data,
     columns,
     manualPagination: !!serverPagination,
+    manualSorting: !!onSortingChange,
     pageCount: serverPagination?.pageCount ?? -1,
     autoResetPageIndex: !serverPagination,
     state: { sorting, columnFilters, globalFilter },
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),

@@ -6,9 +6,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-full flex flex-col">
       <Navbar />
+      <ReviewNotificationBanner />
       <main className="flex-grow">{children}</main>
       <FooterConditional />
-      <ReviewNotificationBanner />
     </div>
   );
 }

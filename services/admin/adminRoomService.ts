@@ -6,13 +6,21 @@ import type {
   RoomListQuery,
   ApiPagedResult,
 } from "@/types/admin.type";
-import { adminGet, adminPost, adminPut, adminPutEmpty, buildFilterString } from "./adminApiClient";
+import {
+  adminGet,
+  adminPost,
+  adminPut,
+  adminPutEmpty,
+  buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
+} from "./adminApiClient";
 
 export async function fetchAdminRooms(
   token: string,
   query: RoomListQuery = {}
 ): Promise<ApiPagedResult<AdminRoom>> {
-  const { page = 0, size = 10, cinemaId, roomType, roomStatus, entityStatus } = query;
+  const { page = 0, size = 10, cinemaId, roomType, roomStatus, entityStatus, name } = query;
 
   const filterString = buildFilterString({
     "cinemas.cinemaId": cinemaId != null ? `${cinemaId}` : undefined,
@@ -20,6 +28,8 @@ export async function fetchAdminRooms(
     roomStatus,
     entityStatus,
   });
+  const nameFilterString = name ? buildLikeFilterString({ name }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, nameFilterString);
 
   const params: Record<string, string | number | undefined> = {
     page,
@@ -27,7 +37,7 @@ export async function fetchAdminRooms(
     sort: "createdAt,desc",
   };
 
-  if (filterString) params.filter = filterString;
+  if (combinedFilter) params.filter = combinedFilter;
 
   return adminGet<ApiPagedResult<AdminRoom>>(token, "/admin/rooms", params);
 }

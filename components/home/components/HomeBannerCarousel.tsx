@@ -36,7 +36,7 @@ export function HomeBannerCarousel({ banners }: HomeBannerCarouselProps) {
 
   return (
     <div
-      className="relative w-full h-[70vh] sm:h-[80vh] lg:h-[88vh] overflow-hidden group/banner"
+      className="relative w-full h-[70vh] sm:h-[80vh] lg:h-[88vh] min-h-[400px] max-h-[550px] overflow-hidden group/banner"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >

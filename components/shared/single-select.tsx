@@ -17,6 +17,12 @@ interface SingleSelectWithSearchProps {
     hasMore?: boolean;
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
+    /**
+     * Khi truyền, mỗi lần gõ (debounce ~400ms) gọi callback này thay vì tự lọc
+     * client trên `options` — dùng khi danh sách gốc quá lớn để tải hết
+     * (server-side search). Khi không truyền, giữ hành vi cũ: lọc client.
+     */
+    onSearchChange?: (term: string) => void;
 }
 
 export function SingleSelectWithSearch({
@@ -31,12 +37,19 @@ export function SingleSelectWithSearch({
     hasMore = false,
     isLoadingMore = false,
     onLoadMore,
+    onSearchChange,
 }: SingleSelectWithSearchProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
+
+    useEffect(() => {
+        if (!onSearchChange) return;
+        const t = setTimeout(() => onSearchChange(searchTerm), 400);
+        return () => clearTimeout(t);
+    }, [searchTerm, onSearchChange]);
 
     useEffect(() => {
         function handleClickOutside(event: globalThis.MouseEvent) {
@@ -65,9 +78,11 @@ export function SingleSelectWithSearch({
         }
     }, [isOpen, hasMore, isLoadingMore, onLoadMore, options.length]);
 
-    const filteredOptions = options.filter((o) =>
-        o.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Khi co onSearchChange, component cha da fetch dung theo searchTerm roi
+    // (server-side search) -- khong loc client them de tranh loc chong loc.
+    const filteredOptions = onSearchChange
+        ? options
+        : options.filter((o) => o.label.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const selectedLabel = options.find((o) => o.value === value)?.label;
 

@@ -30,6 +30,10 @@ export async function registerUser(payload: RegisterPayload): Promise<void> {
     body: JSON.stringify(payload),
   });
 
+  if (res.status >= 500) {
+    throw new Error("Máy chủ không phản hồi");
+  }
+
   const data = await res.json();
   if (!res.ok) {
     throw new Error(getErrorMessage(data?.code, data?.message || "Đăng ký thất bại"));

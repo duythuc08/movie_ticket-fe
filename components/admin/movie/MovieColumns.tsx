@@ -95,8 +95,8 @@ export function createMovieColumns(
       ),
     },
     {
-      id: "releaseDate",
-      header: "Ngày chiếu",
+      accessorKey: "releaseDate",
+      header: ({ column }) => <ColumnHeader column={column} title="Ngày chiếu" />,
       cell: ({ row }) => {
         const date = row.original.releaseDate;
         if (!date) return <span className="text-muted-foreground">—</span>;

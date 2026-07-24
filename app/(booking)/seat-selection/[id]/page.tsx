@@ -97,24 +97,46 @@ export default function SeatSelectionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function getUserId() {
+    const token = sessionStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId || payload.sub || payload.id;
+    } catch {
+      return null;
+    }
+  }
+
   // SSE — nhận cập nhật ghế real-time thay vì polling mỗi 5s
   useEffect(() => {
     if (loading) return;
 
-    const es = new EventSource(`/api-proxy/seatShowTimes/selection/${showTimeId}/stream`);
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
+
+    // EventSource không hỗ trợ custom header nên phải gắn token qua query param.
+    // Gọi thẳng backend thay vì qua rewrite /api-proxy vì Next.js rewrite buffer
+    // response và không stream được text/event-stream tới client.
+    const apiBase = process.env.NEXT_PUBLIC_API_URL;
+    const streamUrl = `${apiBase}/seatShowTimes/selection/${showTimeId}/stream?token=${token}`;
+    const es = new EventSource(streamUrl);
+    const currentUserId = getUserId();
 
     es.addEventListener("seat-update", (e: MessageEvent) => {
       try {
         const seats: SeatShowTime[] = JSON.parse(e.data);
         processSeatData(seats);
-        const nowOccupied = seats
-          .filter((s) => s.seatShowTimeStatus !== "AVAILABLE")
+        // Loại trừ ghế do chính user hiện tại vừa khóa (initiateBooking) —
+        // broadcast SSE này quay lại luôn tab của chính mình, không phải conflict thật.
+        const nowOccupiedByOthers = seats
+          .filter((s) => s.seatShowTimeStatus !== "AVAILABLE" && s.userId !== currentUserId)
           .map((s) => s.seatId);
         setSelectedSeats((prev) => {
-          const conflicts = prev.filter((id) => nowOccupied.includes(id));
+          const conflicts = prev.filter((id) => nowOccupiedByOthers.includes(id));
           if (conflicts.length > 0) {
             toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.");
-            return prev.filter((id) => !nowOccupied.includes(id));
+            return prev.filter((id) => !nowOccupiedByOthers.includes(id));
           }
           return prev;
         });
@@ -160,16 +182,6 @@ export default function SeatSelectionPage() {
       .filter((s) => selectedSeats.includes(s.seatId))
       .reduce((sum, s) => sum + (seatPrices[s.seatType] || 0), 0);
 
-  const getUserId = () => {
-    const token = sessionStorage.getItem("token");
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.userId || payload.sub || payload.id;
-    } catch {
-      return null;
-    }
-  };
 
   const handleGoToFoods = async () => {
     if (selectedSeats.length === 0 || initiating) return;

@@ -23,6 +23,8 @@ const STATUS_MAP = {
   HIDDEN:   { label: "Đã ẩn",     color: "bg-gray-500/10 text-gray-500 border-gray-500/20"     },
 };
 
+const PAGE_SIZE = 20;
+
 interface MovieReviewsTabProps {
   movieId: number;
 }
@@ -31,23 +33,30 @@ export function MovieReviewsTab({ movieId }: MovieReviewsTabProps) {
   const { token } = useAuth();
   const [reviews,   setReviews]   = useState<AdminReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [selected,  setSelected]  = useState<AdminReview | null>(null);
   const [isInteractionsOpen, setIsInteractionsOpen] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage = 0, append = false) => {
     if (!token) return;
-    setIsLoading(true);
+    if (append) setIsLoadingMore(true); else setIsLoading(true);
     try {
-      const result = await fetchAdminReviews(token, { page: 0, size: 9999, movieId });
-      setReviews(result.content);
+      const result = await fetchAdminReviews(token, { page: targetPage, size: PAGE_SIZE, movieId });
+      setReviews((prev) => (append ? [...prev, ...result.content] : result.content));
+      setPage(result.currentPage);
+      setTotalPages(result.totalPages);
     } catch {
       toast.error("Không thể tải đánh giá");
     } finally {
-      setIsLoading(false);
+      if (append) setIsLoadingMore(false); else setIsLoading(false);
     }
   }, [token, movieId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(0, false); }, [load]);
+
+  const handleLoadMore = () => load(page + 1, true);
 
   const handleApprove = async (review: AdminReview) => {
     if (!token) return;
@@ -197,6 +206,22 @@ export function MovieReviewsTab({ movieId }: MovieReviewsTabProps) {
             );
           })}
         </div>
+
+        {page + 1 < totalPages && (
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+              ) : null}
+              Xem thêm đánh giá
+            </Button>
+          </div>
+        )}
       </div>
 
       <ReviewInteractionsDialog

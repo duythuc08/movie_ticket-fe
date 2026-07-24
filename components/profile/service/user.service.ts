@@ -74,8 +74,9 @@ export async function fetchOrdersByUser(token: string, userId: string): Promise<
   return data.result as Order[];
 }
 
-export async function createVnpayRepaymentUrl(token: string, orderId: string): Promise<string> {
-  const res = await apiFetch(`${BASE_URL}/payment/create-vnpay-url?orderId=${orderId}`, {
+export async function retryPaymentUrl(token: string, orderId: string, method: "VNPAY" | "MOMO"): Promise<string> {
+  const res = await apiFetch(`${BASE_URL}/payment/retry?orderId=${orderId}&method=${method}`, {
+    method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await parseJsonSafe(res);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import type { AdminBanner } from "@/types/admin.type";
 import type { BannerFormSchema } from "@/lib/validations/admin.schemas";
@@ -20,6 +20,8 @@ import { BannerBulkDialog } from "@/components/admin/banner/BannerBulkDialog";
 import type { BannerBulkPayload } from "@/components/admin/banner/BannerBulkDialog";
 import { createBannerColumns } from "@/components/admin/banner/BannerColumns";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const BANNER_TYPE_FILTER = [
   { label: "Phim",     value: "MOVIE" },
@@ -30,6 +32,8 @@ const ACTIVE_FILTER = [
   { label: "Hiển thị", value: "true"  },
   { label: "Ẩn",       value: "false" },
 ];
+
+const PAGE_SIZE = 10;
 
 export default function AdminBannersPage() {
   const { token } = useAuth();
@@ -44,20 +48,41 @@ export default function AdminBannersPage() {
   const [isSubmitting,   setIsSubmitting]   = useState(false);
   const [isDeleting,     setIsDeleting]     = useState(false);
 
-  const loadBanners = useCallback(async () => {
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [bannerType, setBannerType] = useState<string | undefined>(undefined);
+  const [activeFilter, setActiveFilter] = useState<string | undefined>(undefined);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setKeyword(keywordInput), 500);
+    return () => clearTimeout(t);
+  }, [keywordInput]);
+
+  const loadBanners = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
-      const result = await fetchAdminBanners(token, { page: 0, size: 999 });
+      const result = await fetchAdminBanners(token, {
+        page: targetPage,
+        size: PAGE_SIZE,
+        bannerType: bannerType as AdminBanner["bannerType"] | undefined,
+        active: activeFilter !== undefined ? activeFilter === "true" : undefined,
+        title: keyword || undefined,
+      });
       setBanners(result.content);
+      setTotalPages(result.totalPages);
+      setTotalElements(result.totalElements);
     } catch {
       toast.error("Không thể tải danh sách banner");
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, bannerType, activeFilter, keyword]);
 
-  useEffect(() => { loadBanners(); }, [loadBanners]);
+  useEffect(() => { setPage(0); loadBanners(0); }, [loadBanners]);
 
   function handleViewDetail(banner: AdminBanner) {
     setSelectedBanner(banner);
@@ -94,7 +119,7 @@ export default function AdminBannersPage() {
       const created = await createBannersBulk(token, payloads);
       toast.success(`Đã thêm ${created.length} banner thành công`);
       setIsBulkOpen(false);
-      loadBanners();
+      loadBanners(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Thêm banner thất bại");
     } finally {
@@ -124,7 +149,7 @@ export default function AdminBannersPage() {
       toast.success(`Đã cập nhật banner "${data.title}"`);
       setIsEditOpen(false);
       setSelectedBanner(null);
-      loadBanners();
+      loadBanners(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Lưu banner thất bại");
     } finally {
@@ -138,7 +163,7 @@ export default function AdminBannersPage() {
     try {
       await toggleBannerActive(token, banner.id, banner.active);
       toast.success(`Đã ${nextState} banner "${banner.title}"`);
-      loadBanners();
+      loadBanners(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Không thể ${nextState} banner`);
     }
@@ -152,7 +177,7 @@ export default function AdminBannersPage() {
       toast.success(`Đã xóa banner "${selectedBanner.title}"`);
       setIsDeleteOpen(false);
       setSelectedBanner(null);
-      loadBanners();
+      loadBanners(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể xóa banner");
     } finally {
@@ -182,17 +207,66 @@ export default function AdminBannersPage() {
         </Button>
       </PageHeader>
 
+      <div className="flex flex-wrap items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tiêu đề banner..."
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select
+          value={bannerType ?? "__all__"}
+          onValueChange={(value) => setBannerType(value === "__all__" ? undefined : value)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Loại" />
+          </SelectTrigger>
+          <SelectContent data-admin="">
+            {BANNER_TYPE_FILTER.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="__all__">Tất cả</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={activeFilter ?? "__all__"}
+          onValueChange={(value) => setActiveFilter(value === "__all__" ? undefined : value)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Hiển thị" />
+          </SelectTrigger>
+          <SelectContent data-admin="">
+            {ACTIVE_FILTER.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="__all__">Tất cả</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <DataTable
         columns={columns}
         data={banners}
-        searchKey="title"
-        searchPlaceholder="Tìm theo tiêu đề banner..."
-        filters={[
-          { key: "bannerType", label: "Loại",      options: BANNER_TYPE_FILTER },
-          { key: "active",     label: "Hiển thị",  options: ACTIVE_FILTER     },
-        ]}
         isLoading={isLoading}
         emptyText="Chưa có banner nào."
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          total: totalElements,
+          onChange: (newPage) => {
+            setPage(newPage);
+            loadBanners(newPage);
+          },
+        }}
       />
 
       <BannerBulkDialog

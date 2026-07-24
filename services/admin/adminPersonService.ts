@@ -12,15 +12,19 @@ import {
   adminPut,
   adminPutEmpty,
   buildFilterString,
+  buildLikeFilterString,
+  combineFilterStrings,
 } from "./adminApiClient";
 
 export async function fetchAdminPersons(
   token: string,
   query: PersonListQuery = {}
 ): Promise<ApiPagedResult<AdminPerson>> {
-  const { page = 0, size = 10, movieRole, entityStatus } = query;
+  const { page = 0, size = 10, movieRole, entityStatus, name } = query;
 
   const filterString = buildFilterString({ movieRole, entityStatus });
+  const nameFilterString = name ? buildLikeFilterString({ name }) : undefined;
+  const combinedFilter = combineFilterStrings(filterString, nameFilterString);
 
   const params: Record<string, string | number | undefined> = {
     page,
@@ -28,8 +32,8 @@ export async function fetchAdminPersons(
     sort: "createdAt,desc",
   };
 
-  if (filterString) {
-    params.filter = filterString;
+  if (combinedFilter) {
+    params.filter = combinedFilter;
   }
 
   return adminGet<ApiPagedResult<AdminPerson>>(token, "/admin/persons", params);

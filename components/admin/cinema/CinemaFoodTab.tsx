@@ -152,7 +152,9 @@ export function CinemaFoodTab({ cinemaId }: CinemaFoodTabProps) {
                 </div>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline" className="text-[10px] uppercase">{food.foodType}</Badge>
-                  {food.isCombo && <Badge variant="default" className="text-[10px] uppercase bg-orange-500">Combo</Badge>}
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    Tồn: <span className={food.stockQuantity === 0 ? "text-destructive font-bold" : "text-foreground font-bold"}>{food.stockQuantity}</span>
+                  </span>
                 </div>
                 <div className="mt-auto flex items-center justify-between pt-2 border-t border-border/50">
                   <span className="font-bold text-sm text-green-600">

@@ -25,6 +25,7 @@ export interface PersonUpdatePayload {
 export interface PersonListQuery extends AdminListQuery {
   movieRole?: MovieRole;
   entityStatus?: EntityStatus;
+  name?: string;
 }
 
 export interface PersonFormValues {

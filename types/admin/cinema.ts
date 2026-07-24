@@ -116,6 +116,7 @@ export interface AdminSeatStatusUpdateRequest {
 export interface CinemaListQuery extends AdminListQuery {
   cinemaStatus?: CinemaStatus;
   entityStatus?: EntityStatus;
+  name?: string;
 }
 
 export interface RoomListQuery extends AdminListQuery {
@@ -123,4 +124,5 @@ export interface RoomListQuery extends AdminListQuery {
   roomType?: RoomType;
   roomStatus?: RoomStatus;
   entityStatus?: EntityStatus;
+  name?: string;
 }

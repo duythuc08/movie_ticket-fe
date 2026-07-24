@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import type { AdminReview, AdminMovie } from "@/types/admin.type";
+import type { AdminReview } from "@/types/admin.type";
 import {
   fetchAdminReviews,
   approveReview,
@@ -12,15 +12,17 @@ import {
 } from "@/services/admin/adminReviewService";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { DataTable, PageHeader } from "@/components/shared";
+import type { SelectOption } from "@/components/shared/multi-select";
 import { createReviewColumns } from "@/components/admin/review/ReviewColumns";
 import { ReviewFilters } from "@/components/admin/review/ReviewFilters";
 import { ReviewInteractionsDialog } from "@/components/admin/review/ReviewInteractionsDialog";
+
+const MOVIE_OPTIONS_PAGE_SIZE = 20;
 
 export default function AdminReviewsPage() {
   const { token } = useAuth();
 
   const [reviews, setReviews]       = useState<AdminReview[]>([]);
-  const [movies,  setMovies]        = useState<AdminMovie[]>([]);
   const [isLoading, setIsLoading]   = useState(false);
   const [filters, setFilters]       = useState<{ keyword?: string; status?: string; movieId?: number }>({});
   const [page, setPage]             = useState(0);
@@ -30,15 +32,45 @@ export default function AdminReviewsPage() {
   const [isInteractionsOpen, setIsInteractionsOpen] = useState(false);
   const [selectedReview, setSelectedReview]         = useState<AdminReview | null>(null);
 
-  const loadMovies = useCallback(async () => {
+  // ── Dropdown chọn phim cho filter — lazy load 20 phim/trang, hoặc tìm theo tên qua API ──
+  const [movieOptions,      setMovieOptions]      = useState<SelectOption[]>([]);
+  const [movieOptionsPage,  setMovieOptionsPage]  = useState(0);
+  const [movieOptionsTotalPages, setMovieOptionsTotalPages] = useState(1);
+  const [isLoadingMovies,     setIsLoadingMovies]     = useState(false);
+  const [isLoadingMoreMovies, setIsLoadingMoreMovies] = useState(false);
+  const [movieSearchTerm, setMovieSearchTerm] = useState("");
+
+  const loadMovieOptions = useCallback(async (targetPage: number, append: boolean, titleSearch = "") => {
     if (!token) return;
+    if (append) setIsLoadingMoreMovies(true); else setIsLoadingMovies(true);
     try {
-      const result = await fetchAdminMovies(token, { page: 0, size: 999 });
-      setMovies(result.content);
+      const result = await fetchAdminMovies(token, {
+        page: targetPage,
+        size: MOVIE_OPTIONS_PAGE_SIZE,
+        sort: "title,asc",
+        title: titleSearch || undefined,
+      });
+      const newOptions = result.content.map((m) => ({ value: String(m.movieId), label: m.title }));
+      setMovieOptions((prev) => (append ? [...prev, ...newOptions] : newOptions));
+      setMovieOptionsPage(result.currentPage);
+      setMovieOptionsTotalPages(result.totalPages);
     } catch {
-      // movies list is optional for the filter
+      // dropdown phim là tùy chọn, không chặn trang review nếu lỗi
+    } finally {
+      if (append) setIsLoadingMoreMovies(false); else setIsLoadingMovies(false);
     }
   }, [token]);
+
+  const handleLoadMoreMovies = useCallback(() => {
+    if (movieOptionsPage + 1 < movieOptionsTotalPages) {
+      loadMovieOptions(movieOptionsPage + 1, true, movieSearchTerm);
+    }
+  }, [loadMovieOptions, movieOptionsPage, movieOptionsTotalPages, movieSearchTerm]);
+
+  const handleSearchMovies = useCallback((term: string) => {
+    setMovieSearchTerm(term);
+    loadMovieOptions(0, false, term);
+  }, [loadMovieOptions]);
 
   const loadReviews = useCallback(async (targetPage = 0) => {
     if (!token) return;
@@ -65,7 +97,7 @@ export default function AdminReviewsPage() {
     setPage(0);
   }, []);
 
-  useEffect(() => { loadMovies(); }, [loadMovies]);
+  useEffect(() => { loadMovieOptions(0, false, ""); }, [loadMovieOptions]);
   useEffect(() => { loadReviews(0); }, [loadReviews]);
 
   const filteredReviews = useMemo(() => {
@@ -135,7 +167,15 @@ export default function AdminReviewsPage() {
         description="Quản lý và kiểm duyệt đánh giá phim từ người dùng"
       />
 
-      <ReviewFilters movies={movies} onFilterChange={handleFilterChange} />
+      <ReviewFilters
+        movieOptions={movieOptions}
+        isLoadingMovies={isLoadingMovies}
+        hasMoreMovies={movieOptionsPage + 1 < movieOptionsTotalPages}
+        isLoadingMoreMovies={isLoadingMoreMovies}
+        onLoadMoreMovies={handleLoadMoreMovies}
+        onSearchMovies={handleSearchMovies}
+        onFilterChange={handleFilterChange}
+      />
 
       <DataTable
         columns={columns}

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import type { AdminPerson } from "@/types/admin.type";
+import type { AdminPerson, MovieRole } from "@/types/admin.type";
 import type { PersonFormSchema } from "@/lib/validations/admin.schemas";
 import {
     fetchAdminPersons,
@@ -18,6 +18,8 @@ import { PersonFormDialog } from "@/components/admin/layout/person/PersonFormDia
 import { PersonBulkDialog, type PersonBulkPayload } from "@/components/admin/layout/person/PersonBulkDialog";
 import { createPersonColumns } from "@/components/admin/layout/person/PersonColumns";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
 
 const STATUS_FILTER_OPTIONS = [
@@ -30,6 +32,9 @@ const ROLE_FILTER_OPTIONS = [
     { label: "Diễn viên", value: "ACTOR" },
 ];
 
+const PAGE_SIZE = 10;
+const MOVIE_OPTIONS_PAGE_SIZE = 20;
+
 export default function AdminPersonsPage() {
     const { token } = useAuth();
 
@@ -40,34 +45,83 @@ export default function AdminPersonsPage() {
     const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalElements, setTotalElements] = useState(0);
+    const [movieRole, setMovieRole] = useState<string | undefined>(undefined);
+    const [entityStatus, setEntityStatus] = useState<string | undefined>(undefined);
+    const [keywordInput, setKeywordInput] = useState("");
+    const [keyword, setKeyword] = useState("");
+
     const [movieOptions, setMovieOptions] = useState<{ value: string; label: string }[]>([]);
+    const [movieOptionsPage, setMovieOptionsPage] = useState(0);
+    const [movieOptionsTotalPages, setMovieOptionsTotalPages] = useState(1);
+    const [isLoadingMovieOptions, setIsLoadingMovieOptions] = useState(false);
+    const [isLoadingMoreMovieOptions, setIsLoadingMoreMovieOptions] = useState(false);
     const [movieFilterId, setMovieFilterId] = useState<string>("");
     const [fetchedMovieId, setFetchedMovieId] = useState<string>("");
     const [fetchedPersonIds, setFetchedPersonIds] = useState<Set<number>>(new Set());
 
-    const loadPersons = useCallback(async () => {
+    useEffect(() => {
+        const t = setTimeout(() => setKeyword(keywordInput), 500);
+        return () => clearTimeout(t);
+    }, [keywordInput]);
+
+    // Khi loc theo phim duoc chon: tam tat server pagination, tai het person
+    // (139 dong, chap nhan duoc) de loc client theo castPersons/directors cua
+    // phim do -- backend khong ho tro filter person theo movieId truc tiep.
+    const isFilteringByMovie = !!movieFilterId;
+
+    const loadPersons = useCallback(async (targetPage = 0) => {
         if (!token) return;
         setIsLoading(true);
         try {
-            const result = await fetchAdminPersons(token, { page: 0, size: 999 });
+            const result = await fetchAdminPersons(token, {
+                page: targetPage,
+                size: isFilteringByMovie ? 999 : PAGE_SIZE,
+                movieRole: movieRole as MovieRole | undefined,
+                entityStatus: entityStatus as AdminPerson["entityStatus"] | undefined,
+                name: keyword || undefined,
+            });
             setPersons(result.content);
+            setTotalPages(result.totalPages);
+            setTotalElements(result.totalElements);
         } catch {
             toast.error("Không thể tải danh sách diễn viên / đạo diễn");
         } finally {
             setIsLoading(false);
         }
-    }, [token]);
+    }, [token, movieRole, entityStatus, keyword, isFilteringByMovie]);
 
-    useEffect(() => { loadPersons(); }, [loadPersons]);
+    useEffect(() => { setPage(0); loadPersons(0); }, [loadPersons]);
 
-    useEffect(() => {
+    const loadMovieOptions = useCallback(async (targetPage: number, append: boolean) => {
         if (!token) return;
-        fetchAdminMovies(token, { size: 200 })
-            .then(res => {
-                setMovieOptions(res.content.map(m => ({ value: String(m.movieId), label: m.title })));
-            })
-            .catch(() => {});
+        if (append) setIsLoadingMoreMovieOptions(true); else setIsLoadingMovieOptions(true);
+        try {
+            const result = await fetchAdminMovies(token, {
+                page: targetPage,
+                size: MOVIE_OPTIONS_PAGE_SIZE,
+                sort: "title,asc",
+            });
+            const newOptions = result.content.map((m) => ({ value: String(m.movieId), label: m.title }));
+            setMovieOptions((prev) => (append ? [...prev, ...newOptions] : newOptions));
+            setMovieOptionsPage(result.currentPage);
+            setMovieOptionsTotalPages(result.totalPages);
+        } catch {
+            // dropdown loc theo phim la tuy chon, khong chan trang neu loi
+        } finally {
+            if (append) setIsLoadingMoreMovieOptions(false); else setIsLoadingMovieOptions(false);
+        }
     }, [token]);
+
+    useEffect(() => { loadMovieOptions(0, false); }, [loadMovieOptions]);
+
+    const handleLoadMoreMovieOptions = useCallback(() => {
+        if (movieOptionsPage + 1 < movieOptionsTotalPages) {
+            loadMovieOptions(movieOptionsPage + 1, true);
+        }
+    }, [loadMovieOptions, movieOptionsPage, movieOptionsTotalPages]);
 
     useEffect(() => {
         if (!movieFilterId || !token) return;
@@ -111,7 +165,7 @@ export default function AdminPersonsPage() {
             const created = await createPersonsBulk(token, payloads);
             toast.success(`Đã thêm ${created.length} nhân sự thành công`);
             setIsBulkOpen(false);
-            loadPersons();
+            loadPersons(page);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Thêm nhân sự thất bại");
         } finally {
@@ -136,7 +190,7 @@ export default function AdminPersonsPage() {
             });
             toast.success(`Đã cập nhật "${updated.name}" thành công`);
             setIsEditOpen(false);
-            loadPersons();
+            loadPersons(page);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Cập nhật thất bại");
         } finally {
@@ -150,7 +204,7 @@ export default function AdminPersonsPage() {
         try {
             await togglePersonStatus(token, person.id, person.entityStatus);
             toast.success(`Đã ${action} "${person.name}"`);
-            loadPersons();
+            loadPersons(page);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : `Không thể ${action}`);
         }
@@ -176,28 +230,80 @@ export default function AdminPersonsPage() {
                 </Button>
             </PageHeader>
 
-            <DataTable
-                columns={columns}
-                data={displayedPersons}
-                searchKey="name"
-                searchPlaceholder="Tìm theo tên..."
-                filters={[
-                    { key: "movieRole", label: "Vai trò", options: ROLE_FILTER_OPTIONS },
-                    { key: "entityStatus", label: "Trạng thái", options: STATUS_FILTER_OPTIONS },
-                ]}
-                isLoading={isLoading}
-                emptyText="Chưa có diễn viên / đạo diễn nào."
-                onResetFilters={() => setMovieFilterId("")}
-            >
+            <div className="flex flex-wrap items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+                <div className="relative flex-1 min-w-50 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Tìm theo tên..."
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+
+                <Select
+                    value={movieRole ?? "__all__"}
+                    onValueChange={(value) => setMovieRole(value === "__all__" ? undefined : value)}
+                >
+                    <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Vai trò" />
+                    </SelectTrigger>
+                    <SelectContent data-admin="">
+                        {ROLE_FILTER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                        <SelectItem value="__all__">Tất cả</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={entityStatus ?? "__all__"}
+                    onValueChange={(value) => setEntityStatus(value === "__all__" ? undefined : value)}
+                >
+                    <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent data-admin="">
+                        {STATUS_FILTER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                        <SelectItem value="__all__">Tất cả</SelectItem>
+                    </SelectContent>
+                </Select>
+
                 <SingleSelectWithSearch
                     options={movieOptions}
                     value={movieFilterId}
                     onChange={setMovieFilterId}
                     placeholder="Lọc theo phim"
                     searchPlaceholder="Tìm tên phim..."
+                    isLoading={isLoadingMovieOptions}
+                    hasMore={movieOptionsPage + 1 < movieOptionsTotalPages}
+                    isLoadingMore={isLoadingMoreMovieOptions}
+                    onLoadMore={handleLoadMoreMovieOptions}
                     className="w-52"
                 />
-            </DataTable>
+            </div>
+
+            <DataTable
+                columns={columns}
+                data={displayedPersons}
+                isLoading={isLoading}
+                emptyText="Chưa có diễn viên / đạo diễn nào."
+                serverPagination={isFilteringByMovie ? undefined : {
+                    page,
+                    pageCount: totalPages,
+                    total: totalElements,
+                    onChange: (newPage) => {
+                        setPage(newPage);
+                        loadPersons(newPage);
+                    },
+                }}
+            />
 
             <PersonBulkDialog
                 open={isBulkOpen}
