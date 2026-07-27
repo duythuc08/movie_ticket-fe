@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { adminUserService } from "@/services/admin/adminUserService";
 import { useAuth } from "@/context/AuthContext";
-import type { AdminUser, AdminUserRecommendation, LoyaltyHistory } from "@/types/admin/user";
+import type { AdminUser, AdminUserRecommendation, LoyaltyHistory, UserReviewHistoryItem } from "@/types/admin/user";
 import type { ApiPagedResult } from "@/types/admin.type";
 import { X, User, TrendingUp, TrendingDown, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,9 +42,13 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
   const [historyPage, setHistoryPage] = useState(0);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [recommendation, setRecommendation] = useState<AdminUserRecommendation | null>(null);
+  const [reviews, setReviews] = useState<UserReviewHistoryItem[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(0);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isRecommendLoading, setIsRecommendLoading] = useState(false);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
 
   const loadUser = useCallback(async () => {
@@ -83,12 +87,29 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
     finally { setIsRecommendLoading(false); }
   }, [token, userId]);
 
+  const loadReviews = useCallback(async (page = 0) => {
+    if (!token || !userId) return;
+    setIsReviewsLoading(true);
+    try {
+      const res: ApiPagedResult<UserReviewHistoryItem> = await adminUserService.getReviewHistory(token, userId, page, 12);
+      if (page === 0) {
+        setReviews(res.content);
+      } else {
+        setReviews((prev) => [...prev, ...res.content]);
+      }
+      setReviewsTotal(res.totalElements);
+      setReviewsPage(page);
+    } catch { toast.error("Không thể tải lịch sử đánh giá"); }
+    finally { setIsReviewsLoading(false); }
+  }, [token, userId]);
+
   useEffect(() => { loadUser(); }, [loadUser]);
 
   function handleTabChange(key: string) {
     setActiveTab(key);
     if (key === "loyalty" && userId && history.length === 0) loadHistory(0);
     if (key === "recommend" && userId && !recommendation) loadRecommendation();
+    if (key === "reviews" && userId && reviews.length === 0) loadReviews(0);
   }
 
   const formatDate = (iso: string) =>
@@ -137,6 +158,7 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
               { key: "info",      label: "Thông tin" },
               { key: "loyalty",   label: "Điểm tích lũy" },
               { key: "recommend", label: "Phim phù hợp" },
+              { key: "reviews",   label: "Lịch sử đánh giá" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -211,7 +233,7 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                         <div className="border rounded-xl bg-card shadow-sm overflow-hidden">
                           <div className="p-4 border-b bg-muted/20 flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-primary" />
-                            <h3 className="text-sm font-semibold">Hồ sơ thể loại yêu thích</h3>
+                            <h3 className="text-sm font-semibold">Các thể loại yêu thích của {user.firstname} {user.lastname}</h3>
                           </div>
                           <div className="p-4">
                             {recommendation.genreProfile.length === 0 ? (
@@ -369,6 +391,57 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                               className="text-xs"
                             >
                               {isHistoryLoading ? "Đang tải..." : `Tải thêm (${historyTotal - history.length} còn lại)`}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "reviews" && (
+                  <div className="space-y-4">
+                    {isReviewsLoading && reviews.length === 0 ? (
+                      <div className="p-12 text-center text-muted-foreground">Đang tải lịch sử đánh giá...</div>
+                    ) : reviews.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground border rounded-xl bg-muted/10">
+                        Người dùng chưa đánh giá phim nào
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {reviews.map((r) => (
+                            <div key={r.reviewId} className="border rounded-xl bg-card shadow-sm overflow-hidden">
+                              {r.posterUrl ? (
+                                <img src={r.posterUrl} alt={r.movieTitle} className="w-full aspect-2/3 object-cover" />
+                              ) : (
+                                <div className="w-full aspect-2/3 bg-muted" />
+                              )}
+                              <div className="p-3 space-y-1.5">
+                                <p className="font-medium text-sm truncate" title={r.movieTitle}>{r.movieTitle}</p>
+                                {r.genres.length > 0 && (
+                                  <p className="text-xs text-muted-foreground truncate" title={r.genres.join(" · ")}>
+                                    {r.genres.join(" · ")}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-1 pt-0.5">
+                                  <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                  <span className="text-sm font-semibold">{r.rating}/5</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {reviews.length < reviewsTotal && (
+                          <div className="text-center pt-2">
+                            <Button
+                              variant="outline" size="sm"
+                              onClick={() => loadReviews(reviewsPage + 1)}
+                              disabled={isReviewsLoading}
+                              className="text-xs"
+                            >
+                              {isReviewsLoading ? "Đang tải..." : `Tải thêm (${reviewsTotal - reviews.length} còn lại)`}
                             </Button>
                           </div>
                         )}

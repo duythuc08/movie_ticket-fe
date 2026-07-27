@@ -1,6 +1,6 @@
 import { adminGet, adminPost, adminPut, adminPutEmpty } from "./adminApiClient";
 import type { ApiPagedResult } from "@/types/admin.type";
-import type { AdminUser, AdminUserRecommendation, LoyaltyHistory } from "@/types/admin/user";
+import type { AdminUser, AdminUserRecommendation, LoyaltyHistory, UserReviewHistoryItem } from "@/types/admin/user";
 import type { CreateUserValues, UpdateUserValues } from "@/lib/validations/admin/user.schema";
 
 export const adminUserService = {
@@ -51,4 +51,9 @@ export const adminUserService = {
 
   getUserRecommendations: (token: string, userId: string) =>
     adminGet<AdminUserRecommendation>(token, `/admin/users/${userId}/recommendations`),
+
+  getReviewHistory: (token: string, userId: string, page = 0, size = 12) =>
+    adminGet<ApiPagedResult<UserReviewHistoryItem>>(token, `/admin/users/${userId}/review-history`, {
+      page, size, sort: "rating,desc",
+    }),
 };

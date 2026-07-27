@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Play, Star, ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "@/components/movie/components/ImageWithFallback";
+import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 export interface RecommendationItemResponse {
   movieId: number;
@@ -12,19 +13,28 @@ export interface RecommendationItemResponse {
   posterUrl: string;
   description: string;
   duration: number;
+  genres?: string[];
   predictedScore: number;
   neighborCount: number;
   averageRating: number;
   source: string;
 }
 
+export interface GenreProfileItem {
+  genreName: string;
+  likedCount: number;
+  weightPct: number;
+}
+
 interface RecommendationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recommendations: RecommendationItemResponse[];
+  usedColdStart?: boolean;
+  genreProfile?: GenreProfileItem[];
 }
 
-export function RecommendationDialog({ open, onOpenChange, recommendations }: RecommendationDialogProps) {
+export function RecommendationDialog({ open, onOpenChange, recommendations, usedColdStart = false, genreProfile = [] }: RecommendationDialogProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -61,11 +71,23 @@ export function RecommendationDialog({ open, onOpenChange, recommendations }: Re
 
           <DialogHeader className="mb-4 flex flex-col items-center text-center space-y-3">
             <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              Phim phù hợp dành cho bạn
+              {usedColdStart ? "Phim phù hợp dành cho người dùng mới" : "Phim phù hợp dành cho bạn"}
             </DialogTitle>
-            <p className="text-sm sm:text-base text-gray-500 max-w-[80%] mx-auto leading-relaxed">
-              Dựa trên sở thích và đánh giá của bạn, chúng tôi đã tinh chọn những bộ phim đặc biệt này.
-            </p>
+            {usedColdStart || genreProfile.length === 0 ? (
+              <p className="text-sm sm:text-base text-gray-500 max-w-[80%] mx-auto leading-relaxed">
+                Dựa trên sở thích và đánh giá của bạn, chúng tôi đã tinh chọn những bộ phim đặc biệt này.
+              </p>
+            ) : (
+              <p className="text-sm sm:text-base text-gray-500 max-w-[80%] mx-auto leading-relaxed">
+                Bạn thường đánh giá cao các phim thuộc thể loại{" "}
+                <span className="text-gray-700 font-semibold">
+                  {genreProfile
+                    .map((g) => GENRE_LABELS[g.genreName.toUpperCase()] ?? g.genreName)
+                    .join(", ")}
+                </span>
+                {" "}— đây là những bộ phim chúng tôi tin bạn sẽ thích.
+              </p>
+            )}
           </DialogHeader>
 
           {recommendations.length === 0 ? (
@@ -117,6 +139,13 @@ export function RecommendationDialog({ open, onOpenChange, recommendations }: Re
                         <h3 className="text-white text-sm font-semibold mb-1 line-clamp-2 leading-tight">
                           {item.title}
                         </h3>
+                        {item.genres && item.genres.length > 0 && (
+                          <p className="text-primary/90 text-[11px] font-medium mb-1.5 line-clamp-1">
+                            {item.genres
+                              .map((g) => GENRE_LABELS[g.toUpperCase()] ?? g)
+                              .join(" · ")}
+                          </p>
+                        )}
                         <p className="text-white/70 text-xs mb-2 line-clamp-2">{item.description}</p>
 
                         <div className="flex items-center gap-2 mb-3">

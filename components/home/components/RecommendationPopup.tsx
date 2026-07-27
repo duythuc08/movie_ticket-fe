@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { RecommendationDialog, RecommendationItemResponse } from "@/components/movie/components/RecommendationDialog";
+import { RecommendationDialog, RecommendationItemResponse, GenreProfileItem } from "@/components/movie/components/RecommendationDialog";
 import { apiFetch } from "@/lib/fetchApi";
 
 export function RecommendationPopup() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendationItemResponse[]>([]);
+  const [genreProfile, setGenreProfile] = useState<GenreProfileItem[]>([]);
+  const [usedColdStart, setUsedColdStart] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -23,8 +25,11 @@ export function RecommendationPopup() {
         const res = await apiFetch("/api-proxy/recommendations");
         if (res.ok) {
           const data = await res.json();
-          if (data.code === 0 && data.result && data.result.length > 0) {
-            setRecommendations(data.result);
+          const result = data.result;
+          if (data.code === 0 && result && result.recommendations && result.recommendations.length > 0) {
+            setRecommendations(result.recommendations);
+            setGenreProfile(result.genreProfile ?? []);
+            setUsedColdStart(!!result.usedColdStart);
             setOpen(true);
             sessionStorage.setItem("hasShownRecommendation_v2", "true");
           }
@@ -42,10 +47,12 @@ export function RecommendationPopup() {
   if (recommendations.length === 0) return null;
 
   return (
-    <RecommendationDialog 
-      open={open} 
-      onOpenChange={setOpen} 
-      recommendations={recommendations} 
+    <RecommendationDialog
+      open={open}
+      onOpenChange={setOpen}
+      recommendations={recommendations}
+      genreProfile={genreProfile}
+      usedColdStart={usedColdStart}
     />
   );
 }

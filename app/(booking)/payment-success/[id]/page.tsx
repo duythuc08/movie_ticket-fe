@@ -23,39 +23,15 @@ function PaymentSuccessContent() {
   const orderIdFromUrl = searchParams.get("orderId") || (pathId !== "momo" ? pathId : null);
 
   useEffect(() => {
-    const loadData = async () => {
+    const readPendingOrder = () => {
       const savedOrder = sessionStorage.getItem("pendingOrder");
-
-      if (savedOrder) {
-        try {
-          const parsed = JSON.parse(savedOrder);
-          setExtraInfo({
-            movie: parsed.movie,
-            moviePoster: parsed.moviePoster,
-            format: parsed.format,
-            cinema: parsed.cinema,
-            roomName: parsed.roomName,
-            date: parsed.date,
-            time: parsed.time,
-            paymentMethod: parsed.paymentMethod,
-          });
-
-          if (!orderIdFromUrl && parsed.orderId) {
-            await loadOrderFromAPI(parsed.orderId);
-            return;
-          }
-        } catch (e) {
-          console.error("Error parsing localStorage:", e);
-        }
+      if (!savedOrder) return null;
+      try {
+        return JSON.parse(savedOrder);
+      } catch (e) {
+        console.error("Error parsing sessionStorage pendingOrder:", e);
+        return null;
       }
-
-      if (!orderIdFromUrl) {
-        setError("Không tìm thấy mã đơn hàng");
-        setLoading(false);
-        return;
-      }
-
-      await loadOrderFromAPI(orderIdFromUrl);
     };
 
     const loadOrderFromAPI = async (orderId: string) => {
@@ -63,6 +39,24 @@ function PaymentSuccessContent() {
         const token = sessionStorage.getItem("token") ?? "";
         const data = await getOrderDetail(orderId, token);
         setOrderData(data);
+
+        const pending = readPendingOrder();
+        const showTimeInfo = data.showTimeInfo;
+        const showTimeDate = showTimeInfo?.showTime ? new Date(showTimeInfo.showTime) : null;
+        setExtraInfo({
+          movie: showTimeInfo?.movieName || pending?.movie,
+          moviePoster: showTimeInfo?.moviePosterUrl || pending?.moviePoster,
+          format: pending?.format,
+          cinema: showTimeInfo?.cinemaName || pending?.cinema,
+          roomName: showTimeInfo?.roomName || pending?.roomName,
+          date: showTimeDate
+            ? showTimeDate.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })
+            : pending?.date,
+          time: showTimeDate
+            ? showTimeDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+            : pending?.time,
+          paymentMethod: pending?.paymentMethod || data.payment?.paymentType,
+        });
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -70,7 +64,16 @@ function PaymentSuccessContent() {
       }
     };
 
-    loadData();
+    const pending = readPendingOrder();
+    const targetOrderId = orderIdFromUrl || pending?.orderId;
+
+    if (!targetOrderId) {
+      setError("Không tìm thấy mã đơn hàng");
+      setLoading(false);
+      return;
+    }
+
+    loadOrderFromAPI(targetOrderId);
   }, [orderIdFromUrl]);
 
   const formatCurrency = (amount?: number) =>

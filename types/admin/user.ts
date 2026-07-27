@@ -54,3 +54,12 @@ export interface AdminUserRecommendation {
   recommendations: RecommendationItem[];
   usedColdStart: boolean;
 }
+
+export interface UserReviewHistoryItem {
+  reviewId: number;
+  movieId: number;
+  movieTitle: string;
+  posterUrl?: string;
+  genres: string[];
+  rating: number;
+}

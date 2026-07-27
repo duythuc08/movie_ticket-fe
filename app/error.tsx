@@ -30,7 +30,13 @@ export default function ErrorPage({
           <Button onClick={() => window.location.href = "/"} variant="outline" className="gap-2">
             <Home className="w-4 h-4" /> Về trang chủ
           </Button>
-          <Button onClick={reset} className="gap-2">
+          <Button
+            onClick={() => {
+              reset();
+              window.location.reload();
+            }}
+            className="gap-2"
+          >
             <RefreshCw className="w-4 h-4" /> Thử lại
           </Button>
         </div>

@@ -110,7 +110,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
               <thead>
                 <tr className="border-b border-border text-left">
                   <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Mã đơn</th>
-                  <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Hoạt động</th>
+                  <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Tên Phim</th>
                   <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider hidden sm:table-cell">Chi nhánh</th>
                   <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Ngày</th>
                   <th className="pb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Tổng cộng</th>
@@ -136,7 +136,7 @@ export function OrderHistory({ orders, loading, onSelectOrder }: Props) {
                       <td className="py-3.5 pr-3">
                         <div className="min-w-0">
                           <p className="text-foreground font-medium truncate max-w-[180px]">
-                            {order.showTimeInfo?.movieName || `Đặt vé (${ticketCount} vé)`}
+                            {order.showTimeInfo?.movieName || `---`}
                           </p>
                         </div>
                       </td>

@@ -197,6 +197,7 @@ export interface OrderFood {
 
 export interface ShowTimeInfo {
   movieName: string | null;
+  moviePosterUrl: string | null;
   roomName: string | null;
   showTime: string | null;
   cinemaName: string | null;
