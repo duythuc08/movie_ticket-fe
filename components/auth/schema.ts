@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
+  password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự"),
 });
 
 export const registerSchema = z
@@ -16,7 +16,7 @@ export const registerSchema = z
     email: z.string().email("Email không hợp lệ"),
     password: z
       .string()
-      .min(6, "Mật khẩu tối thiểu 6 ký tự")
+      .min(8, "Mật khẩu tối thiểu 8 ký tự")
       .regex(/[a-z]/, "Mật khẩu phải có chữ thường")
       .regex(/[A-Z]/, "Mật khẩu phải có chữ hoa")
       .regex(/[^a-zA-Z0-9]/, "Mật khẩu phải có ký tự đặc biệt"),
@@ -42,7 +42,7 @@ export const resetPasswordSchema = z
   .object({
     newPassword: z
       .string()
-      .min(6, "Mật khẩu tối thiểu 6 ký tự"),
+      .min(8, "Mật khẩu tối thiểu 8 ký tự"),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {

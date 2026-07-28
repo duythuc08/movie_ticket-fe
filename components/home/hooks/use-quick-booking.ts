@@ -71,10 +71,18 @@ export function useQuickBooking() {
       setLoadingDates(true);
       try {
         const rawDates = await fetchDatesByCinemaAndMovie(cinema.id, selectedMovie.id);
-        const window6 = new Set(get6DayWindow());
-        const bookingDates: BookingDate[] = rawDates
-          .filter((d) => window6.has(d))
-          .map((d) => ({ value: d, label: formatDateLabel(d) }));
+        const window6 = get6DayWindow();
+        const todayStr = window6[0];
+
+        const datesSet = new Set(rawDates.filter((d) => window6.includes(d)));
+        datesSet.add(todayStr); // Always include today
+
+        const sortedDates = Array.from(datesSet).sort();
+
+        const bookingDates: BookingDate[] = sortedDates.map((d) => ({
+          value: d,
+          label: formatDateLabel(d),
+        }));
         setDates(bookingDates);
       } finally {
         setLoadingDates(false);

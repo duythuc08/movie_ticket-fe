@@ -97,6 +97,9 @@ export const ErrorCodeMap: Record<number, string> = {
     1095: "Số điện thoại rạp chiếu đã tồn tại",
     1096: "Email rạp chiếu đã tồn tại",
     1097: "Số điện thoại này đã được sử dụng bởi tài khoản khác",
+    1099: "Tài khoản của bạn đã bị khóa",
+    1100: "Ghế đôi phải được chọn theo cặp",
+    1101: "Chuyển đổi trạng thái đánh giá không hợp lệ",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

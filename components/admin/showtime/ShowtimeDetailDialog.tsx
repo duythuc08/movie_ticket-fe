@@ -92,13 +92,30 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
 
   const handleCancelShowtime = () => setConfirmCancel(true);
 
+  const seatStats = useMemo(() => {
+    if (seatData?.seats) {
+      let available = 0, sold = 0, blocked = 0;
+      for (const seat of seatData.seats) {
+        if (seat.seatShowTimeStatus === "AVAILABLE") available++;
+        else if (seat.seatShowTimeStatus === "SOLD" || seat.seatShowTimeStatus === "RESERVED") sold++;
+        else blocked++;
+      }
+      return { available, sold, blocked };
+    }
+    return {
+      available: detail?.seatSummary?.available || 0,
+      sold: detail?.seatSummary?.sold || 0,
+      blocked: detail?.seatSummary?.blocked || 0
+    };
+  }, [seatData, detail]);
+
   const pieData = useMemo(() => {
     return [
-      { name: 'Trống', value: detail?.seatSummary?.available || 0, color: '#4ade80' },
-      { name: 'Đã bán', value: detail?.seatSummary?.sold || 0, color: '#f87171' },
-      { name: 'Khóa', value: detail?.seatSummary?.blocked || 0, color: '#94a3b8' }
+      { name: 'Trống', value: seatStats.available, color: '#4ade80' },
+      { name: 'Đã bán', value: seatStats.sold, color: '#f87171' },
+      { name: 'Khóa', value: seatStats.blocked, color: '#94a3b8' }
     ];
-  }, [detail]);
+  }, [seatStats]);
 
   if (!open) return null;
 
@@ -270,11 +287,11 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                       <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-2 text-center text-sm">
                         <div>
                           <p className="text-muted-foreground text-xs uppercase">Đã bán</p>
-                          <p className="font-bold text-primary">{detail.seatSummary?.sold || 0}</p>
+                          <p className="font-bold text-primary">{seatStats.sold}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground text-xs uppercase">Còn trống</p>
-                          <p className="font-bold text-emerald-600">{detail.seatSummary?.available || 0}</p>
+                          <p className="font-bold text-emerald-600">{seatStats.available}</p>
                         </div>
                       </div>
                     </div>

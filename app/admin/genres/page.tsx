@@ -9,6 +9,7 @@ import type { GenreFormSchema } from "@/lib/validations/admin.schemas";
 import {
     fetchAdminGenres,
     createGenre,
+    updateGenre,
     toggleGenreStatus,
 } from "@/services/admin/adminGenreService";
 import { DataTable, PageHeader } from "@/components/shared";
@@ -83,8 +84,11 @@ export default function AdminGenresPage() {
         setIsSubmitting(true);
         try {
             if (selectedGenre) {
-                // TODO: Thêm PUT /admin/genres/{id} vào BE nếu cần cập nhật
-                toast.info("Tính năng cập nhật đang được phát triển");
+                await updateGenre(token, selectedGenre.genreId, {
+                    name: data.name,
+                    description: data.description,
+                });
+                toast.success("Cập nhật thành công");
             } else {
                 await createGenre(token, {
                     name: data.name,

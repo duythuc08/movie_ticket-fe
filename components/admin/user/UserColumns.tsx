@@ -12,6 +12,7 @@ interface UserColumnsProps {
   onViewDetail:   (u: AdminUser) => void;
   onEdit:         (u: AdminUser) => void;
   onBan:          (u: AdminUser) => void;
+  onUnban:        (u: AdminUser) => void;
   onToggleStatus: (u: AdminUser) => void;
 }
 
@@ -22,7 +23,7 @@ const USER_STATUS_MAP: StatusMap = {
 };
 
 export const createUserColumns = ({
-  onViewDetail, onEdit, onBan, onToggleStatus,
+  onViewDetail, onEdit, onBan, onUnban, onToggleStatus,
 }: UserColumnsProps): ColumnDef<AdminUser>[] => [
   {
     accessorKey: "userId",
@@ -114,7 +115,9 @@ export const createUserColumns = ({
               icon: u.entityStatus === "ACTIVE" ? PowerOff : Power,
               onClick: () => onToggleStatus(u),
             },
-            { label: "Khóa tài khoản", icon: ShieldBan, onClick: () => onBan(u), variant: "destructive" },
+            u.userStatus === "BANNED" 
+              ? { label: "Mở khóa tài khoản", icon: ShieldBan, onClick: () => onUnban(u) }
+              : { label: "Khóa tài khoản", icon: ShieldBan, onClick: () => onBan(u), variant: "destructive" },
           ]}
         />
       );

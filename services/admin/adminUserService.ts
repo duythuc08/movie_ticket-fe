@@ -38,6 +38,9 @@ export const adminUserService = {
   banUser: (token: string, userId: string) =>
     adminPutEmpty(token, `/admin/users/${userId}/banned`),
 
+  unbanUser: (token: string, userId: string) =>
+    adminPutEmpty(token, `/admin/users/${userId}/unbanned`),
+
   activateUser: (token: string, userId: string) =>
     adminPutEmpty(token, `/admin/users/${userId}/activate`),
 

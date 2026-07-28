@@ -13,8 +13,8 @@ export const updateProfileSchema = z.object({
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(6, "Mật khẩu hiện tại tối thiểu 6 ký tự"),
-    newPassword:     z.string().min(6, "Mật khẩu mới tối thiểu 6 ký tự"),
+    currentPassword: z.string().min(8, "Mật khẩu hiện tại tối thiểu 8 ký tự"),
+    newPassword:     z.string().min(8, "Mật khẩu mới tối thiểu 8 ký tự"),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {

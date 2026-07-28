@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserInfo, MembershipTier } from "@/types";
 import type { ProfileFormState } from "@/components/profile/user.types";
+import { useState } from "react";
+import { KeyRound } from "lucide-react";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 
 interface Props {
   userInfo: UserInfo | null;
@@ -36,12 +39,20 @@ export function PersonalInfo({ userInfo, allTiers, form, saving, loading, onForm
     ? Math.min(100, ((pts - (curTier?.pointsRequired || 0)) / ((nextTier.pointsRequired || 1) - (curTier?.pointsRequired || 0))) * 100)
     : 100;
 
+  const [pwdOpen, setPwdOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-card border border-border rounded-xl shadow-sm">
-        <div className="px-6 py-5 border-b border-border">
-          <h2 className="text-base font-bold text-foreground">Thông tin cá nhân</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Cập nhật thông tin hồ sơ của bạn</p>
+        <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-foreground">Thông tin cá nhân</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">Cập nhật thông tin hồ sơ của bạn</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setPwdOpen(true)} className="gap-2">
+            <KeyRound className="w-4 h-4" />
+            Đổi mật khẩu
+          </Button>
         </div>
         <div className="p-6">
           {loading ? (
@@ -136,6 +147,8 @@ export function PersonalInfo({ userInfo, allTiers, form, saving, loading, onForm
           )}
         </div>
       </div>
+
+      <ChangePasswordDialog open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </div>
   );
 }

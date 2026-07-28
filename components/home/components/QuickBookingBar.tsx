@@ -249,7 +249,9 @@ export function QuickBookingBar() {
             
             <div className="flex flex-wrap gap-3">
               {!loadingSlots && slots.length === 0 ? (
-                <span className="text-sm text-muted-foreground italic">Không có suất chiếu nào cho ngày này</span>
+                <span className="text-sm text-muted-foreground italic">
+                  Chưa có suất chiếu cho ngày {dates.find((d) => d.value === selectedDate)?.label}
+                </span>
               ) : (
                 slots.map((slot) => {
                   const isSelected = selectedSlot?.showTimeId === slot.showTimeId;

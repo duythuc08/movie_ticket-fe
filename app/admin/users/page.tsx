@@ -135,11 +135,27 @@ export default function AdminUsersPage() {
     });
   };
 
+  const handleUnban = (u: AdminUser) => {
+    setPending({
+      title: "Mở khóa tài khoản",
+      description: `Bạn có chắc chắn muốn mở khóa cho tài khoản "${u.username}"?`,
+      confirmLabel: "Mở khóa",
+      confirmVariant: "default",
+      action: async () => {
+        if (!token) return;
+        await adminUserService.unbanUser(token, u.userId);
+        toast.success("Mở khóa tài khoản thành công");
+        load(page);
+      },
+    });
+  };
+
   const columns = useMemo(() => createUserColumns({
     onViewDetail:   (u) => setDetailUserId(u.userId),
     onEdit:         (u) => { setEditUser(u); setIsFormOpen(true); },
     onToggleStatus: handleToggleStatus,
     onBan:          handleBan,
+    onUnban:        handleUnban,
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -164,7 +180,7 @@ export default function AdminUsersPage() {
           <SelectTrigger className="w-[180px] bg-background">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent data-admin="">
             <SelectItem value="all">-- Tất cả --</SelectItem>
             <SelectItem value="UNVERIFIED">Chưa xác minh</SelectItem>
             <SelectItem value="VERIFIED">Đã xác minh</SelectItem>

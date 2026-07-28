@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { genreFormSchema, type GenreFormSchema } from "@/lib/validations/admin.schemas";
 import type { AdminGenre } from "@/types/admin.type";
+import { useState, useEffect } from "react";
 
 interface GenreFormDialogProps {
     open: boolean;
@@ -23,12 +24,21 @@ export function GenreFormDialog({
     isSubmitting,
 }: GenreFormDialogProps) {
     const isCreateMode = !genre;
+    const [isEditMode, setIsEditMode] = useState(false);
+
+    useEffect(() => {
+        if (!open) {
+            setIsEditMode(false);
+        }
+    }, [open]);
+
+    const isReadOnly = !isCreateMode && !isEditMode;
 
     return (
         <AdminFormDialog
             open={open}
             onOpenChange={onOpenChange}
-            title={isCreateMode ? "Thêm thể loại mới" : "Chi tiết thể loại"}
+            title={isCreateMode ? "Thêm thể loại mới" : isEditMode ? "Cập nhật thể loại" : "Chi tiết thể loại"}
             subtitle={!isCreateMode ? genre.name : undefined}
             schema={genreFormSchema}
             defaultValues={{
@@ -37,8 +47,9 @@ export function GenreFormDialog({
             }}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
-            submitLabel="Thêm mới"
-            readOnly={!isCreateMode}
+            submitLabel={isCreateMode ? "Thêm mới" : "Cập nhật"}
+            readOnly={isReadOnly}
+            onEdit={isReadOnly ? () => setIsEditMode(true) : undefined}
             maxWidth="max-w"
         >
             {(form) => (

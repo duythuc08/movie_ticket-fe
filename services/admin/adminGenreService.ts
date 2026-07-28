@@ -8,6 +8,7 @@ import type {
 import {
   adminGet,
   adminPost,
+  adminPut,
   adminPutEmpty,
   buildFilterString,
   buildLikeFilterString,
@@ -60,6 +61,14 @@ export async function createGenre(
   payload: GenreCreatePayload
 ): Promise<AdminGenre> {
   return adminPost<AdminGenre>(token, "/admin/genres", payload);
+}
+
+export async function updateGenre(
+  token: string,
+  genreId: number,
+  payload: GenreCreatePayload
+): Promise<AdminGenre> {
+  return adminPut<AdminGenre>(token, `/admin/genres/${genreId}`, payload);
 }
 
 export async function activateGenre(

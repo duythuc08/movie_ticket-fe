@@ -35,11 +35,13 @@ export default function ForgotPasswordPage() {
     try {
       await sendForgotPassword(email);
       setIsSuccess(true);
-      setMessage("OTP đã được gửi. Vui lòng kiểm tra email!");
+      setMessage("Nếu email hợp lệ, hệ thống đã gửi mã OTP. Vui lòng kiểm tra hộp thư!");
       setStep("verify");
     } catch (error) {
       console.error(error);
-      setMessage("Không thể gửi yêu cầu. Vui lòng kiểm tra email và thử lại.");
+      setIsSuccess(true); // Tránh ném lỗi để chống dò email
+      setMessage("Nếu email hợp lệ, hệ thống đã gửi mã OTP. Vui lòng kiểm tra hộp thư!");
+      setStep("verify");
     } finally {
       setLoading(false);
     }
@@ -71,11 +73,11 @@ export default function ForgotPasswordPage() {
       toast.error("Mật khẩu xác nhận không khớp!");
       return;
     }
-    if (form.newPassword.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
+    if (form.newPassword.length < 8) {
+      toast.error("Mật khẩu phải có ít nhất 8 ký tự!");
       return;
     }
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{6,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
     if (!passwordRegex.test(form.newPassword)) {
       toast.error("Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ in hoa và 1 ký tự đặc biệt!");
       return;
