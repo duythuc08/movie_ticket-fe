@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
@@ -97,13 +98,18 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
 
   const totalDiscount = (order.discountAmount || 0) + (order.memberDiscountAmount || 0);
 
+  const [isRePaying, setIsRePaying] = useState(false);
+
   const handleRePayment = async (method: "VNPAY" | "MOMO") => {
+    if (isRePaying) return;
+    setIsRePaying(true);
     try {
       const token = getStoredToken() ?? "";
       const url = await retryPaymentUrl(token, String(order.orderId), method);
       window.location.href = url;
     } catch {
       toast.error("Không thể kết nối đến máy chủ thanh toán.");
+      setIsRePaying(false);
     }
   };
 
@@ -272,6 +278,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
               <Button
                 size="sm"
                 onClick={() => handleRePayment("MOMO")}
+                disabled={isRePaying}
                 className="cursor-pointer font-bold rounded-xl hover:-translate-y-0.5 transition-all shadow-md bg-[#d82d8b] hover:bg-[#d82d8b]/90 text-white shrink-0"
               >
                 TT MoMo
@@ -279,6 +286,7 @@ export function OrderDetailDialog({ order, open, onClose }: Props) {
               <Button
                 size="sm"
                 onClick={() => handleRePayment("VNPAY")}
+                disabled={isRePaying}
                 className="cursor-pointer font-bold rounded-xl hover:-translate-y-0.5 transition-all shadow-md bg-[#0066b3] hover:bg-[#0066b3]/90 text-white shrink-0"
               >
                 TT VNPAY

@@ -26,6 +26,7 @@ export default function SeatSelectionPage() {
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const selectedSeatsRef = useRef<number[]>([]);
   const proceededRef = useRef(false);
+  const justReportedConflictRef = useRef(false);
   const [seatData, setSeatData] = useState<Record<string, SeatShowTime[]>>({});
   const [seatPrices, setSeatPrices] = useState<Record<string, number>>({});
   const [suggestedSeats, setSuggestedSeats] = useState<SuggestedSeat[]>([]);
@@ -135,7 +136,11 @@ export default function SeatSelectionPage() {
         setSelectedSeats((prev) => {
           const conflicts = prev.filter((id) => nowOccupiedByOthers.includes(id));
           if (conflicts.length > 0) {
-            toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.");
+            if (justReportedConflictRef.current) {
+              justReportedConflictRef.current = false;
+            } else {
+              toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.");
+            }
             return prev.filter((id) => !nowOccupiedByOthers.includes(id));
           }
           return prev;
@@ -232,6 +237,8 @@ export default function SeatSelectionPage() {
       router.push(`/food-selection/${showTimeId}`);
     } catch (err) {
       const error = err as Error;
+      justReportedConflictRef.current = true;
+      setTimeout(() => { justReportedConflictRef.current = false; }, 3000);
       toast.error(error.message || "Không thể khóa ghế. Vui lòng thử lại.");
       // Refresh để lấy trạng thái ghế mới nhất và bỏ chọn ghế bị conflict
       try {

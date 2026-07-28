@@ -261,7 +261,7 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                             </div>
                             {recommendation.usedColdStart && (
                               <Badge variant="outline" className="text-xs text-muted-foreground">
-                                Phim nổi bật (khách hàng mới)
+                                Phổ biến (khách hàng mới)
                               </Badge>
                             )}
                           </div>
@@ -318,8 +318,11 @@ export const UserDetailDialog = ({ open, onOpenChange, userId }: UserDetailDialo
                                       {movie.predictedScore.toFixed(2)}
                                     </td>
                                     <td className="p-3 text-right">
-                                      <Badge variant={movie.source === "cf" ? "secondary" : "outline"} className="text-xs">
-                                        {movie.source === "cf" ? "CF" : "Nổi bật"}
+                                      <Badge
+                                        variant={movie.source === "cf_pure" ? "secondary" : "outline"}
+                                        className="text-xs"
+                                      >
+                                        {movie.source === "cf_pure" ? "Cá nhân" : "Phổ biến"}
                                       </Badge>
                                     </td>
                                   </tr>
