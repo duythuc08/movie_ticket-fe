@@ -2,6 +2,7 @@
 
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { ImageUploadPreview, SingleSelectWithSearch } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,10 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { bannerFormSchema, type BannerFormSchema } from "@/lib/validations/admin.schemas";
 import { adminEventService } from "@/services/admin/adminEventService";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
-import type { AdminBanner, AdminMovie } from "@/types/admin.type";
+import { MovieSelectorDialog } from "@/components/admin/movie/MovieSelectorDialog";
+import type { AdminBanner } from "@/types/admin.type";
 import type { AdminEvent } from "@/types/admin/promotion";
-import { Hash, Image as ImageIcon, Link as LinkIcon, Settings2 } from "lucide-react";
+import { Film, Hash, Image as ImageIcon, Link as LinkIcon, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,11 +37,6 @@ interface BannerFormDialogProps {
 
 function BannerFormContent({
   form,
-  movies,
-  isLoadingMovies,
-  hasMore,
-  isLoadingMore,
-  onLoadMore,
   currentImageUrl,
   linkedMovie,
   events,
@@ -51,11 +47,6 @@ function BannerFormContent({
   onLoadMoreEvents,
 }: {
   form: UseFormReturn<BannerFormSchema>;
-  movies: AdminMovie[];
-  isLoadingMovies: boolean;
-  hasMore: boolean;
-  isLoadingMore: boolean;
-  onLoadMore: () => void;
   currentImageUrl?: string | null;
   linkedMovie?: { movieId: number; title: string } | null;
   events: AdminEvent[];
@@ -66,6 +57,8 @@ function BannerFormContent({
   onLoadMoreEvents: () => void;
 }) {
   const watchedType = form.watch("bannerType");
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState(linkedMovie?.title ?? "");
 
   return (
     <div className="space-y-6 py-2">
@@ -182,25 +175,31 @@ function BannerFormContent({
             <Controller
               control={form.control}
               name="movieId"
-              render={({ field }) => {
-                const base = movies.map((m) => ({ value: String(m.movieId), label: m.title }));
-                if (linkedMovie && !base.some((o) => o.value === String(linkedMovie.movieId))) {
-                  base.unshift({ value: String(linkedMovie.movieId), label: linkedMovie.title });
-                }
-                return (
-                  <SingleSelectWithSearch
-                    options={base}
-                    value={field.value != null ? String(field.value) : ""}
-                    onChange={(val) => field.onChange(val ? Number(val) : null)}
-                    placeholder="Chọn phim liên kết..."
-                    searchPlaceholder="Tìm tên phim..."
-                    isLoading={isLoadingMovies}
-                    hasMore={hasMore}
-                    isLoadingMore={isLoadingMore}
-                    onLoadMore={onLoadMore}
+              render={({ field }) => (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsMovieDialogOpen(true)}
+                    className="w-full justify-start font-normal h-10 gap-2"
+                  >
+                    <Film className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className={field.value ? "" : "text-muted-foreground"}>
+                      {field.value ? selectedMovieTitle : "Chọn phim liên kết..."}
+                    </span>
+                  </Button>
+                  <MovieSelectorDialog
+                    open={isMovieDialogOpen}
+                    onOpenChange={setIsMovieDialogOpen}
+                    value={field.value ?? null}
+                    excludeStopped={false}
+                    onSelect={(movie) => {
+                      field.onChange(movie.movieId);
+                      setSelectedMovieTitle(movie.title);
+                    }}
                   />
-                );
-              }}
+                </>
+              )}
             />
           </div>
         )}
@@ -276,12 +275,6 @@ export function BannerFormDialog({
   const isEditMode = !!banner;
 
   const PAGE_SIZE = 5;
-  const [movies, setMovies] = useState<AdminMovie[]>([]);
-  const [moviePage, setMoviePage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoadingMovies, setIsLoadingMovies] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [eventPage, setEventPage] = useState(0);
   const [hasMoreEvents, setHasMoreEvents] = useState(false);
@@ -294,29 +287,12 @@ export function BannerFormDialog({
 
     const resetTimer = window.setTimeout(() => {
       if (cancelled) return;
-      setMovies([]);
       setEvents([]);
-      setMoviePage(0);
       setEventPage(0);
-      setHasMore(false);
       setHasMoreEvents(false);
     }, 0);
 
     async function load() {
-      setIsLoadingMovies(true);
-      try {
-        const result = await fetchAdminMovies(token!, { page: 0, size: PAGE_SIZE });
-        if (!cancelled) {
-          setMovies(result.content);
-          setHasMore(!result.last);
-          setMoviePage(1);
-        }
-      } catch {
-        if (!cancelled) toast.error("Không thể tải danh sách phim");
-      } finally {
-        if (!cancelled) setIsLoadingMovies(false);
-      }
-
       setIsLoadingEvents(true);
       try {
         const evtResult = await adminEventService.getEvents(token!, 0, PAGE_SIZE);
@@ -338,21 +314,6 @@ export function BannerFormDialog({
       window.clearTimeout(resetTimer);
     };
   }, [open, token]);
-
-  async function handleLoadMore() {
-    if (!token || isLoadingMore || !hasMore) return;
-    setIsLoadingMore(true);
-    try {
-      const result = await fetchAdminMovies(token, { page: moviePage, size: PAGE_SIZE });
-      setMovies((prev) => [...prev, ...result.content]);
-      setHasMore(!result.last);
-      setMoviePage((p) => p + 1);
-    } catch {
-      toast.error("Không thể tải thêm phim");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }
 
   async function handleLoadMoreEvents() {
     if (!token || isLoadingMoreEvents || !hasMoreEvents) return;
@@ -404,11 +365,6 @@ export function BannerFormDialog({
       {(form) => (
         <BannerFormContent
           form={form}
-          movies={movies}
-          isLoadingMovies={isLoadingMovies}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-          onLoadMore={handleLoadMore}
           currentImageUrl={banner?.imageUrl}
           linkedMovie={banner?.movies}
           events={events}

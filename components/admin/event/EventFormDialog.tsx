@@ -1,5 +1,6 @@
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
-import { ImageUploadPreview, SingleSelectWithSearch } from "@/components/shared";
+import { ImageUploadPreview } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,10 +10,10 @@ import { useAuth } from "@/context/AuthContext";
 import { eventSchema, type EventValues } from "@/lib/validations/admin/promotion.schema";
 import { adminEventService } from "@/services/admin/adminEventService";
 import { uploadFileAndGetUrl } from "@/services/admin/adminFileService";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import { MovieSelectorDialog } from "@/components/admin/movie/MovieSelectorDialog";
 import type { AdminEvent } from "@/types/admin/promotion";
-import { HelpCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Film, HelpCircle, X as XIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -43,17 +44,8 @@ export const EventFormDialog = ({
 }: EventFormDialogProps) => {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [movieOptions, setMovieOptions] = useState<{ value: string; label: string }[]>([]);
-
-  useEffect(() => {
-    if (!token || !open) return;
-    fetchAdminMovies(token, { size: 200 })
-      .then((res) => setMovieOptions([
-        { value: "none", label: "— Không liên kết phim —" },
-        ...res.content.map((m) => ({ value: String(m.movieId), label: m.title })),
-      ]))
-      .catch(() => { });
-  }, [token, open]);
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState(event?.movieTitle ?? "");
 
   const isEdit = !!event;
 
@@ -168,11 +160,39 @@ export const EventFormDialog = ({
               </div>
               <div className="space-y-1.5">
                 <Label className="font-medium text-sm">Phim liên kết</Label>
-                <SingleSelectWithSearch
-                  options={movieOptions}
-                  value={form.watch("movieId") ? String(form.watch("movieId")) : "none"}
-                  onChange={(v) => form.setValue("movieId", v === "none" ? null : Number(v))}
-                  placeholder="Chọn phim (tùy chọn)..."
+                <div className="flex gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsMovieDialogOpen(true)}
+                    className="flex-1 justify-start font-normal bg-background gap-2"
+                  >
+                    <Film className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className={form.watch("movieId") ? "" : "text-muted-foreground"}>
+                      {form.watch("movieId") ? selectedMovieTitle : "Chọn phim (tùy chọn)..."}
+                    </span>
+                  </Button>
+                  {form.watch("movieId") && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => { form.setValue("movieId", null); setSelectedMovieTitle(""); }}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <MovieSelectorDialog
+                  open={isMovieDialogOpen}
+                  onOpenChange={setIsMovieDialogOpen}
+                  value={form.watch("movieId") ?? null}
+                  excludeStopped={false}
+                  onSelect={(movie) => {
+                    form.setValue("movieId", movie.movieId);
+                    setSelectedMovieTitle(movie.title);
+                  }}
                 />
               </div>
             </div>

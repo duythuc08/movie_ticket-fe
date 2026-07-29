@@ -1,4 +1,4 @@
-export type ShowTimeStatus = "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "FULLY_BOOKED";
+export type ShowTimeStatus = "DRAFT" | "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED" | "FULLY_BOOKED";
 export type SeatShowTimeStatus = "AVAILABLE" | "RESERVED" | "SOLD" | "BLOCKED";
 
 export interface Showtime {
@@ -69,4 +69,47 @@ export interface SeatShowtimeItem {
     seatColumn: number;
     price: number;
     status: SeatShowTimeStatus;
+}
+
+export interface ProposalMovieCountAssignment {
+    movieId: number;
+    count: number;
+}
+
+export interface ProposalRoomPlan {
+    roomId: number;
+    assignments: ProposalMovieCountAssignment[];
+}
+
+export interface ShowTimeProposalOverrideItem {
+    movieId: number;
+    roomId: number;
+    startTime: string;
+    endTime: string;
+}
+
+export interface ShowTimeProposalRequest {
+    cinemaId: number;
+    fromDate: string; // yyyy-MM-dd
+    toDate: string; // yyyy-MM-dd
+    openTime: string; // HH:mm
+    closeTime: string; // HH:mm
+    roomPlans: ProposalRoomPlan[];
+    dryRun: boolean;
+    /** Khi có: admin đã kéo-thả chỉnh tay trong Preview — ghi thẳng, không tính lại thuật toán. */
+    overrideShowtimes?: ShowTimeProposalOverrideItem[];
+}
+
+export interface ShowTimeProposalShortfall {
+    roomId: number;
+    roomName: string;
+    movieId: number;
+    movieTitle: string;
+    date: string;
+    missingCount: number;
+}
+
+export interface ShowTimeProposalResult {
+    created: Showtime[];
+    shortfalls: ShowTimeProposalShortfall[];
 }

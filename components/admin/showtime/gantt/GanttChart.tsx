@@ -19,11 +19,41 @@ interface GanttChartProps {
   selectedDate: Date;
   onViewDetail?: (showtime: Showtime) => void;
   onEdit?: (showtime: Showtime) => void;
+  onApproveDraft?: (showtime: Showtime) => void;
+  onEditDraftTime?: (showtime: Showtime) => void;
+  onDeleteDraft?: (showtime: Showtime) => void;
+  /** true = mọi khối DRAFT chỉ cho click-to-select để hoán đổi, không có dropdown action (Preview chưa lưu DB). */
+  dragOnly?: boolean;
+  /** showTimeId của khối đang được chọn làm vế đầu thao tác hoán đổi (chỉ dùng khi dragOnly). */
+  selectedForSwapId?: number | null;
+  /** Click vào 1 khối DRAFT khi dragOnly — dùng để chọn/hoán đổi thay vì kéo-thả. */
+  onSelectForSwap?: (showtime: Showtime) => void;
 }
 
-export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime, selectedDate, onViewDetail, onEdit }: GanttChartProps) => {
+export const GanttChart = ({
+  rooms,
+  showtimes,
+  onAddClick,
+  onUpdateShowtimeTime,
+  selectedDate,
+  onViewDetail,
+  onEdit,
+  onApproveDraft,
+  onEditDraftTime,
+  onDeleteDraft,
+  dragOnly = false,
+  selectedForSwapId = null,
+  onSelectForSwap,
+}: GanttChartProps) => {
+  // Lưới bắt đầu từ giờ của suất chiếu sớm nhất trong ngày (mặc định 9h nếu chưa có suất nào).
+  const startHour = useMemo(() => {
+    if (showtimes.length === 0) return 9;
+    const earliestHour = Math.min(...showtimes.map(st => new Date(st.startTime).getHours()));
+    return earliestHour;
+  }, [showtimes]);
+
   const times = Array.from({ length: 37 }, (_, i) => {
-    const hour = Math.floor(i / 2) + 9;
+    const hour = Math.floor(i / 2) + startHour;
     const isNextDay = hour >= 24;
     const displayHour = isNextDay ? hour - 24 : hour;
     const minute = i % 2 === 0 ? "00" : "30";
@@ -33,8 +63,8 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
     };
   });
 
-  // Slot index 30 = 00:00 (next day), slots 30-35 are next-day
-  const MIDNIGHT_IDX = 30;
+  // Slot index tại đó 00:00 (hôm sau) rơi vào — phụ thuộc startHour vì lưới bắt đầu từ giờ đó.
+  const MIDNIGHT_IDX = (24 - startHour) * 2;
 
   const [dragOverCell, setDragOverCell] = useState<{ roomId: number, cellIndex: number } | null>(null);
 
@@ -44,15 +74,15 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
     const cellIndex = Math.max(0, Math.min(35, Math.floor(percent * 36)));
     const roundedMinutes = cellIndex * 30;
     
-    let hour = Math.floor(roundedMinutes / 60) + 9;
+    let hour = Math.floor(roundedMinutes / 60) + startHour;
     const minute = roundedMinutes % 60;
-    
+
     const clickDate = new Date(selectedDate);
     if (hour >= 24) {
       hour -= 24;
       clickDate.setDate(clickDate.getDate() + 1);
     }
-    
+
     const pad = (n: number) => n.toString().padStart(2, "0");
     return `${clickDate.getFullYear()}-${pad(clickDate.getMonth() + 1)}-${pad(clickDate.getDate())}T${pad(hour)}:${pad(minute)}:00`;
   };
@@ -93,7 +123,7 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
     let newStartTime;
     if (cellIndexToUse !== undefined) {
       const roundedMinutes = cellIndexToUse * 30;
-      let hour = Math.floor(roundedMinutes / 60) + 9;
+      let hour = Math.floor(roundedMinutes / 60) + startHour;
       const minute = roundedMinutes % 60;
       const clickDate = new Date(selectedDate);
       if (hour >= 24) {
@@ -188,7 +218,7 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
               />
               {Array.from({ length: 36 }).map((_, idx) => {
                 const roundedMinutes = idx * 30;
-                let hour = Math.floor(roundedMinutes / 60) + 9;
+                let hour = Math.floor(roundedMinutes / 60) + startHour;
                 const clickDate = new Date(selectedDate);
                 if (hour >= 24) { hour -= 24; clickDate.setDate(clickDate.getDate() + 1); }
                 clickDate.setHours(hour, roundedMinutes % 60, 0, 0);
@@ -224,7 +254,18 @@ export const GanttChart = ({ rooms, showtimes, onAddClick, onUpdateShowtimeTime,
 
               {showtimesByRoom.get(room.roomId)?.map(st => (
                 <div key={st.showTimeId}>
-                  <GanttShowtimeBlock showtime={st} onViewDetail={onViewDetail} onEdit={onEdit} />
+                  <GanttShowtimeBlock
+                    showtime={st}
+                    ganttStartHour={startHour}
+                    dragOnly={dragOnly}
+                    isSelectedForSwap={selectedForSwapId === st.showTimeId}
+                    onSelectForSwap={onSelectForSwap}
+                    onViewDetail={onViewDetail}
+                    onEdit={onEdit}
+                    onApproveDraft={onApproveDraft}
+                    onEditDraftTime={onEditDraftTime}
+                    onDeleteDraft={onDeleteDraft}
+                  />
                 </div>
               ))}
             </div>

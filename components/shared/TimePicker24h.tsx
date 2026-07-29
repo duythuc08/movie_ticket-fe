@@ -11,7 +11,8 @@ export const TimePicker24h = ({ value, onChange, disabled }: TimePicker24hProps)
   const [hour, minute] = value ? value.split(":") : ["", ""];
 
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
-  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"));
+  // Chỉ cho chọn phút bội số 5 (00, 05, 10, ..., 55) — khớp quy ước làm tròn giờ chiếu toàn hệ thống.
+  const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, "0"));
 
   const handleHourChange = (newHour: string) => {
     onChange(`${newHour}:${minute || "00"}`);

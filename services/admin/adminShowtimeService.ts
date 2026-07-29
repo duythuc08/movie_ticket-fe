@@ -1,8 +1,10 @@
-import { adminGet, adminPost, adminPut, adminPutEmpty } from "./adminApiClient";
+import { adminGet, adminPost, adminPut, adminPutEmpty, adminDelete } from "./adminApiClient";
 import type { ApiPagedResult } from "@/types/admin.type";
 import type {
   Showtime,
   ShowtimeDetail,
+  ShowTimeProposalRequest,
+  ShowTimeProposalResult,
 } from "@/types/admin/showtime";
 import type { SelectionResponse } from "@/types";
 import type { CreateShowtimeValues, UpdateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
@@ -38,5 +40,25 @@ export const adminShowtimeService = {
 
   getSeatSelection: async (token: string, showTimeId: number) => {
     return adminGet<SelectionResponse>(token, `/seatShowTimes/selection/${showTimeId}`);
-  }
+  },
+
+  proposeShowtimes: async (token: string, data: ShowTimeProposalRequest) => {
+    return adminPost<ShowTimeProposalResult>(token, "/admin/showtimes/propose", data);
+  },
+
+  approveDraft: async (token: string, id: number) => {
+    return adminPut<Showtime>(token, `/admin/showtimes/${id}/approve`, {});
+  },
+
+  approveDraftsByCinemaAndDate: async (token: string, cinemaId: number, day: string) => {
+    return adminPut<Showtime[]>(token, `/admin/showtimes/approve-batch?cinemaId=${cinemaId}&day=${day}`, {});
+  },
+
+  updateDraftTime: async (token: string, id: number, data: UpdateShowtimeValues) => {
+    return adminPut<Showtime>(token, `/admin/showtimes/${id}/draft`, data);
+  },
+
+  deleteDraft: async (token: string, id: number) => {
+    return adminDelete(token, `/admin/showtimes/${id}/draft`);
+  },
 };

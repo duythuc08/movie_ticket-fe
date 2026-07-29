@@ -13,13 +13,12 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploadPreview, SingleSelectWithSearch } from "@/components/shared";
+import { MovieSelectorDialog } from "@/components/admin/movie/MovieSelectorDialog";
 import { useAuth } from "@/context/AuthContext";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { adminEventService } from "@/services/admin/adminEventService";
-import type { AdminMovie } from "@/types/admin.type";
 import type { AdminEvent } from "@/types/admin/promotion";
 import { toast } from "sonner";
-import { ChevronDown, ChevronUp, Hash, Image as ImageIcon, Loader2, Plus, Settings2, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Film, Hash, Image as ImageIcon, Loader2, Plus, Settings2, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const bannerRowSchema = z.object({
@@ -63,9 +62,7 @@ interface BannerBulkDialogProps {
 function BannerRow({
   index,
   form,
-  movies,
   events,
-  isLoadingMovies,
   isLoadingEvents,
   onRemove,
   canRemove,
@@ -73,14 +70,14 @@ function BannerRow({
   index: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form: any;
-  movies: AdminMovie[];
   events: AdminEvent[];
-  isLoadingMovies: boolean;
   isLoadingEvents: boolean;
   onRemove: () => void;
   canRemove: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState("");
   const bannerType = form.watch(`banners.${index}.bannerType`);
   const title = form.watch(`banners.${index}.title`);
   const imageFile = form.watch(`banners.${index}.imageFile`);
@@ -217,14 +214,29 @@ function BannerRow({
                   control={form.control}
                   name={`banners.${index}.movieId`}
                   render={({ field }) => (
-                    <SingleSelectWithSearch
-                      options={movies.map((m) => ({ value: String(m.movieId), label: m.title }))}
-                      value={field.value != null ? String(field.value) : ""}
-                      onChange={(val) => field.onChange(val ? Number(val) : null)}
-                      placeholder="Chọn phim..."
-                      searchPlaceholder="Tìm phim..."
-                      isLoading={isLoadingMovies}
-                    />
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsMovieDialogOpen(true)}
+                        className="w-full justify-start font-normal h-9 gap-2"
+                      >
+                        <Film className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className={field.value ? "" : "text-muted-foreground"}>
+                          {field.value ? selectedMovieTitle : "Chọn phim..."}
+                        </span>
+                      </Button>
+                      <MovieSelectorDialog
+                        open={isMovieDialogOpen}
+                        onOpenChange={setIsMovieDialogOpen}
+                        value={field.value ?? null}
+                        excludeStopped={false}
+                        onSelect={(movie) => {
+                          field.onChange(movie.movieId);
+                          setSelectedMovieTitle(movie.title);
+                        }}
+                      />
+                    </>
                   )}
                 />
               </div>
@@ -285,9 +297,7 @@ const DEFAULT_ROW: BannerRowData = {
 
 export function BannerBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }: BannerBulkDialogProps) {
   const { token } = useAuth();
-  const [movies, setMovies] = useState<AdminMovie[]>([]);
   const [events, setEvents] = useState<AdminEvent[]>([]);
-  const [isLoadingMovies, setIsLoadingMovies] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
   const form = useForm<BulkForm>({
@@ -302,12 +312,6 @@ export function BannerBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }:
     form.reset({ banners: [{ ...DEFAULT_ROW }] });
 
     if (!token) return;
-    setIsLoadingMovies(true);
-    fetchAdminMovies(token, { page: 0, size: 200 })
-      .then((r) => setMovies(r.content))
-      .catch(() => toast.error("Không thể tải danh sách phim"))
-      .finally(() => setIsLoadingMovies(false));
-
     setIsLoadingEvents(true);
     adminEventService.getEvents(token, 0, 200)
       .then((r) => setEvents(r.content))
@@ -355,9 +359,7 @@ export function BannerBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }:
                 key={field.id}
                 index={index}
                 form={form}
-                movies={movies}
                 events={events}
-                isLoadingMovies={isLoadingMovies}
                 isLoadingEvents={isLoadingEvents}
                 onRemove={() => remove(index)}
                 canRemove={fields.length > 1}

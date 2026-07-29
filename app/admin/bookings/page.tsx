@@ -101,7 +101,7 @@ export default function AdminBookingsPage() {
           key: "orderStatus",
           label: "Trạng thái",
           options: [
-            { label: "(Mặc định)", value: "PENDING_OR_PAID_OR_USED" },
+            { label: "Mặc định", value: "PENDING_OR_PAID_OR_USED" },
             { label: "Chờ thanh toán", value: "PENDING" },
             { label: "Đang xử lý", value: "IN_PROGRESS" },
             { label: "Đã thanh toán", value: "PAID" },

@@ -3,13 +3,15 @@
 import { AdminFormDialog } from "@/components/admin/layout/AdminFormDialog";
 import { SingleSelectWithSearch } from "@/components/shared";
 import { TimePicker24h } from "@/components/shared/TimePicker24h";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { updateShowtimeSchema, UpdateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAdminRooms } from "@/services/admin/adminRoomService";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
+import { MovieSelectorDialog } from "@/components/admin/movie/MovieSelectorDialog";
 import type { Showtime } from "@/types/admin/showtime";
+import { Film } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -45,19 +47,21 @@ export const ShowtimeEditDialog = ({
 }: ShowtimeEditDialogProps) => {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [movieOptions, setMovieOptions] = useState<{ value: string; label: string; duration: number }[]>([]);
   const [roomOptions, setRoomOptions] = useState<{ value: string; label: string }[]>([]);
   const initialDateTime = useMemo(() => getInitialDateTime(showtime?.startTime), [showtime?.startTime]);
   const [dateStr, setDateStr] = useState(initialDateTime.date);
   const [timeStr, setTimeStr] = useState(initialDateTime.time);
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState(showtime?.movieTitle ?? "");
+  const [selectedMovieDuration, setSelectedMovieDuration] = useState(showtime?.movieDuration ?? 120);
+
+  useEffect(() => {
+    setSelectedMovieTitle(showtime?.movieTitle ?? "");
+    setSelectedMovieDuration(showtime?.movieDuration ?? 120);
+  }, [showtime]);
 
   useEffect(() => {
     if (!token) return;
-    fetchAdminMovies(token, { size: 200 })
-      .then((res) =>
-        setMovieOptions(res.content.map((m) => ({ value: String(m.movieId), label: m.title, duration: m.duration || 120 })))
-      )
-      .catch(() => {});
     fetchAdminRooms(token, { size: 200, entityStatus: "ACTIVE" })
       .then((res) =>
         setRoomOptions(res.content.map((r) => ({ value: String(r.roomId), label: r.name })))
@@ -102,9 +106,8 @@ export const ShowtimeEditDialog = ({
       maxWidth="max-w-2xl"
     >
       {(form) => {
-        const selectedMovie = movieOptions.find(m => m.value === String(form.watch("movieId")));
-        const duration = selectedMovie?.duration || 120;
-        
+        const duration = selectedMovieDuration || 120;
+
         let endTimeStr = "";
         if (dateStr && timeStr && duration) {
           const start = new Date(combineDateAndTime(dateStr, timeStr));
@@ -124,15 +127,31 @@ export const ShowtimeEditDialog = ({
         <>
           <div className="space-y-2">
             <Label>Phim <span className="text-destructive">*</span></Label>
-            <SingleSelectWithSearch
-              options={movieOptions}
-              value={String(form.watch("movieId") || "")}
-              onChange={(val) => form.setValue("movieId", Number(val), { shouldValidate: true })}
-              placeholder="Chọn phim..."
-            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsMovieDialogOpen(true)}
+              className="w-full justify-start font-normal h-10 gap-2"
+            >
+              <Film className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className={form.watch("movieId") ? "" : "text-muted-foreground"}>
+                {form.watch("movieId") ? selectedMovieTitle : "Chọn phim..."}
+              </span>
+            </Button>
             {form.formState.errors.movieId && (
               <p className="text-xs text-destructive">{form.formState.errors.movieId.message}</p>
             )}
+
+            <MovieSelectorDialog
+              open={isMovieDialogOpen}
+              onOpenChange={setIsMovieDialogOpen}
+              value={form.watch("movieId") || null}
+              onSelect={(movie) => {
+                form.setValue("movieId", movie.movieId, { shouldValidate: true });
+                setSelectedMovieTitle(movie.title);
+                setSelectedMovieDuration(movie.duration);
+              }}
+            />
           </div>
 
           <div className="space-y-2">

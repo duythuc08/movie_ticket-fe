@@ -11,7 +11,8 @@ import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAdminRooms } from "@/services/admin/adminRoomService";
 import { fetchSeatsByRoom } from "@/services/admin/adminSeatService";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
-import { Clock as ClockIcon, Plus, Trash2 } from "lucide-react";
+import { MovieSelectorDialog } from "@/components/admin/movie/MovieSelectorDialog";
+import { Clock as ClockIcon, Film, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useFieldArray } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
@@ -66,10 +67,11 @@ interface ShowtimeFormDialogProps {
 export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomId, initialStartTime, selectedDateStr }: ShowtimeFormDialogProps) => {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [movieOptions, setMovieOptions] = useState<SelectOption[]>([]);
   const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
   const [movieDurations, setMovieDurations] = useState<Record<string, number>>({});
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState<string>("");
 
   const loadOptions = useCallback(async () => {
     if (!token || !open) return;
@@ -83,8 +85,6 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
       const activeMovies = moviesRes.content.filter(
         m => m.movieStatus === "NOW_SHOWING" || m.movieStatus === "COMING_SOON"
       );
-      const mOptions = activeMovies.map(m => ({ value: String(m.movieId), label: m.title }));
-      setMovieOptions(mOptions);
 
       const durations: Record<string, number> = {};
       activeMovies.forEach(m => durations[String(m.movieId)] = m.duration);
@@ -202,13 +202,18 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label>Phim chiếu <span className="text-destructive">*</span></Label>
-                <SingleSelectWithSearch
-                  options={movieOptions}
-                  value={watchMovieId ? String(watchMovieId) : ""}
-                  onChange={(val) => form.setValue("movieId", Number(val))}
-                  placeholder={isLoadingOptions ? "Đang tải..." : "Chọn phim..."}
+                <Button
+                  type="button"
+                  variant="outline"
                   disabled={isLoadingOptions}
-                />
+                  onClick={() => setIsMovieDialogOpen(true)}
+                  className="w-full justify-start font-normal h-10 gap-2"
+                >
+                  <Film className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className={watchMovieId ? "" : "text-muted-foreground"}>
+                    {watchMovieId ? selectedMovieTitle : (isLoadingOptions ? "Đang tải..." : "Chọn phim...")}
+                  </span>
+                </Button>
                 {form.formState.errors.movieId && <p className="text-xs text-destructive">{form.formState.errors.movieId.message}</p>}
               </div>
               <div className="space-y-2">
@@ -349,6 +354,17 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
               </div>
               {form.formState.errors.startTimes && <p className="text-xs text-destructive">{form.formState.errors.startTimes.message}</p>}
             </div>
+
+            <MovieSelectorDialog
+              open={isMovieDialogOpen}
+              onOpenChange={setIsMovieDialogOpen}
+              value={watchMovieId || null}
+              onSelect={(movie) => {
+                form.setValue("movieId", movie.movieId, { shouldValidate: true });
+                setSelectedMovieTitle(movie.title);
+                setMovieDurations((prev) => ({ ...prev, [String(movie.movieId)]: movie.duration }));
+              }}
+            />
           </>
         );
       }}
