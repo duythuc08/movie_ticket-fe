@@ -99,10 +99,10 @@ export const CINEMA_STATUS_OPTIONS: { value: CinemaStatus; label: string }[] = [
 ];
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  STANDARD: "Thường",
-  VIP: "VIP",
-  IMAX: "IMAX",
+  TWO_D: "2D",
   THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
 };
 
 export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
@@ -110,3 +110,4 @@ export const ROOM_STATUS_LABELS: Record<RoomStatus, string> = {
   MAINTENANCE: "Bảo trì",
   CLEANING: "Vệ sinh",
 };
+

@@ -23,6 +23,7 @@ import {
   Home,
   Percent,
   CalendarDays,
+  Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -72,6 +73,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   { label: "Suất chiếu",         href: "/admin/showtimes",  icon: <Clock size={18} /> },
+  { label: "Chính sách giá vé",  href: "/admin/price-policies", icon: <Banknote size={18} /> },
   { label: "Đặt vé & Đơn hàng", href: "/admin/bookings",   icon: <Ticket size={18} /> },
   {
     label: "Khuyến mãi & Sự kiện",

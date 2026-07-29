@@ -14,6 +14,15 @@ interface BookingSummaryProps {
   disableProceed?: boolean;
 }
 
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
+
+const formatRoomType = (roomType?: string) => ROOM_TYPE_LABEL[roomType ?? ""] || roomType || "2D";
+
 export function BookingSummary({
   bookingInfo,
   groupedSeats,
@@ -39,7 +48,9 @@ export function BookingSummary({
         <div className="min-w-0">
           <h3 className="text-base font-bold mb-1 text-card-foreground line-clamp-2">{bookingInfo?.movie}</h3>
           <p className="text-xs text-muted-foreground mb-1">{bookingInfo?.cinema}</p>
-          <p className="text-xs text-muted-foreground">{bookingInfo?.roomName}</p>
+          <p className="text-xs text-muted-foreground">
+            {[formatRoomType(bookingInfo?.roomType), bookingInfo?.roomName].filter(Boolean).join(" • ")}
+          </p>
           <p className="text-xs font-semibold text-foreground mt-1">{bookingInfo?.time}</p>
         </div>
       </div>
@@ -104,3 +115,4 @@ export function BookingSummary({
     </div>
   );
 }
+

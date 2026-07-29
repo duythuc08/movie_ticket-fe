@@ -1,7 +1,7 @@
 import type { EntityStatus, AdminListQuery } from "./common";
 
 export type CinemaStatus = "OPERATIONAL" | "TEMPORARILY_CLOSED";
-export type RoomType = "STANDARD" | "VIP" | "IMAX" | "THREE_D";
+export type RoomType = "TWO_D" | "THREE_D" | "IMAX" | "PREMIUM";
 export type RoomStatus = "OPERATIONAL" | "MAINTENANCE" | "CLEANING";
 export type SeatType = "STANDARD" | "VIP" | "COUPLE" | "AISLE";
 export type SeatStatus = "NORMAL" | "BROKEN" | "MAINTENANCE";

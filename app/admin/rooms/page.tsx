@@ -30,10 +30,10 @@ import { RoomDetailDialog } from "@/components/admin/cinema/RoomDetailDialog";
 import { createRoomColumns } from "@/components/admin/cinema/RoomColumns";
 
 const ROOM_TYPE_FILTER = [
-  { label: "Phòng Thường", value: "STANDARD" },
-  { label: "Phòng VIP",    value: "VIP"      },
-  { label: "Phòng IMAX",   value: "IMAX"     },
-  { label: "Phòng 3D",     value: "THREE_D"  },
+  { label: "Phòng 2D", value: "TWO_D" },
+  { label: "Phòng 3D", value: "THREE_D" },
+  { label: "Phòng IMAX", value: "IMAX" },
+  { label: "Phòng Premium", value: "PREMIUM" },
 ];
 
 const PAGE_SIZE = 10;
@@ -108,9 +108,11 @@ export default function AdminRoomsPage() {
   }, [token]);
 
   useEffect(() => {
-    setPage(0);
-    loadRooms(0);
-    loadCinemas();
+    queueMicrotask(() => {
+      setPage(0);
+      void loadRooms(0);
+      void loadCinemas();
+    });
   }, [loadRooms, loadCinemas]);
 
   useEffect(() => {

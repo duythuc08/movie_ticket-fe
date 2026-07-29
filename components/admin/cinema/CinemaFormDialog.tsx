@@ -170,7 +170,7 @@ export function CinemaFormDialog({
                   variant="outline"
                   size="sm"
                   className="gap-1 h-8"
-                  onClick={() => append({ roomId: null, name: "", capacity: 0, roomType: "STANDARD", roomStatus: "OPERATIONAL" })}
+                  onClick={() => append({ roomId: null, name: "", capacity: 0, roomType: "TWO_D", roomStatus: "OPERATIONAL" })}
                 >
                   <Plus className="h-4 w-4" /> Thêm phòng
                 </Button>
@@ -204,10 +204,10 @@ export function CinemaFormDialog({
                     >
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent data-admin="">
-                        <SelectItem value="STANDARD">Thường</SelectItem>
-                        <SelectItem value="VIP">VIP</SelectItem>
-                        <SelectItem value="IMAX">IMAX</SelectItem>
+                        <SelectItem value="TWO_D">2D</SelectItem>
                         <SelectItem value="THREE_D">3D</SelectItem>
+                        <SelectItem value="IMAX">IMAX</SelectItem>
+                        <SelectItem value="PREMIUM">Premium</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

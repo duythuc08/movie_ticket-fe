@@ -42,6 +42,7 @@ export interface BookingState {
   cinemaId?: number;
   cinema?: string;
   roomName?: string;
+  roomType?: string;
   showTimeId?: number;
   date?: string;
   time?: string;

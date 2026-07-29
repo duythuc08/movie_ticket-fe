@@ -8,6 +8,15 @@ import { useQuickBooking } from "@/components/home/hooks/use-quick-booking";
 import { saveBookingState } from "@/components/booking/utils/bookingStorage";
 import type { Movie, Cinema, QuickBookingSlot } from "@/types";
 
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
+
+const formatRoomType = (roomType?: string) => ROOM_TYPE_LABEL[roomType ?? ""] || roomType || "2D";
+
 // --- Utility component for Combobox ---
 interface ComboboxFieldProps<T> {
   label: string;
@@ -278,6 +287,7 @@ export function QuickBookingBar() {
                           showTimeId: slot.showTimeId,
                           date: selectedDate,
                           roomName: slot.roomName,
+                          roomType: slot.roomType,
                         });
                         router.push(`/seat-selection/${slot.showTimeId}`);
                       }}
@@ -286,7 +296,7 @@ export function QuickBookingBar() {
                         {slot.startTime}
                       </span>
                       <span className={`text-xs ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                        {slot.roomType}
+                        {formatRoomType(slot.roomType)}
                       </span>
                     </button>
                   );

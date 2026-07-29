@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBookingState, mergeBookingState } from "@/components/booking/utils/bookingStorage";
 import { fetchSeatSelection, initiateBooking } from "@/components/booking/service/booking.service";
-import { setBookingTimer, clearBookingTimer } from "@/components/booking/hooks/use-booking-timer";
+import { setBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import { logActivity } from "@/components/activity/service/activity.service";
 import type { SeatShowTime, SeatDetail, SuggestedSeat } from "@/types";
 
@@ -15,6 +15,14 @@ import { SeatMap } from "@/components/booking/components/SeatMap";
 import { SeatLegend } from "@/components/booking/components/SeatLegend";
 import { formatCurrency, seatLabel } from "@/components/booking/utils/booking.utils";
 
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
+
+const formatRoomType = (roomType?: string) => ROOM_TYPE_LABEL[roomType ?? ""] || roomType || "2D";
 
 export default function SeatSelectionPage() {
   const router = useRouter();
@@ -153,7 +161,7 @@ export default function SeatSelectionPage() {
     es.onerror = () => es.close();
 
     return () => es.close();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [loading, showTimeId]);
 
   const toggleSeat = (seat: SeatShowTime) => {
@@ -284,8 +292,6 @@ export default function SeatSelectionPage() {
     );
   }
 
-  const rows = Object.keys(seatData).sort();
-
   return (
     <div className="min-h-screen pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 pb-36 bg-background">
       <div className="max-w-6xl mx-auto">
@@ -295,7 +301,7 @@ export default function SeatSelectionPage() {
           <div>
             <h1 className="mb-1 text-2xl font-bold text-foreground">Chọn ghế của bạn</h1>
             <p className="text-sm text-muted-foreground">
-              {bookingInfo.movie || "Tên phim"} • {bookingInfo.roomName || "Phòng chiếu"}
+              {bookingInfo.movie || "Tên phim"} • {formatRoomType(bookingInfo.roomType)} • {bookingInfo.roomName || "Phòng chiếu"}
             </p>
           </div>
           {suggestedSeats.length > 0 && !showSuggestions && (
@@ -377,3 +383,4 @@ export default function SeatSelectionPage() {
     </div>
   );
 }
+

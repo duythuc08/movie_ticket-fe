@@ -122,7 +122,7 @@ export async function fetchShowtimesByDate(
 
     if (data.code !== 0) return { date: dateLabel, cinemas: [] };
 
-    const grouped: Record<string, { cinemaId: number; name: string; location: string; times: { id: number; time: string; roomName: string }[] }> = {};
+    const grouped: Record<string, { cinemaId: number; name: string; location: string; times: { id: number; time: string; roomName: string; roomType: string }[] }> = {};
 
     (data.result as Record<string, unknown>[]).forEach((show) => {
       const cinemaKey = String(show.cinemaId);
@@ -145,6 +145,7 @@ export async function fetchShowtimesByDate(
         id: show.showTimeId as number,
         time: timeString,
         roomName: (show.roomName as string) || "Unknown Room",
+        roomType: (show.roomType as string) || "TWO_D",
       });
     });
 

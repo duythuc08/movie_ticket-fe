@@ -8,24 +8,24 @@ import { Eye, Pencil, Power, PowerOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  STANDARD: "Thường",
-  VIP:      "VIP",
+  TWO_D: "2D",
+  PREMIUM: "Premium",
   IMAX:     "IMAX",
-  THREE_D:  "3D",
+  THREE_D: "3D",
 };
 
 export const ROOM_TYPE_BADGE_CLASSES: Record<RoomType, string> = {
-  STANDARD: "bg-blue-600 text-white border-transparent",
-  VIP:      "bg-amber-500 text-white border-transparent",
+  TWO_D: "bg-blue-600 text-white border-transparent",
+  PREMIUM: "bg-amber-500 text-white border-transparent",
   IMAX:     "bg-violet-600 text-white border-transparent",
-  THREE_D:  "bg-teal-500 text-white border-transparent",
+  THREE_D: "bg-teal-500 text-white border-transparent",
 };
 
 export const ROOM_TYPE_OPTIONS: { value: RoomType; label: string }[] = [
-  { value: "STANDARD", label: "Phòng Thường" },
-  { value: "VIP",      label: "Phòng VIP"    },
-  { value: "IMAX",     label: "Phòng IMAX"   },
-  { value: "THREE_D",  label: "Phòng 3D"     },
+  { value: "TWO_D", label: "Ph�ng 2D" },
+  { value: "PREMIUM", label: "Ph�ng Premium" },
+  { value: "IMAX", label: "Ph�ng IMAX" },
+  { value: "THREE_D", label: "Ph�ng 3D" },
 ];
 
 export const ROOM_STATUS_OPTIONS: { value: RoomStatus; label: string }[] = [
@@ -124,3 +124,4 @@ export function createRoomColumns(
     },
   ];
 }
+

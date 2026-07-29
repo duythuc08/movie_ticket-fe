@@ -38,6 +38,7 @@ export function clearOrderData(): void {
     showTimeId: existing.showTimeId,
     date: existing.date,
     roomName: existing.roomName,
+    roomType: existing.roomType,
   });
 }
 

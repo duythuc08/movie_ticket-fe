@@ -1,4 +1,4 @@
-import { adminGet, adminPost, adminPut, adminPutEmpty, buildFilterString } from "./adminApiClient";
+import { adminGet, adminPost, adminPut, adminPutEmpty } from "./adminApiClient";
 import type { ApiPagedResult } from "@/types/admin.type";
 import type {
   Showtime,
@@ -21,7 +21,11 @@ export const adminShowtimeService = {
   },
 
   createShowtime: async (token: string, data: CreateShowtimeValues) => {
-    return adminPost<Showtime[]>(token, "/admin/showtimes", data);
+    const { usePricePolicy, prices, ...rest } = data;
+    return adminPost<Showtime[]>(token, "/admin/showtimes", {
+      ...rest,
+      prices: usePricePolicy ? [] : prices,
+    });
   },
 
   updateShowtime: async (token: string, id: number, data: UpdateShowtimeValues) => {

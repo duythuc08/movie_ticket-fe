@@ -15,8 +15,16 @@ interface ShowtimesProps {
     showTimeId: number;
     date: string;
     roomName: string;
+    roomType: string;
   }) => void;
 }
+
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
 
 function isToday(date: Date): boolean {
   const today = new Date();
@@ -28,9 +36,9 @@ function isToday(date: Date): boolean {
 }
 
 function filterValidTimes(
-  times: { id: number; time: string; roomName: string }[],
+  times: { id: number; time: string; roomName: string; roomType: string }[],
   isCurrentDay: boolean
-): { id: number; time: string; roomName: string }[] {
+): { id: number; time: string; roomName: string; roomType: string }[] {
   if (!isCurrentDay) return times;
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -43,7 +51,7 @@ function filterValidTimes(
 export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: ShowtimesProps) {
   const handleSelectTime = (
     cinema: { cinemaId: number; name: string; location: string },
-    timeObj: { id: number; time: string; roomName: string }
+    timeObj: { id: number; time: string; roomName: string; roomType: string }
   ) => {
     onSelect({
       cinemaId: cinema.cinemaId,
@@ -53,6 +61,7 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
       showTimeId: timeObj.id,
       date: data?.date ?? "",
       roomName: timeObj.roomName,
+      roomType: timeObj.roomType,
     });
   };
 
@@ -120,9 +129,12 @@ export function Showtimes({ data, days, selectedDate, onSelectDate, onSelect }: 
                   <button
                     key={tIndex}
                     onClick={() => handleSelectTime(cinema, timeObj)}
-                    className="px-5 py-2 bg-secondary border border-border rounded-xl hover:bg-primary hover:text-primary-foreground hover:border-primary hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 text-sm font-semibold cursor-pointer"
+                    className="min-w-20 px-4 py-2 bg-secondary border border-border rounded-xl hover:bg-primary hover:text-primary-foreground hover:border-primary hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 text-sm font-semibold cursor-pointer flex flex-col items-center gap-0.5"
                   >
-                    {timeObj.time}
+                    <span>{timeObj.time}</span>
+                    <span className="text-[11px] font-bold opacity-75">
+                      {ROOM_TYPE_LABEL[timeObj.roomType] || timeObj.roomType || "2D"}
+                    </span>
                   </button>
                 ))}
               </div>

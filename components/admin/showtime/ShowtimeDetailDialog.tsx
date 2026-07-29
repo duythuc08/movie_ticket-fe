@@ -72,9 +72,13 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
 
   // SSE — cập nhật sơ đồ ghế real-time khi tab "Sơ đồ ghế" đang mở
   useEffect(() => {
-    if (!open || activeTab !== "seats" || !showTimeId) return;
+    if (!open || activeTab !== "seats" || !showTimeId || !token) return;
 
-    const es = new EventSource(`/api-proxy/seatShowTimes/selection/${showTimeId}/stream`);
+    // EventSource không hỗ trợ custom header nên phải gắn token qua query param.
+    // Gọi thẳng backend thay vì qua rewrite /api-proxy vì Next.js rewrite buffer
+    // response và không stream được text/event-stream tới client.
+    const apiBase = process.env.NEXT_PUBLIC_API_URL;
+    const es = new EventSource(`${apiBase}/seatShowTimes/selection/${showTimeId}/stream?token=${token}`);
 
     es.addEventListener("seat-update", (e: MessageEvent) => {
       try {
@@ -88,7 +92,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
     es.onerror = () => es.close();
 
     return () => es.close();
-  }, [open, activeTab, showTimeId]);
+  }, [open, activeTab, showTimeId, token]);
 
   const handleCancelShowtime = () => setConfirmCancel(true);
 

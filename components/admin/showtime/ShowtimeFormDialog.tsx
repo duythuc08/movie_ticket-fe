@@ -4,6 +4,7 @@ import { TimePicker24h } from "@/components/shared/TimePicker24h";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import { createShowtimeSchema, CreateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
@@ -65,8 +66,6 @@ interface ShowtimeFormDialogProps {
 export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomId, initialStartTime, selectedDateStr }: ShowtimeFormDialogProps) => {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [movieDuration, setMovieDuration] = useState<number>(0);
-
   const [movieOptions, setMovieOptions] = useState<SelectOption[]>([]);
   const [roomOptions, setRoomOptions] = useState<SelectOption[]>([]);
   const [movieDurations, setMovieDurations] = useState<Record<string, number>>({});
@@ -92,10 +91,10 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
       setMovieDurations(durations);
 
       const roomTypeMap: Record<string, string> = {
-        "STANDARD": "Phòng thường",
-        "VIP": "VIP",
+        "TWO_D": "2D",
+        "THREE_D": "3D",
         "IMAX": "IMAX",
-        "THREE_D": "3D"
+        "PREMIUM": "Premium",
       };
       setRoomOptions(roomsRes.content.map(r => {
         const typeStr = roomTypeMap[r.roomType] || r.roomType;
@@ -109,7 +108,9 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
   }, [token, open]);
 
   useEffect(() => {
-    loadOptions();
+    queueMicrotask(() => {
+      void loadOptions();
+    });
   }, [loadOptions]);
 
   const defaultDateStr = selectedDateStr || initialStartTime?.split("T")[0] || new Date().toISOString().split("T")[0];
@@ -120,6 +121,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
       movieId: 0,
       roomId: initialRoomId || 0,
       startTimes: [timeOnly ? combineDateAndTime(defaultDateStr, timeOnly) : ""],
+      usePricePolicy: true,
       prices: [{ price: 0, seatType: "STANDARD" }]
     };
   }, [initialRoomId, initialStartTime, defaultDateStr]);
@@ -158,6 +160,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
         const watchMovieId = form.watch("movieId");
         const watchStartTimes = form.watch("startTimes") || [];
         const watchRoomId = form.watch("roomId");
+        const usePricePolicy = form.watch("usePricePolicy");
         const dur = movieDurations[String(watchMovieId)] || 0;
 
         useEffect(() => {
@@ -182,7 +185,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
           return () => { isMounted = false; };
         }, [token, watchRoomId, form]);
 
-        const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({
+        const { fields: priceFields } = useFieldArray({
           control: form.control,
           name: "prices"
         });
@@ -221,6 +224,25 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
               </div>
             </div>
 
+            <div className="rounded-lg border border-border bg-muted/20 p-4 mt-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold">Dùng chính sách giá tự động</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Tắt để tự nhập giá tay cho từng loại ghế, giống hệt cách form hiện tại đang hoạt động.
+                  </p>
+                </div>
+                <Controller
+                  name="usePricePolicy"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+              </div>
+            </div>
+
+            {!usePricePolicy && (
             <div className="space-y-3 pt-4">
               <div className="flex items-center justify-between pb-1 border-b border-border">
                 <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Bảng giá</Label>
@@ -264,6 +286,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
               </div>
               {form.formState.errors.prices && <p className="text-xs text-destructive">{form.formState.errors.prices.message}</p>}
             </div>
+            )}
 
             <div className="space-y-3 pt-4">
               <div className="flex items-center justify-between pb-1 border-b border-border">
@@ -272,7 +295,7 @@ export const ShowtimeFormDialog = ({ open, onOpenChange, onSuccess, initialRoomI
 
               <div className="space-y-4">
                 {watchStartTimes.map((currentValue, index) => {
-                  const { date, time } = parseDateTimeToDateAndTime(currentValue);
+                  const { time } = parseDateTimeToDateAndTime(currentValue);
 
                   return (
                     <div key={index} className="p-4 bg-muted/20 border border-border/60 rounded-xl space-y-3 relative group">

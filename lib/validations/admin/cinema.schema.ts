@@ -24,7 +24,7 @@ export const cinemaFormSchema = z.object({
     roomId: z.number().nullable(),
     name: z.string().min(1, "Tên phòng không được trống"),
     capacity: z.number().int().min(0),
-    roomType: z.enum(["STANDARD", "VIP", "IMAX", "THREE_D"]),
+    roomType: z.enum(["TWO_D", "THREE_D", "IMAX", "PREMIUM"]),
     roomStatus: z.enum(["OPERATIONAL", "MAINTENANCE", "CLEANING"]),
   })).optional(),
 });
@@ -45,7 +45,7 @@ export const roomFormSchema = z.object({
     .number({ error: "Vui lòng chọn rạp" })
     .int()
     .positive("ID rạp không hợp lệ"),
-  roomType: z.enum(["STANDARD", "VIP", "IMAX", "THREE_D"] as const, {
+  roomType: z.enum(["TWO_D", "THREE_D", "IMAX", "PREMIUM"] as const, {
     error: "Vui lòng chọn loại phòng",
   }),
   roomStatus: z.enum(["OPERATIONAL", "MAINTENANCE", "CLEANING"] as const, {

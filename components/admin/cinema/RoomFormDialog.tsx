@@ -41,7 +41,7 @@ export function RoomFormDialog({
     name:       room?.name              ?? "",
     capacity:   room?.capacity          ?? 0,
     cinemaId:   room?.cinemas?.cinemaId ?? defaultCinemaId ?? 0,
-    roomType:   (room?.roomType         ?? "") as RoomType,
+    roomType:   (room?.roomType         ?? "TWO_D") as RoomType,
     roomStatus: (room?.roomStatus       ?? "") as RoomStatus,
     rowCount:   "" as unknown as number,
     columnCount: "" as unknown as number,

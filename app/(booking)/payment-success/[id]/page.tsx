@@ -9,6 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getOrderDetail } from "@/components/booking/service/order.service";
 import type { OrderData, OrderExtraInfo } from "@/components/profile/types";
 
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
+
+const formatRoomType = (roomType?: string) => ROOM_TYPE_LABEL[roomType ?? ""] || roomType || undefined;
+
 function PaymentSuccessContent() {
   const { id: pathId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -46,7 +55,7 @@ function PaymentSuccessContent() {
         setExtraInfo({
           movie: showTimeInfo?.movieName || pending?.movie,
           moviePoster: showTimeInfo?.moviePosterUrl || pending?.moviePoster,
-          format: pending?.format,
+          format: formatRoomType(pending?.roomType) || pending?.format,
           cinema: showTimeInfo?.cinemaName || pending?.cinema,
           roomName: showTimeInfo?.roomName || pending?.roomName,
           date: showTimeDate
@@ -68,8 +77,10 @@ function PaymentSuccessContent() {
     const targetOrderId = orderIdFromUrl || pending?.orderId;
 
     if (!targetOrderId) {
-      setError("Không tìm thấy mã đơn hàng");
-      setLoading(false);
+      queueMicrotask(() => {
+        setError("Không tìm thấy mã đơn hàng");
+        setLoading(false);
+      });
       return;
     }
 
@@ -165,8 +176,6 @@ function PaymentSuccessContent() {
       </main>
     );
   }
-
-  const ticketSummary = getTicketSummary();
 
   return (
     <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
