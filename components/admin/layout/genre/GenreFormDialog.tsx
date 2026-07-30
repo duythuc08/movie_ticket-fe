@@ -48,7 +48,6 @@ export function GenreFormDialog({
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             submitLabel={isCreateMode ? "Thêm mới" : "Cập nhật"}
-            readOnly={isReadOnly}
             onEdit={isReadOnly ? () => setIsEditMode(true) : undefined}
             maxWidth="max-w"
         >

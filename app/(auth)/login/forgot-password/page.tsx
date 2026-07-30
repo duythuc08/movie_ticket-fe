@@ -8,14 +8,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sendForgotPassword, verifyOTP, resetPassword } from "@/components/auth/service/auth.service";
+import { sendForgotPassword, resetPassword } from "@/components/auth/service/auth.service";
+import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
 import type { ResetPasswordForm, ForgotPasswordStep } from "@/components/auth/types";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<ForgotPasswordStep>("email");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
   const [form, setForm] = useState<ResetPasswordForm>({ newPassword: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -42,25 +42,6 @@ export default function ForgotPasswordPage() {
       setIsSuccess(true); // Tránh ném lỗi để chống dò email
       setMessage("Nếu email hợp lệ, hệ thống đã gửi mã OTP. Vui lòng kiểm tra hộp thư!");
       setStep("verify");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // STEP 2: Xác thực OTP
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setIsSuccess(false);
-    try {
-      await verifyOTP(email, otp);
-      setIsSuccess(true);
-      setMessage("OTP xác thực thành công. Vui lòng nhập mật khẩu mới.");
-      setStep("reset");
-    } catch (error) {
-      console.error(error);
-      setMessage("OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -100,6 +81,23 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  if (step === "verify") {
+    return (
+      <VerifyEmailForm
+        email={email}
+        onClose={() => {
+          setStep("email");
+          router.push("/login");
+        }}
+        onVerified={() => {
+          setIsSuccess(true);
+          setMessage("OTP xác thực thành công. Vui lòng nhập mật khẩu mới.");
+          setStep("reset");
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -116,7 +114,6 @@ export default function ForgotPasswordPage() {
 
           <h2 className="text-center text-2xl font-medium mb-6 text-white">
             {step === "email" && "Quên mật khẩu"}
-            {step === "verify" && "Xác thực OTP"}
             {step === "reset" && "Đặt mật khẩu mới"}
           </h2>
 
@@ -147,27 +144,6 @@ export default function ForgotPasswordPage() {
               </div>
               <Button type="submit" size="lg" disabled={loading} className="w-full h-10 mt-4 text-lg font-semibold bg-primary hover:bg-primary/90 cursor-pointer">
                 {loading ? "Đang gửi..." : "Gửi OTP"}
-              </Button>
-            </form>
-          )}
-
-          {step === "verify" && (
-            <form onSubmit={handleVerifyOtp} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-white">Mã OTP</Label>
-                <Input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  placeholder="Nhập mã OTP từ email"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  className="bg-zinc-900 text-white border-zinc-700 focus:border-primary focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <Button type="submit" size="lg" disabled={loading} className="w-full h-10 mt-4 text-lg font-semibold bg-primary hover:bg-primary/90">
-                {loading ? "Đang xác thực..." : "Xác thực OTP"}
               </Button>
             </form>
           )}

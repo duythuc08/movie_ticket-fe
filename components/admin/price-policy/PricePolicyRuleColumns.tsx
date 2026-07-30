@@ -64,12 +64,12 @@ export const createPricePolicyRuleColumns = ({
   onDelete,
 }: PricePolicyRuleColumnsProps): ColumnDef<PricePolicyRule>[] => [
     {
-      id: "room",
+      accessorKey: "roomType",
       header: "Loại phòng",
       cell: ({ row }) => <span className="text-sm">{ROOM_TYPE_LABEL[row.original.roomType]}</span>,
     },
     {
-      id: "seat",
+      accessorKey: "seatType",
       header: "Loại ghế",
       cell: ({ row }) => <span className="text-sm">{SEAT_TYPE_LABEL[row.original.seatType]}</span>,
     },

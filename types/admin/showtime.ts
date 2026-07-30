@@ -113,3 +113,14 @@ export interface ShowTimeProposalResult {
     created: Showtime[];
     shortfalls: ShowTimeProposalShortfall[];
 }
+
+export interface DraftProposalDateCount {
+    date: string;
+    count: number;
+}
+
+export interface DraftProposalCinema {
+    cinemaId: number;
+    cinemaName: string;
+    dates: DraftProposalDateCount[];
+}

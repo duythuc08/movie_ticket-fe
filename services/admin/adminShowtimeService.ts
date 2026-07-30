@@ -5,6 +5,7 @@ import type {
   ShowtimeDetail,
   ShowTimeProposalRequest,
   ShowTimeProposalResult,
+  DraftProposalCinema,
 } from "@/types/admin/showtime";
 import type { SelectionResponse } from "@/types";
 import type { CreateShowtimeValues, UpdateShowtimeValues } from "@/lib/validations/admin/showtime.schema";
@@ -16,6 +17,10 @@ export const adminShowtimeService = {
 
   getShowtimesForGantt: async (token: string, cinemaId: number, day: string) => {
     return adminGet<Showtime[]>(token, "/admin/showtimes/gantt", { cinemaId, day });
+  },
+
+  getDraftProposalCinemas: async (token: string) => {
+    return adminGet<DraftProposalCinema[]>(token, "/admin/showtimes/draft-proposals");
   },
 
   getShowtimeDetail: async (token: string, id: number) => {

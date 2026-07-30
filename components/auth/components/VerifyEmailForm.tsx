@@ -12,9 +12,12 @@ import { OTP_RESEND_COOLDOWN } from "@/components/auth/constants/auth.constants"
 interface VerifyEmailFormProps {
   email: string;
   onClose: () => void;
+  /** Gọi khi xác thực OTP thành công thay vì onClose — dùng cho luồng cần chuyển bước tiếp
+   * (VD quên mật khẩu chuyển sang đặt mật khẩu mới) thay vì đóng hẳn màn hình xác thực. */
+  onVerified?: () => void;
 }
 
-export function VerifyEmailForm({ email, onClose }: VerifyEmailFormProps) {
+export function VerifyEmailForm({ email, onClose, onVerified }: VerifyEmailFormProps) {
   const [code, setCode] = useState("");
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -75,8 +78,13 @@ export function VerifyEmailForm({ email, onClose }: VerifyEmailFormProps) {
 
     try {
       await verifyOTP(email, code);
-      setMessage("Xác thực thành công! Đang chuyển về đăng nhập...");
-      setTimeout(() => onClose(), 2000);
+      if (onVerified) {
+        setMessage("Xác thực thành công!");
+        setTimeout(() => onVerified(), 1000);
+      } else {
+        setMessage("Xác thực thành công! Đang chuyển về đăng nhập...");
+        setTimeout(() => onClose(), 2000);
+      }
     } catch (error) {
       console.error("Verify email error:", error);
       setMessage("Mã xác thực không hợp lệ hoặc đã hết hạn.");

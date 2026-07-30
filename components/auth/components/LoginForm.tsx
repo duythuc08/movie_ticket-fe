@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
-import { loginUser, resendOTP } from "@/components/auth/service/auth.service";
+import { loginUser } from "@/components/auth/service/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { AUTH_ROUTES, ERROR_MESSAGES } from "@/components/auth/constants/auth.constants";
 import { decodeToken } from "@/components/auth/utils/auth.utils";
@@ -61,17 +61,16 @@ export function LoginForm() {
     try {
       const result = await loginUser(form.email, form.password);
 
-      if (result.authenticated && result.token) {
-        if (result.enabled) {
-          login(result.token, result.refreshToken);
-          const payload = decodeToken(result.token);
-          const scope = String(payload?.scope ?? payload?.scope ?? "");
-          const destination = scope.includes("ADMIN") ? "/admin" : from;
-          router.replace(destination);
-        } else {
-          await resendOTP(form.email);
-          setShowVerify(true);
-        }
+      if (result.authenticated && result.enabled && result.token) {
+        login(result.token, result.refreshToken);
+        const payload = decodeToken(result.token);
+        const scope = String(payload?.scope ?? payload?.scope ?? "");
+        const destination = scope.includes("ADMIN") ? "/admin" : from;
+        router.replace(destination);
+      } else if (result.authenticated && !result.enabled) {
+        // Backend đã tự gửi lại OTP khi phát hiện tài khoản chưa xác thực (không cấp
+        // token cho tới khi verify) — chỉ cần chuyển sang màn hình nhập mã.
+        setShowVerify(true);
       } else {
         setError(ERROR_MESSAGES.INVALID_CREDENTIALS);
       }

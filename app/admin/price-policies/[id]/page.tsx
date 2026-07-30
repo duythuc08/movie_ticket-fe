@@ -13,6 +13,26 @@ import { adminHolidayService } from "@/services/admin/adminHolidayService";
 import { createPricePolicyRuleColumns } from "@/components/admin/price-policy/PricePolicyRuleColumns";
 import { PriceRuleFormDialog } from "@/components/admin/price-policy/PriceRuleFormDialog";
 import type { PricePolicy, PricePolicyRule, Holiday } from "@/types/admin/pricePolicy";
+import type { FilterConfig } from "@/components/shared";
+
+const ROOM_TYPE_OPTIONS: FilterConfig["options"] = [
+  { label: "2D", value: "TWO_D" },
+  { label: "3D", value: "THREE_D" },
+  { label: "IMAX", value: "IMAX" },
+  { label: "Premium", value: "PREMIUM" },
+];
+
+const SEAT_TYPE_OPTIONS: FilterConfig["options"] = [
+  { label: "Thường", value: "STANDARD" },
+  { label: "VIP", value: "VIP" },
+  { label: "Đôi", value: "COUPLE" },
+];
+
+const RULE_TYPE_OPTIONS: FilterConfig["options"] = [
+  { label: "Theo ngày trong tuần", value: "WEEKDAY_LIST" },
+  { label: "Ngày lễ", value: "HOLIDAY" },
+  { label: "Giá mặc định", value: "DEFAULT" },
+];
 
 export default function AdminPricePolicyDetailPage() {
   const { token } = useAuth();
@@ -96,6 +116,11 @@ export default function AdminPricePolicyDetailPage() {
         data={rules}
         isLoading={isLoading}
         emptyText="Chưa có rule nào trong chính sách này."
+        filters={[
+          { key: "roomType", label: "Loại phòng", options: ROOM_TYPE_OPTIONS },
+          { key: "seatType", label: "Loại ghế", options: SEAT_TYPE_OPTIONS },
+          { key: "ruleType", label: "Loại rule", options: RULE_TYPE_OPTIONS },
+        ]}
       />
 
       <PriceRuleFormDialog

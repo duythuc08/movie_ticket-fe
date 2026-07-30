@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Table, CalendarRange, X, CalendarPlus, CheckCheck } from "lucide-react";
+import { Plus, Table, CalendarRange, X, CheckCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchActiveCinemasForSelect, fetchAdminCinemaById } from "@/services/admin/adminCinemaService";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
@@ -147,7 +146,6 @@ const CinemaGanttSection = ({
 
 export default function AdminShowtimesPage() {
   const { token } = useAuth();
-  const router = useRouter();
 
   const [cinemas, setCinemas] = useState<AdminCinema[]>([]);
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
@@ -159,9 +157,6 @@ export default function AdminShowtimesPage() {
   const [isInitialAddOpen, setIsInitialAddOpen] = useState(false);
   const [initialAddData, setInitialAddData] = useState<{ cinemaId: string; date: string }>({ cinemaId: "", date: "" });
   const [expandedCinemaId, setExpandedCinemaId] = useState<number | null>(null);
-
-  const [isProposeDialogOpen, setIsProposeDialogOpen] = useState(false);
-  const [proposeData, setProposeData] = useState<{ cinemaId: string; from: string; to: string }>({ cinemaId: "", from: "", to: "" });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -181,6 +176,10 @@ export default function AdminShowtimesPage() {
 
   const [filters, setFilters] = useState<{ cinemaId?: string; status?: string; date?: string; keyword?: string }>({});
   const [ganttRefreshKey, setGanttRefreshKey] = useState(0);
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const PAGE_SIZE = 10;
 
   const loadCinemas = useCallback(async () => {
     if (!token) return;
@@ -192,7 +191,7 @@ export default function AdminShowtimesPage() {
     }
   }, [token]);
 
-  const loadShowtimes = useCallback(async () => {
+  const loadShowtimes = useCallback(async (targetPage = 0) => {
     if (!token) return;
     setIsLoading(true);
     try {
@@ -212,8 +211,8 @@ export default function AdminShowtimesPage() {
 
         const filterString = filterParts.join(" and ");
 
-        const result = await adminShowtimeService.getShowtimes(token, 0, 100, filterString || undefined);
-        
+        const result = await adminShowtimeService.getShowtimes(token, targetPage, PAGE_SIZE, filterString || undefined);
+
         const statusOrder: Record<string, number> = {
           "SCHEDULED": 1,
           "ONGOING": 2,
@@ -221,7 +220,7 @@ export default function AdminShowtimesPage() {
           "FULLY_BOOKED": 4,
           "CANCELLED": 5
         };
-        
+
         const sortedData = [...result.content].sort((a, b) => {
           const orderA = statusOrder[a.showTimeStatus] || 99;
           const orderB = statusOrder[b.showTimeStatus] || 99;
@@ -229,6 +228,9 @@ export default function AdminShowtimesPage() {
         });
 
         setShowtimes(sortedData);
+        setPage(result.currentPage);
+        setTotalPages(result.totalPages);
+        setTotalElements(result.totalElements);
       }
     } catch {
       toast.error("Không thể tải danh sách suất chiếu");
@@ -247,9 +249,9 @@ export default function AdminShowtimesPage() {
       const offset = today.getTimezoneOffset();
       const localToday = new Date(today.getTime() - (offset*60*1000));
       setFilters(prev => ({ ...prev, date: localToday.toISOString().split('T')[0] }));
-      return; 
+      return;
     }
-    loadShowtimes();
+    loadShowtimes(0);
   }, [loadShowtimes, viewMode, filters.date]);
 
   const handleViewDetail = (showtime: Showtime) => {
@@ -339,24 +341,6 @@ export default function AdminShowtimesPage() {
     setIsInitialAddOpen(false);
   };
 
-  const handleProposeSubmit = () => {
-    if (!proposeData.cinemaId || !proposeData.from || !proposeData.to) {
-      toast.error("Vui lòng chọn Rạp và khoảng ngày");
-      return;
-    }
-    if (proposeData.from > proposeData.to) {
-      toast.error("Ngày bắt đầu phải trước ngày kết thúc");
-      return;
-    }
-    const params = new URLSearchParams({
-      cinemaId: proposeData.cinemaId,
-      from: proposeData.from,
-      to: proposeData.to,
-    });
-    setIsProposeDialogOpen(false);
-    router.push(`/admin/showtimes/propose?${params.toString()}`);
-  };
-
   const columns = useMemo(
     () => createShowtimeColumns({
       onViewDetail: handleViewDetail,
@@ -394,14 +378,6 @@ export default function AdminShowtimesPage() {
               </div>
             </Button>
           </div>
-          <Button variant="outline" onClick={() => {
-            const today = new Date().toISOString().split("T")[0];
-            const weekLater = new Date(Date.now() + 6 * 86400000).toISOString().split("T")[0];
-            setProposeData({ cinemaId: "", from: today, to: weekLater });
-            setIsProposeDialogOpen(true);
-          }} className="gap-2">
-            <CalendarPlus className="h-4 w-4" /> Lập lịch mới
-          </Button>
           <Button onClick={() => {
             setInitialAddData({ cinemaId: "", date: filters.date || new Date().toISOString().split("T")[0] });
             setIsInitialAddOpen(true);
@@ -419,9 +395,25 @@ export default function AdminShowtimesPage() {
           data={showtimes}
           isLoading={isLoading}
           emptyText="Không tìm thấy suất chiếu nào."
+          serverPagination={{
+            page,
+            pageCount: totalPages,
+            total: totalElements,
+            onChange: (newPage) => loadShowtimes(newPage),
+          }}
         />
       ) : (
         <div className="space-y-4">
+          {expandedCinemaId !== null && (
+            <div className="flex items-center justify-between bg-muted/30 border rounded-lg px-4 py-2.5">
+              <span className="text-sm text-muted-foreground">
+                Đang chỉ xem 1 rạp — {cinemas.find(c => c.cinemaId === expandedCinemaId)?.name}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setExpandedCinemaId(null)}>
+                Xem tất cả rạp
+              </Button>
+            </div>
+          )}
           {(expandedCinemaId !== null ? cinemas.filter(c => c.cinemaId === expandedCinemaId) : cinemas).map(cinema => (
             <CinemaGanttSection
               key={cinema.cinemaId}
@@ -450,7 +442,7 @@ export default function AdminShowtimesPage() {
       <ShowtimeFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSuccess={() => { loadShowtimes(); setGanttRefreshKey(k => k + 1); }}
+        onSuccess={() => { loadShowtimes(page); setGanttRefreshKey(k => k + 1); }}
         initialRoomId={formInitialRoom}
         initialStartTime={formInitialTime}
       />
@@ -462,14 +454,14 @@ export default function AdminShowtimesPage() {
           if (!open) setSelectedShowtimeId(null);
         }}
         showTimeId={selectedShowtimeId}
-        onRefreshList={loadShowtimes}
+        onRefreshList={() => loadShowtimes(page)}
       />
 
       <ShowtimeEditDialog
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
         showtime={editShowtime}
-        onSuccess={() => { loadShowtimes(); setGanttRefreshKey(k => k + 1); }}
+        onSuccess={() => { loadShowtimes(page); setGanttRefreshKey(k => k + 1); }}
       />
 
       <Dialog open={isInitialAddOpen} onOpenChange={setIsInitialAddOpen}>
@@ -528,72 +520,6 @@ export default function AdminShowtimesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isProposeDialogOpen} onOpenChange={setIsProposeDialogOpen}>
-        <DialogContent data-admin="" className="max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 rounded-xl border border-border shadow-2xl [&>button]:hidden">
-          <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
-            <div className="space-y-1">
-              <DialogTitle className="text-base font-bold tracking-tight text-foreground">Lập lịch chiếu mới</DialogTitle>
-              <p className="text-xs text-muted-foreground">Chọn rạp và khoảng ngày để cấu hình đề xuất theo từng phòng</p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border transition-all"
-              onClick={() => setIsProposeDialogOpen(false)}
-            >
-              <X size={16} />
-            </Button>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto p-6 bg-background">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Chọn Rạp chiếu <span className="text-destructive">*</span></Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={proposeData.cinemaId}
-                  onChange={e => setProposeData(prev => ({ ...prev, cinemaId: e.target.value }))}
-                >
-                  <option value="">-- Chọn Rạp --</option>
-                  {cinemas.map(c => (
-                    <option key={c.cinemaId} value={c.cinemaId.toString()}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Từ ngày <span className="text-destructive">*</span></Label>
-                  <Input
-                    type="date"
-                    value={proposeData.from}
-                    onChange={e => setProposeData(prev => ({ ...prev, from: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Đến ngày <span className="text-destructive">*</span></Label>
-                  <Input
-                    type="date"
-                    value={proposeData.to}
-                    onChange={e => setProposeData(prev => ({ ...prev, to: e.target.value }))}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border bg-card px-6 py-3.5 flex items-center justify-between gap-4 shrink-0">
-            <p className="text-xs text-muted-foreground font-medium">
-              Các trường đánh dấu <span className="text-destructive">*</span> không được bỏ trống.
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => setIsProposeDialogOpen(false)} className="h-9 text-xs font-semibold">Hủy bỏ</Button>
-              <Button onClick={handleProposeSubmit} className="h-9 text-xs font-semibold min-w-[140px]">Tiếp tục</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <DraftTimeEditDialog
         showtime={draftTimeEditShowtime}
         onOpenChange={(open) => { if (!open) setDraftTimeEditShowtime(null); }}
@@ -614,7 +540,7 @@ export default function AdminShowtimesPage() {
           try {
             await adminShowtimeService.cancelShowtime(token, pendingCancel.showTimeId);
             toast.success("Huỷ suất chiếu thành công");
-            loadShowtimes();
+            loadShowtimes(page);
             setPendingCancel(null);
           } catch {
             toast.error("Lỗi khi huỷ suất chiếu");
