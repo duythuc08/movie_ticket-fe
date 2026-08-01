@@ -17,6 +17,16 @@ const ROLE_OPTIONS = [
   { value: "ADMIN", label: "ADMIN — Quản trị viên" },
 ];
 
+type AdminRoleValue = "USER" | "ADMIN";
+const VALID_ROLES = new Set<AdminRoleValue>(["USER", "ADMIN"]);
+
+function normalizeRoles(values: string[]): AdminRoleValue[] {
+  const roles = values.filter((value): value is AdminRoleValue =>
+    VALID_ROLES.has(value as AdminRoleValue)
+  );
+  return roles.length > 0 ? roles : ["USER"];
+}
+
 interface UserFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,7 +49,7 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
     lastname:    user?.lastname    ?? "",
     phoneNumber: user?.phoneNumber ?? "",
     birthday:    user?.birthday    ?? "",
-    roles:       user?.roles.map((r) => r.name) ?? ["USER"],
+    roles:       normalizeRoles(user?.roles.map((r) => r.name) ?? ["USER"]),
   }), [user]);
 
   const [createEmailError, setCreateEmailError] = useState<string | null>(null);
@@ -127,7 +137,7 @@ export const UserFormDialog = ({ open, onOpenChange, onSuccess, user }: UserForm
               <MultiSelectWithSearch
                 options={ROLE_OPTIONS}
                 selectedValues={form.watch("roles") ?? []}
-                onChange={(vals) => form.setValue("roles", vals)}
+                onChange={(vals) => form.setValue("roles", normalizeRoles(vals))}
                 placeholder="Chọn vai trò..."
               />
             </div>

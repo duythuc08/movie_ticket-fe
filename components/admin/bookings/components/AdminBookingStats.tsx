@@ -103,14 +103,14 @@ export function AdminBookingStats({ year, month }: { year: number; month: number
           color="bg-indigo-500/20 ring-1 ring-indigo-500/30"
         />
         <StatCard
-          title="Đã Thanh Toán"
-          value={String(stats.paidOrders)}
+          title="Thành công"
+          value={String(stats.successfulOrders)}
           icon={<CheckCircle2 size={24} className="text-blue-400" />}
           color="bg-blue-500/20 ring-1 ring-blue-500/30"
         />
         <StatCard
-          title="Đã Hủy/Hết Hạn"
-          value={String(stats.cancelledOrders + stats.expiredOrders)}
+          title="Thất bại/Hết hạn"
+          value={String(stats.failedOrExpiredOrders)}
           icon={<CalendarX2 size={24} className="text-rose-400" />}
           color="bg-rose-500/20 ring-1 ring-rose-500/30"
         />

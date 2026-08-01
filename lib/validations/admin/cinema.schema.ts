@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredVietnamPhoneSchema } from "@/lib/validations/common";
 
 export const cinemaFormSchema = z.object({
   name: z
@@ -9,10 +10,7 @@ export const cinemaFormSchema = z.object({
     .string()
     .min(1, "Địa chỉ không được để trống")
     .max(500, "Địa chỉ tối đa 500 ký tự"),
-  phoneNumber: z
-    .string()
-    .min(1, "Số điện thoại không được để trống")
-    .regex(/^(0[35789])[0-9]{8}$/, "Số điện thoại không hợp lệ (VD: 0901234567)"),
+  phoneNumber: requiredVietnamPhoneSchema,
   email: z
     .string()
     .min(1, "Email không được để trống")

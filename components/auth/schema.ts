@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  requiredPastDateSchema,
+  requiredVietnamPhoneSchema,
+  strongPasswordSchema,
+} from "@/lib/validations/common";
 
 export const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
@@ -9,17 +14,10 @@ export const registerSchema = z
   .object({
     firstname: z.string().min(1, "Vui lòng nhập họ"),
     lastname: z.string().min(1, "Vui lòng nhập tên"),
-    phoneNumber: z
-      .string()
-      .regex(/^[0-9]{10}$/, "Số điện thoại không hợp lệ"),
-    birthday: z.string().min(1, "Vui lòng chọn ngày sinh"),
+    phoneNumber: requiredVietnamPhoneSchema,
+    birthday: requiredPastDateSchema,
     email: z.string().email("Email không hợp lệ"),
-    password: z
-      .string()
-      .min(8, "Mật khẩu tối thiểu 8 ký tự")
-      .regex(/[a-z]/, "Mật khẩu phải có chữ thường")
-      .regex(/[A-Z]/, "Mật khẩu phải có chữ hoa")
-      .regex(/[^a-zA-Z0-9]/, "Mật khẩu phải có ký tự đặc biệt"),
+    password: strongPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -40,9 +38,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    newPassword: z
-      .string()
-      .min(8, "Mật khẩu tối thiểu 8 ký tự"),
+    newPassword: strongPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {

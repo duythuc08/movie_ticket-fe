@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sendForgotPassword, resetPassword } from "@/components/auth/service/auth.service";
 import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
+import { forgotPasswordSchema, resetPasswordSchema } from "@/components/auth/schema";
 import type { ResetPasswordForm, ForgotPasswordStep } from "@/components/auth/types";
 
 export default function ForgotPasswordPage() {
@@ -32,8 +33,14 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setMessage("");
     setIsSuccess(false);
+    const validation = forgotPasswordSchema.safeParse({ email });
+    if (!validation.success) {
+      setLoading(false);
+      setMessage(validation.error.issues[0]?.message ?? "Email không hợp lệ");
+      return;
+    }
     try {
-      const message = await sendForgotPassword(email);
+      const message = await sendForgotPassword(validation.data.email);
       setIsSuccess(true);
       setMessage(message);
       setStep("verify");
@@ -50,17 +57,9 @@ export default function ForgotPasswordPage() {
   // STEP 3: Reset password
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.newPassword !== form.confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
-      return;
-    }
-    if (form.newPassword.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự!");
-      return;
-    }
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
-    if (!passwordRegex.test(form.newPassword)) {
-      toast.error("Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ in hoa và 1 ký tự đặc biệt!");
+    const validation = resetPasswordSchema.safeParse(form);
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message ?? "Mật khẩu mới không hợp lệ");
       return;
     }
 
@@ -68,7 +67,7 @@ export default function ForgotPasswordPage() {
     setMessage("");
     setIsSuccess(false);
     try {
-      await resetPassword(email, form.newPassword);
+      await resetPassword(email, validation.data.newPassword);
       setIsSuccess(true);
       setMessage("Mật khẩu đã được cập nhật thành công!");
       toast.success("Đặt lại mật khẩu thành công! Đang chuyển hướng...");

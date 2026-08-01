@@ -1,20 +1,21 @@
 import { z } from "zod";
+import {
+  optionalPastDateSchema,
+  optionalVietnamPhoneSchema,
+  strongPasswordSchema,
+} from "@/lib/validations/common";
 
 export const updateProfileSchema = z.object({
-  firstname:   z.string().min(1, "Họ không được để trống"),
-  lastname:    z.string().min(1, "Tên không được để trống"),
-  phoneNumber: z
-    .string()
-    .regex(/^[0-9]{10}$/, "Số điện thoại phải gồm đúng 10 chữ số")
-    .optional()
-    .or(z.literal("")),
-  birthday: z.string().optional(),
+  firstname:   z.string().min(1, "Họ không được để trống").max(100, "Họ tối đa 100 ký tự"),
+  lastname:    z.string().min(1, "Tên không được để trống").max(100, "Tên tối đa 100 ký tự"),
+  phoneNumber: optionalVietnamPhoneSchema.default(""),
+  birthday:    optionalPastDateSchema.default(""),
 });
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(8, "Mật khẩu hiện tại tối thiểu 8 ký tự"),
-    newPassword:     z.string().min(8, "Mật khẩu mới tối thiểu 8 ký tự"),
+    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
+    newPassword:     strongPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {

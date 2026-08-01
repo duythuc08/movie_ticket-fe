@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Play, Star, ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "@/components/movie/components/ImageWithFallback";
-import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 export interface RecommendationItemResponse {
   movieId: number;
@@ -82,7 +81,7 @@ export function RecommendationDialog({ open, onOpenChange, recommendations, used
                 Bạn thường đánh giá cao các phim thuộc thể loại{" "}
                 <span className="text-gray-700 font-semibold">
                   {genreProfile
-                    .map((g) => GENRE_LABELS[g.genreName.toUpperCase()] ?? g.genreName)
+                    .map((g) => g.genreName)
                     .join(", ")}
                 </span>
                 {" "}— đây là những bộ phim chúng tôi tin bạn sẽ thích.
@@ -142,7 +141,7 @@ export function RecommendationDialog({ open, onOpenChange, recommendations, used
                         {item.genres && item.genres.length > 0 && (
                           <p className="text-primary/90 text-[11px] font-medium mb-1.5 line-clamp-1">
                             {item.genres
-                              .map((g) => GENRE_LABELS[g.toUpperCase()] ?? g)
+                              .map((g) => g)
                               .join(" · ")}
                           </p>
                         )}

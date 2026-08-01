@@ -34,7 +34,6 @@ import type { SelectOption } from "@/components/shared";
 import { fetchAllGenresForSelect, createGenre } from "@/services/admin/adminGenreService";
 import { fetchPersonsByRoleForSelect, createPerson } from "@/services/admin/adminPersonService";
 import { useAuth } from "@/context/AuthContext";
-import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 const AGE_RATING_OPTIONS = [
   { value: "G", label: "G — Mọi lứa tuổi" },
@@ -100,11 +99,11 @@ export function MovieFormDialog({
       ]);
       const activeGenreOptions = genres.map((g) => ({
         value: g.name,
-        label: GENRE_LABELS[g.name.toUpperCase()] ?? g.name,
+        label: g.name,
       }));
       const selectedGenreOptions = (movie?.genre ?? []).map((g) => ({
         value: g.name,
-        label: GENRE_LABELS[g.name.toUpperCase()] ?? g.name,
+        label: g.name,
       }));
       const activeDirectorOptions = directors.map((p) => ({ value: String(p.id), label: p.name }));
       const activeActorOptions = actors.map((p) => ({ value: String(p.id), label: p.name }));
@@ -174,7 +173,7 @@ export function MovieFormDialog({
     const created = await createGenre(token, { name, description: description || undefined });
     setGenreOptions((prev) => [
       ...prev,
-      { value: created.name, label: GENRE_LABELS[created.name.toUpperCase()] ?? created.name },
+      { value: created.name, label: created.name },
     ]);
     const current = form.getValues("genreNames");
     form.setValue("genreNames", [...current, created.name]);

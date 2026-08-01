@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { changePasswordSchema } from "@/components/profile/schema";
+import { getErrorMessage } from "@/lib/errors";
 
 interface Props {
   open: boolean;
@@ -28,19 +30,16 @@ export function ChangePasswordDialog({ open, onClose }: Props) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
+    const validation = changePasswordSchema.safeParse({
+      currentPassword: oldPassword,
+      newPassword,
+      confirmPassword,
+    });
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message ?? "Thông tin đổi mật khẩu không hợp lệ");
       return;
     }
-    if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu mới không khớp");
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
-      return;
-    }
-    
+
     setSaving(true);
     try {
       const res = await fetch("/api-proxy/users/change-password", {
@@ -54,7 +53,7 @@ export function ChangePasswordDialog({ open, onClose }: Props) {
       
       const data = await res.json();
       if (!res.ok || data.code !== 1000) {
-        throw new Error(data.message || "Đổi mật khẩu thất bại");
+        throw new Error(getErrorMessage(data?.code, data?.message || "Đổi mật khẩu thất bại"));
       }
       
       toast.success("Đổi mật khẩu thành công");
@@ -62,8 +61,8 @@ export function ChangePasswordDialog({ open, onClose }: Props) {
       setNewPassword("");
       setConfirmPassword("");
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || "Lỗi khi đổi mật khẩu");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lỗi khi đổi mật khẩu");
     } finally {
       setSaving(false);
     }

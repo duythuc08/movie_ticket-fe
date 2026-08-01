@@ -230,11 +230,8 @@ export interface AdminOrderSummaryResponse {
 export interface AdminOrderStatsResponse {
   totalRevenue: number;
   totalOrders: number;
-  paidOrders: number;
-  cancelledOrders: number;
-  pendingOrders: number;
-  expiredOrders: number;
-  usedOrders: number;
+  successfulOrders: number;
+  failedOrExpiredOrders: number;
 }
 
 export interface Order {

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VerifyEmailForm } from "@/components/auth/components/VerifyEmailForm";
 import { registerUser } from "@/components/auth/service/auth.service";
+import { registerSchema } from "@/components/auth/schema";
 import type { SignupFormState } from "@/components/auth/types";
 
 type CompletedFields = Partial<Record<keyof SignupFormState, boolean>>;
@@ -43,29 +44,13 @@ export function SignupForm() {
     e.preventDefault();
     setError("");
 
-    if (form.password !== form.confirmPassword) {
-      setError("Mật khẩu không khớp!");
+    const validation = registerSchema.safeParse(form);
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message ?? "Thông tin đăng ký không hợp lệ");
       return;
     }
 
-    if (form.password.length < 8) {
-      setError("Mật khẩu phải có ít nhất 8 ký tự!");
-      return;
-    }
-
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
-    if (!passwordRegex.test(form.password)) {
-      setError("Mật khẩu phải có chữ thường, chữ hoa và ký tự đặc biệt!");
-      return;
-    }
-
-    const phoneRegex = /^(0[35789])[0-9]{8}$/;
-    if (form.phoneNumber && !phoneRegex.test(form.phoneNumber)) {
-      setError("Số điện thoại không hợp lệ (VD: 0901234567)");
-      return;
-    }
-
-    let formattedDate = form.birthday;
+    let formattedDate = validation.data.birthday;
     if (formattedDate) {
       const dateObj = new Date(formattedDate);
       if (isNaN(dateObj.getTime())) {
@@ -83,11 +68,11 @@ export function SignupForm() {
 
     try {
       await registerUser({
-        username: form.email,
-        password: form.password,
-        firstname: form.firstname,
-        lastname: form.lastname,
-        phoneNumber: form.phoneNumber,
+        username: validation.data.email,
+        password: validation.data.password,
+        firstname: validation.data.firstname,
+        lastname: validation.data.lastname,
+        phoneNumber: validation.data.phoneNumber,
         birthday: formattedDate,
       });
       setMode("verify");
@@ -168,7 +153,7 @@ export function SignupForm() {
 
               <div>
                 <Label className="text-sm text-white/90 mb-1.5 block">Mật khẩu</Label>
-                <Input type="password" name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} required placeholder="Ít nhất 6 ký tự" className={inputClass("password")} />
+                <Input type="password" name="password" value={form.password} onChange={handleChange} onBlur={handleBlur} required placeholder="Ít nhất 8 ký tự" className={inputClass("password")} />
               </div>
 
               <div>

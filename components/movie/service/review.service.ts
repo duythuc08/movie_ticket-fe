@@ -10,7 +10,7 @@ export interface ReviewResponse {
   movieId: number;
   movieName: string;
   rating: number;
-  comment: string;
+  comment: string | null;
   likeCount: number;
   dislikeCount: number;
   createdAt: string;
@@ -53,7 +53,7 @@ export async function fetchReviewsByMovie(
   return data.result;
 }
 
-export async function createReview(movieId: number, rating: number, comment: string): Promise<ReviewResponse> {
+export async function createReview(movieId: number, rating: number, comment?: string | null): Promise<ReviewResponse> {
   const response = await apiFetch(BASE_URL, {
     method: "POST",
     body: JSON.stringify({ movieId, rating, comment }),
@@ -65,7 +65,7 @@ export async function createReview(movieId: number, rating: number, comment: str
   return data.result;
 }
 
-export async function updateReview(reviewId: number, movieId: number, rating: number, comment: string): Promise<ReviewResponse> {
+export async function updateReview(reviewId: number, movieId: number, rating: number, comment?: string | null): Promise<ReviewResponse> {
   const response = await apiFetch(`${BASE_URL}/${reviewId}`, {
     method: "PUT",
     body: JSON.stringify({ movieId, rating, comment }),

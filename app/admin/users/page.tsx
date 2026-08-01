@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Brain, Mail, Plus, Search, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,11 @@ type PendingConfirm = {
 
 export default function AdminUsersPage() {
   const { token } = useAuth();
-  const [items, setItems]           = useState<AdminUser[]>([]);
-  const [isLoading, setIsLoading]   = useState(false);
-  const [keyword, setKeyword]       = useState("");
+  const [items, setItems] = useState<AdminUser[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage]             = useState(0);
+  const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
 
@@ -38,47 +38,10 @@ export default function AdminUsersPage() {
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [isActioning, setIsActioning] = useState(false);
-  const [isTraining, setIsTraining]   = useState(false);
-  const [isMailing, setIsMailing]     = useState(false);
-
-  const handleTrain = async () => {
-    if (!token) return;
-    setIsTraining(true);
-    try {
-      const res = await fetch("/api-proxy/recommendations/refresh", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Train CF hoàn tất");
-    } catch {
-      toast.error("Train CF thất bại");
-    } finally {
-      setIsTraining(false);
-    }
-  };
-
-  const handleSendMail = async () => {
-    if (!token) return;
-    setIsMailing(true);
-    try {
-      const res = await fetch("/api-proxy/recommendations/send-weekly-emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      toast.success(`Gửi mail hoàn tất — thành công: ${data.result?.success ?? 0}, lỗi: ${data.result?.fail ?? 0}`);
-    } catch {
-      toast.error("Gửi mail thất bại");
-    } finally {
-      setIsMailing(false);
-    }
-  };
 
   const buildFilter = useCallback(() => {
     const parts: string[] = [];
-    if (keyword)                parts.push(`username~'${keyword}'`);
+    if (keyword) parts.push(`username~'${keyword}'`);
     if (statusFilter !== "all") parts.push(`userStatus:'${statusFilter}'`);
     return parts.join(" and ") || undefined;
   }, [keyword, statusFilter]);
@@ -113,7 +76,7 @@ export default function AdminUsersPage() {
       action: async () => {
         if (!token) return;
         if (isActive) await adminUserService.inactivateUser(token, u.userId);
-        else          await adminUserService.activateUser(token, u.userId);
+        else await adminUserService.activateUser(token, u.userId);
         toast.success(`${isActive ? "Vô hiệu hóa" : "Kích hoạt"} thành công`);
         load(page);
       },
@@ -151,11 +114,11 @@ export default function AdminUsersPage() {
   };
 
   const columns = useMemo(() => createUserColumns({
-    onViewDetail:   (u) => setDetailUserId(u.userId),
-    onEdit:         (u) => { setEditUser(u); setIsFormOpen(true); },
+    onViewDetail: (u) => setDetailUserId(u.userId),
+    onEdit: (u) => { setEditUser(u); setIsFormOpen(true); },
     onToggleStatus: handleToggleStatus,
-    onBan:          handleBan,
-    onUnban:        handleUnban,
+    onBan: handleBan,
+    onUnban: handleUnban,
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -192,29 +155,8 @@ export default function AdminUsersPage() {
           onClick={() => { setKeyword(""); setStatusFilter("all"); setPage(0); }}
           className="text-muted-foreground hover:text-foreground"
         >
-          <X className="w-4 h-4 mr-2" /> Xoá lọc
+          <X className="w-4 h-4 mr-2" /> Xóa lọc
         </Button>
-
-        <div className="flex items-center gap-2 ml-auto">
-          <Button
-            variant="outline"
-            onClick={handleTrain}
-            disabled={isTraining}
-            className="gap-2"
-          >
-            <Brain className="w-4 h-4" />
-            {isTraining ? "Đang train..." : "Train CF"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleSendMail}
-            disabled={isMailing}
-            className="gap-2"
-          >
-            <Mail className="w-4 h-4" />
-            {isMailing ? "Đang gửi..." : "Gửi mail gợi ý"}
-          </Button>
-        </div>
       </div>
 
       <DataTable
@@ -255,9 +197,14 @@ export default function AdminUsersPage() {
         onConfirm={async () => {
           if (!pending) return;
           setIsActioning(true);
-          try { await pending.action(); }
-          catch (error) { toast.error(error instanceof Error ? error.message : "Lỗi thao tác"); }
-          finally { setIsActioning(false); setPending(null); }
+          try {
+            await pending.action();
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Lỗi thao tác");
+          } finally {
+            setIsActioning(false);
+            setPending(null);
+          }
         }}
       />
     </div>

@@ -129,15 +129,17 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
   const handleSubmit = async () => {
     if (!user) { toast.error("Vui lòng đăng nhập để đánh giá"); return; }
     if (rating < 1) { toast.error("Vui lòng chọn số sao đánh giá"); return; }
+    const normalizedComment = comment.trim();
+    const reviewComment = normalizedComment || null;
     setIsSubmitting(true);
     try {
       if (isEditing && myReview) {
-        const updated = await updateReview(myReview.reviewId, movieId, rating, comment.trim());
+        const updated = await updateReview(myReview.reviewId, movieId, rating, reviewComment);
         setMyReview(updated);
         setIsEditing(false);
         toast.success("Cập nhật thành công. Đánh giá của bạn đang chờ duyệt.");
       } else {
-        const created = await createReview(movieId, rating, comment.trim());
+        const created = await createReview(movieId, rating, reviewComment);
         setMyReview(created);
         setHasReviewed(true);
         window.dispatchEvent(new CustomEvent("review:submitted", { detail: { movieId } }));
@@ -306,7 +308,7 @@ export function MovieReview({ movieId, hasReviewed: initialHasReviewed }: MovieR
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Chia sẻ cảm nhận của bạn (tùy chọn)..."
+            placeholder="Chia sẻ cảm nhận của bạn..."
             className="text-sm min-h-[88px] resize-none"
           />
 

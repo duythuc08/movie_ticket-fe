@@ -8,6 +8,7 @@ import {
   fetchAllMembershipTiers,
   fetchOrdersByUser,
 } from "@/components/profile/service/user.service";
+import { updateProfileSchema } from "@/components/profile/schema";
 import { useAuth } from "@/context/AuthContext";
 import type { UserInfo, MembershipTier, Order } from "@/types";
 import type { ProfileFormState } from "@/components/profile/user.types";
@@ -96,11 +97,16 @@ export function useProfile() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validation = updateProfileSchema.safeParse(form);
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message ?? "Thông tin hồ sơ không hợp lệ.");
+      return;
+    }
     setSaving(true);
     try {
       if (!token) { router.push("/login"); return; }
-      await updateMyInfo(token, form);
-      setUserInfo((p) => (p ? { ...p, ...form } : p));
+      await updateMyInfo(token, validation.data);
+      setUserInfo((p) => (p ? { ...p, ...validation.data } : p));
       toast.success("Cập nhật thông tin thành công!");
     } catch {
       toast.error("Cập nhật thất bại. Vui lòng thử lại.");

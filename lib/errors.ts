@@ -114,9 +114,25 @@ export const ErrorCodeMap: Record<number, string> = {
     1112: "Cần ít nhất một phòng chiếu với một phim được gán suất chiếu",
     1113: "Suất chiếu này không phải là đề xuất nháp",
     1114: "Không thể dừng chiếu phim vì còn suất chiếu đã có vé đặt/bán",
+    1115: "Không thể vô hiệu hóa phim vì còn suất chiếu đang hoạt động",
+    1116: "Không thể vô hiệu hóa ghế vì còn suất chiếu đang hoạt động",
+    1117: "Thể loại đã bị vô hiệu hóa, không thể gắn mới vào phim",
+    1118: "Nhân sự đã bị vô hiệu hóa, không thể gắn mới vào phim",
+    1119: "Phim đã bị vô hiệu hóa, không thể gắn mới vào liên kết này",
+    1120: "Sự kiện đã bị vô hiệu hóa, không thể gắn mới vào liên kết này",
+    1121: "Ngày kết thúc sự kiện không được trước ngày bắt đầu sự kiện",
+    
+};
+
+const DuplicateErrorMessageMap: Record<string, string> = {
+    "Cinema has active showtimes, cannot close or deactivate cinema":
+        "Không thể đóng hoặc vô hiệu hóa rạp vì còn suất chiếu đang hoạt động",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {
+    if (defaultMessage && DuplicateErrorMessageMap[defaultMessage]) {
+        return DuplicateErrorMessageMap[defaultMessage];
+    }
     if (code && ErrorCodeMap[code]) {
         return ErrorCodeMap[code];
     }

@@ -1,8 +1,8 @@
 import * as z from "zod";
 
 export const showtimePriceSchema = z.object({
-  price: z.number(),
-  seatType: z.string(),
+  price: z.number().positive("Giá tiền phải lớn hơn 0"),
+  seatType: z.string().min(1, "Vui lòng chọn loại ghế"),
 });
 
 export const createShowtimeSchema = z.object({
@@ -32,7 +32,10 @@ export type CreateShowtimeValues = z.infer<typeof createShowtimeSchema>;
 export const updateShowtimeSchema = z.object({
   movieId: z.number().min(1, "Vui lòng chọn phim"),
   roomId: z.number().min(1, "Vui lòng chọn phòng chiếu"),
-  startTime: z.string().min(1, "Định dạng giờ không hợp lệ"),
+  startTime: z.string().min(1, "Định dạng giờ không hợp lệ").refine(
+    (v) => !v || new Date(v) > new Date(),
+    "Giờ chiếu phải ở tương lai"
+  ),
 });
 
 export type UpdateShowtimeValues = z.infer<typeof updateShowtimeSchema>;
