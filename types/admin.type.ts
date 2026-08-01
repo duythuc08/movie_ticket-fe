@@ -6,3 +6,4 @@ export * from "./admin/banner";
 export * from "./admin/cinema";
 export * from "./admin/food";
 export * from "./admin/review";
+export * from "./admin/systemOperation";

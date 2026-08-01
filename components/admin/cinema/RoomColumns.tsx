@@ -22,10 +22,10 @@ export const ROOM_TYPE_BADGE_CLASSES: Record<RoomType, string> = {
 };
 
 export const ROOM_TYPE_OPTIONS: { value: RoomType; label: string }[] = [
-  { value: "TWO_D", label: "Ph�ng 2D" },
-  { value: "PREMIUM", label: "Ph�ng Premium" },
-  { value: "IMAX", label: "Ph�ng IMAX" },
-  { value: "THREE_D", label: "Ph�ng 3D" },
+  { value: "TWO_D", label: "Phòng 2D" },
+  { value: "PREMIUM", label: "Phòng Premium" },
+  { value: "IMAX", label: "Phòng IMAX" },
+  { value: "THREE_D", label: "Phòng 3D" },
 ];
 
 export const ROOM_STATUS_OPTIONS: { value: RoomStatus; label: string }[] = [

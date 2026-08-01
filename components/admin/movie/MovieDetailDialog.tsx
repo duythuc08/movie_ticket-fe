@@ -17,6 +17,7 @@ import type { AdminMovie } from "@/types/admin.type";
 import { MovieFormDialog } from "./MovieFormDialog";
 import { MovieReviewsTab } from "./MovieReviewsTab";
 import type { MovieFormSchema } from "@/lib/validations/admin.schemas";
+import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 type TabKey = "info" | "reviews";
 
@@ -235,7 +236,7 @@ export function MovieDetailDialog({
                               variant="secondary"
                               className="text-[11px] font-normal tracking-wide px-2 py-0.5 rounded-md border border-border/50"
                             >
-                              {g.name}
+                              {GENRE_LABELS[g.name.toUpperCase()] ?? g.name}
                             </Badge>
                           ))
                         ) : (

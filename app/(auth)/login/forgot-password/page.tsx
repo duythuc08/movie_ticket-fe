@@ -33,14 +33,14 @@ export default function ForgotPasswordPage() {
     setMessage("");
     setIsSuccess(false);
     try {
-      await sendForgotPassword(email);
+      const message = await sendForgotPassword(email);
       setIsSuccess(true);
-      setMessage("Nếu email hợp lệ, hệ thống đã gửi mã OTP. Vui lòng kiểm tra hộp thư!");
+      setMessage(message);
       setStep("verify");
     } catch (error) {
       console.error(error);
       setIsSuccess(true); // Tránh ném lỗi để chống dò email
-      setMessage("Nếu email hợp lệ, hệ thống đã gửi mã OTP. Vui lòng kiểm tra hộp thư!");
+      setMessage("OTP đã được gửi tới email");
       setStep("verify");
     } finally {
       setLoading(false);

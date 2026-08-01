@@ -48,12 +48,12 @@ export function SignupForm() {
       return;
     }
 
-    if (form.password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự!");
+    if (form.password.length < 8) {
+      setError("Mật khẩu phải có ít nhất 8 ký tự!");
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{6,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
     if (!passwordRegex.test(form.password)) {
       setError("Mật khẩu phải có chữ thường, chữ hoa và ký tự đặc biệt!");
       return;

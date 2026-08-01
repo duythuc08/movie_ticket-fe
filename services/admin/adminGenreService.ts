@@ -44,7 +44,7 @@ export async function fetchAllGenresForSelect(
   const result = await adminGet<ApiPagedResult<AdminGenre>>(
     token,
     "/admin/genres",
-    { page: 0, size: 200, sort: "name,asc" }
+    { page: 0, size: 200, sort: "name,asc", filter: buildFilterString({ entityStatus: "ACTIVE" }) }
   );
   return result.content;
 }

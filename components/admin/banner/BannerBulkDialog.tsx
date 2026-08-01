@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,8 +37,9 @@ const bulkSchema = z.object({
   banners: z.array(bannerRowSchema).min(1),
 });
 
-type BulkForm = z.infer<typeof bulkSchema>;
-type BannerRowData = z.infer<typeof bannerRowSchema>;
+type BulkFormInput = z.input<typeof bulkSchema>;
+type BulkForm = z.output<typeof bulkSchema>;
+type BannerRowData = z.output<typeof bannerRowSchema>;
 
 export interface BannerBulkPayload {
   imageFile: File;
@@ -300,7 +301,7 @@ export function BannerBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }:
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
-  const form = useForm<BulkForm>({
+  const form = useForm<BulkFormInput, unknown, BulkForm>({
     resolver: zodResolver(bulkSchema),
     defaultValues: { banners: [{ ...DEFAULT_ROW }] },
   });
@@ -312,11 +313,14 @@ export function BannerBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }:
     form.reset({ banners: [{ ...DEFAULT_ROW }] });
 
     if (!token) return;
-    setIsLoadingEvents(true);
+    const timeoutId = window.setTimeout(() => {
+      setIsLoadingEvents(true);
     adminEventService.getEvents(token, 0, 200)
       .then((r) => setEvents(r.content))
       .catch(() => toast.error("Không thể tải danh sách sự kiện"))
       .finally(() => setIsLoadingEvents(false));
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [open, token, form]);
 
   async function handleSubmit(data: BulkForm) {

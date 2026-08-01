@@ -13,6 +13,7 @@ import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { fetchAllGenresForSelect } from "@/services/admin/adminGenreService";
 import type { AdminMovie, AdminGenre } from "@/types/admin.type";
 import { cn } from "@/lib/utils";
+import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 const AGE_RATING_LABEL: Record<string, string> = {
   G: "G",
@@ -124,7 +125,10 @@ export function MovieSelectorDialog(props: MovieSelectorDialogProps) {
   }, [genres, nowShowing, comingSoon, stopped]);
 
   const genreOptions = useMemo(
-    () => genresInUse.map((g) => ({ value: g.name, label: g.name })),
+    () => genresInUse.map((g) => ({
+      value: g.name,
+      label: GENRE_LABELS[g.name.toUpperCase()] ?? g.name,
+    })),
     [genresInUse],
   );
 
@@ -332,7 +336,7 @@ function MovieGroupTable({
                       )}
                       <div>
                         <p className="font-medium text-foreground leading-tight">{movie.title}</p>
-                        <p className="text-xs text-muted-foreground">{movie.genre.map((g) => g.name).join(" · ") || "—"}</p>
+                        <p className="text-xs text-muted-foreground">{movie.genre.map((g) => GENRE_LABELS[g.name.toUpperCase()] ?? g.name).join(" · ") || "—"}</p>
                       </div>
                     </div>
                   </td>

@@ -25,6 +25,7 @@ import {
   CalendarDays,
   Banknote,
   ClipboardList,
+  PlayCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -86,6 +87,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   { label: "Quản lý Người dùng", href: "/admin/users", icon: <UserCog size={18} /> },
+  { label: "Vận hành hệ thống", href: "/admin/system-operations", icon: <PlayCircle size={18} /> },
 ];
 
 function SidebarLeaf({ item, isActive }: { item: SidebarLeafItem; isActive: boolean }) {

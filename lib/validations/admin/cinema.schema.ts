@@ -20,13 +20,6 @@ export const cinemaFormSchema = z.object({
   cinemaStatus: z.enum(["OPERATIONAL", "TEMPORARILY_CLOSED"] as const, {
     error: "Vui lòng chọn trạng thái rạp",
   }),
-  rooms: z.array(z.object({
-    roomId: z.number().nullable(),
-    name: z.string().min(1, "Tên phòng không được trống"),
-    capacity: z.number().int().min(0),
-    roomType: z.enum(["TWO_D", "THREE_D", "IMAX", "PREMIUM"]),
-    roomStatus: z.enum(["OPERATIONAL", "MAINTENANCE", "CLEANING"]),
-  })).optional(),
 });
 
 export type CinemaFormSchema = z.infer<typeof cinemaFormSchema>;

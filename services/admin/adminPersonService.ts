@@ -46,7 +46,7 @@ export async function fetchPersonsByRoleForSelect(
   const result = await adminGet<ApiPagedResult<AdminPerson>>(
     token,
     "/admin/persons",
-    { page: 0, size: 999, sort: "name,asc" }
+    { page: 0, size: 999, sort: "name,asc", filter: buildFilterString({ entityStatus: "ACTIVE" }) }
   );
   return result.content.filter(
     (p) => !p.movieRole?.length || p.movieRole.includes(movieRole)

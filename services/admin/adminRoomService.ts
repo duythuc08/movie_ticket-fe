@@ -42,6 +42,13 @@ export async function fetchAdminRooms(
   return adminGet<ApiPagedResult<AdminRoom>>(token, "/admin/rooms", params);
 }
 
+export async function fetchAdminRoomById(
+  token: string,
+  roomId: number
+): Promise<AdminRoom> {
+  return adminGet<AdminRoom>(token, `/admin/rooms/${roomId}`);
+}
+
 export async function createAdminRoom(
   token: string,
   payload: RoomCreatePayload

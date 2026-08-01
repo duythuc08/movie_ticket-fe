@@ -9,11 +9,11 @@ import type { AdminRoom, AdminCinema } from "@/types/admin.type";
 import type { RoomFormSchema } from "@/lib/validations/admin.schemas";
 import {
   fetchAdminRooms,
+  fetchAdminRoomById,
   createAdminRoom,
   updateAdminRoom,
   toggleRoomEntityStatus,
 } from "@/services/admin/adminRoomService";
-import { setupSeatsForRoom } from "@/services/admin/adminSeatService";
 import { fetchActiveCinemasForSelect } from "@/services/admin/adminCinemaService";
 import { DataTable, PageHeader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -129,14 +129,24 @@ export default function AdminRoomsPage() {
   }
 
   function handleViewDetail(room: AdminRoom) {
-    setSelectedRoom(room);
+    if (!token) return;
     setDefaultEditMode(false);
-    setIsDetailOpen(true);
+    fetchAdminRoomById(token, room.roomId)
+      .then((freshRoom) => {
+        setSelectedRoom(freshRoom);
+        setIsDetailOpen(true);
+      })
+      .catch(() => toast.error("Không thể tải chi tiết phòng chiếu"));
   }
 
   function handleEdit(room: AdminRoom) {
-    setSelectedRoom(room);
-    setIsFormOpen(true);
+    if (!token) return;
+    fetchAdminRoomById(token, room.roomId)
+      .then((freshRoom) => {
+        setSelectedRoom(freshRoom);
+        setIsFormOpen(true);
+      })
+      .catch(() => toast.error("Không thể tải dữ liệu phòng để chỉnh sửa"));
   }
 
   async function handleFormSubmit(data: RoomFormSchema) {
@@ -146,7 +156,6 @@ export default function AdminRoomsPage() {
       if (selectedRoom) {
         await updateAdminRoom(token, selectedRoom.roomId, {
           name:       data.name,
-          capacity:   data.capacity,
           roomType:   data.roomType,
           roomStatus: data.roomStatus,
         });
@@ -316,8 +325,7 @@ export default function AdminRoomsPage() {
         initialSetupDims={initialSetupDims}
         onEdit={(room) => {
           setIsDetailOpen(false);
-          setSelectedRoom(room);
-          setIsFormOpen(true);
+          handleEdit(room);
         }}
         onRefresh={loadRooms}
       />

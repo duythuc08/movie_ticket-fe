@@ -98,8 +98,22 @@ export const ErrorCodeMap: Record<number, string> = {
     1096: "Email rạp chiếu đã tồn tại",
     1097: "Số điện thoại này đã được sử dụng bởi tài khoản khác",
     1099: "Tài khoản của bạn đã bị khóa",
+    1098: "Suất chiếu đã kết thúc",
     1100: "Ghế đôi phải được chọn theo cặp",
     1101: "Chuyển đổi trạng thái đánh giá không hợp lệ",
+    1102: "Mật khẩu cũ không đúng",
+    1103: "Không tìm thấy chính sách giá",
+    1104: "Không tìm thấy quy tắc chính sách giá",
+    1105: "Không tìm thấy ngày lễ",
+    1106: "Ngày kết thúc hiệu lực không được trước ngày bắt đầu hiệu lực",
+    1107: "Ngày kết thúc của ngày lễ không được trước ngày bắt đầu",
+    1108: "Quy tắc theo thứ trong tuần phải có ít nhất một ngày trong tuần",
+    1109: "Quy tắc theo ngày lễ phải có ít nhất một ngày lễ",
+    1110: "Không thể xác định giá: không tìm thấy quy tắc chính sách giá phù hợp",
+    1111: "Khoảng thời gian đề xuất không hợp lệ",
+    1112: "Cần ít nhất một phòng chiếu với một phim được gán suất chiếu",
+    1113: "Suất chiếu này không phải là đề xuất nháp",
+    1114: "Không thể dừng chiếu phim vì còn suất chiếu đã có vé đặt/bán",
 };
 
 export const getErrorMessage = (code?: number, defaultMessage?: string) => {

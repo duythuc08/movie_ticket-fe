@@ -34,6 +34,7 @@ import type { SelectOption } from "@/components/shared";
 import { fetchAllGenresForSelect, createGenre } from "@/services/admin/adminGenreService";
 import { fetchPersonsByRoleForSelect, createPerson } from "@/services/admin/adminPersonService";
 import { useAuth } from "@/context/AuthContext";
+import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 const AGE_RATING_OPTIONS = [
   { value: "G", label: "G — Mọi lứa tuổi" },
@@ -42,6 +43,18 @@ const AGE_RATING_OPTIONS = [
   { value: "R", label: "R — Trên 18 tuổi" },
   { value: "NC_17", label: "NC-17 — Chỉ dành cho người lớn" },
 ] as const;
+
+function mergeSelectedOptions(options: SelectOption[], selected: SelectOption[]): SelectOption[] {
+  const seen = new Set(options.map((option) => option.value));
+  return [
+    ...options,
+    ...selected.filter((option) => {
+      if (seen.has(option.value)) return false;
+      seen.add(option.value);
+      return true;
+    }),
+  ];
+}
 
 interface MovieFormDialogProps {
   open: boolean;
@@ -85,17 +98,35 @@ export function MovieFormDialog({
         fetchPersonsByRoleForSelect(token, "DIRECTOR"),
         fetchPersonsByRoleForSelect(token, "ACTOR"),
       ]);
-      setGenreOptions(genres.map((g) => ({ value: g.name, label: g.name })));
-      setDirectorOptions(directors.map((p) => ({ value: String(p.id), label: p.name })));
-      setActorOptions(actors.map((p) => ({ value: String(p.id), label: p.name })));
+      const activeGenreOptions = genres.map((g) => ({
+        value: g.name,
+        label: GENRE_LABELS[g.name.toUpperCase()] ?? g.name,
+      }));
+      const selectedGenreOptions = (movie?.genre ?? []).map((g) => ({
+        value: g.name,
+        label: GENRE_LABELS[g.name.toUpperCase()] ?? g.name,
+      }));
+      const activeDirectorOptions = directors.map((p) => ({ value: String(p.id), label: p.name }));
+      const activeActorOptions = actors.map((p) => ({ value: String(p.id), label: p.name }));
+      const selectedDirectorOptions = (movie?.directors ?? []).map((p) => ({ value: String(p.id), label: p.name }));
+      const selectedActorOptions = (movie?.castPersons ?? []).map((p) => ({ value: String(p.id), label: p.name }));
+
+      setGenreOptions(mergeSelectedOptions(activeGenreOptions, selectedGenreOptions));
+      setDirectorOptions(mergeSelectedOptions(activeDirectorOptions, selectedDirectorOptions));
+      setActorOptions(mergeSelectedOptions(activeActorOptions, selectedActorOptions));
     } catch {
       toast.error("Không thể tải dữ liệu danh sách lựa chọn");
     } finally {
       setIsLoadingOptions(false);
     }
-  }, [token, open]);
+  }, [token, open, movie]);
 
-  useEffect(() => { loadOptions(); }, [loadOptions]);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadOptions();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadOptions]);
 
   useEffect(() => {
     if (!open || isLoadingOptions) return;
@@ -141,7 +172,10 @@ export function MovieFormDialog({
   async function handleQuickAddGenre(name: string, description: string): Promise<void> {
     if (!token) throw new Error("Chưa đăng nhập");
     const created = await createGenre(token, { name, description: description || undefined });
-    setGenreOptions((prev) => [...prev, { value: created.name, label: created.name }]);
+    setGenreOptions((prev) => [
+      ...prev,
+      { value: created.name, label: GENRE_LABELS[created.name.toUpperCase()] ?? created.name },
+    ]);
     const current = form.getValues("genreNames");
     form.setValue("genreNames", [...current, created.name]);
   }

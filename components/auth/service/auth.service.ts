@@ -52,16 +52,17 @@ export async function verifyOTP(email: string, otp: string): Promise<void> {
   }
 }
 
-export async function sendForgotPassword(username: string): Promise<void> {
+export async function sendForgotPassword(username: string): Promise<string> {
   const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(getErrorMessage(data?.code, data?.message || "Gửi yêu cầu quên mật khẩu thất bại"));
   }
+  return data?.message ?? "OTP đã được gửi tới email";
 }
 
 export async function resetPassword(email: string, newPassword: string): Promise<void> {

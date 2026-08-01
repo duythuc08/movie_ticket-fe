@@ -107,10 +107,7 @@ export default function AdminCinemasPage() {
     setIsSubmitting(true);
     try {
       if (selectedCinema) {
-        await updateAdminCinema(token, selectedCinema.cinemaId, {
-          ...data,
-          rooms: data.rooms || [],
-        });
+        await updateAdminCinema(token, selectedCinema.cinemaId, data);
         toast.success(`Đã cập nhật rạp "${data.name}"`);
       } else {
         await createAdminCinema(token, data);

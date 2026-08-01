@@ -192,8 +192,8 @@ export function CinemaDetailDialog({
                               className="group flex flex-col justify-between p-4 rounded-xl border bg-card hover:border-primary/30 hover:shadow-sm transition-all"
                             >
                               <div className="flex items-start justify-between mb-4">
-                                <div>
-                                  <span className="font-bold text-base block mb-1 group-hover:text-primary transition-colors">{room.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-base group-hover:text-primary transition-colors">{room.name}</span>
                                   <Badge variant="outline" className={`text-[10px] uppercase tracking-wider font-bold ${ROOM_TYPE_BADGE_CLASSES[room.roomType]}`}>
                                     {ROOM_TYPE_LABELS[room.roomType]}
                                   </Badge>

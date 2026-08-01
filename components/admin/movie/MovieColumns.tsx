@@ -6,6 +6,7 @@ import { StatusBadge, ActionMenu, ColumnHeader } from "@/components/shared";
 import type { StatusMap } from "@/components/shared";
 import { Eye, Pencil, Power, PowerOff, Ban, RotateCcw } from "lucide-react";
 import Image from "next/image";
+import { GENRE_LABELS } from "@/components/movie/constants/movie.constants";
 
 const MOVIE_STATUS_MAP: StatusMap = {
   NOW_SHOWING: { label: "Đang chiếu",  variant: "success"   },
@@ -70,7 +71,7 @@ export function createMovieColumns(
                 key={g.genreId}
                 className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary border border-primary/20"
               >
-                {g.name}
+                {GENRE_LABELS[g.name.toUpperCase()] ?? g.name}
               </span>
             ))}
             {genres.length > 2 && (

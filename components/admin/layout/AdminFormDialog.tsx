@@ -27,6 +27,7 @@ interface AdminFormDialogProps<TSchema extends FieldValues> {
   isSubmitting?: boolean;
   isLoading?: boolean;
   submitLabel?: string;
+  validationMode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
   readOnly?: boolean;
   onEdit?: () => void;
   maxWidth?: string;
@@ -46,6 +47,7 @@ export function AdminFormDialog<TSchema extends FieldValues>({
   isSubmitting = false,
   isLoading = false,
   submitLabel = "Lưu",
+  validationMode = "onChange",
   readOnly = false,
   onEdit,
   maxWidth = "max-w-lg",
@@ -55,7 +57,8 @@ export function AdminFormDialog<TSchema extends FieldValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema as any),
     defaultValues,
-    mode: "onChange",
+    mode: validationMode,
+    reValidateMode: validationMode === "onSubmit" ? "onSubmit" : "onChange",
   });
 
   React.useEffect(() => {
