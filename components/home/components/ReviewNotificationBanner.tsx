@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { X, Star, BellRing } from "lucide-react";
 import { apiFetch } from "@/lib/fetchApi";
 import { useAuth } from "@/context/AuthContext";
+import type { RecommendationItemResponse } from "@/components/movie/components/RecommendationDialog";
 
 interface UnreviewedMovieResponse {
   movieId: number;
@@ -16,31 +17,46 @@ interface UnreviewedMovieResponse {
 export function ReviewNotificationBanner() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [allUnreviewed, setAllUnreviewed] = useState<UnreviewedMovieResponse[]>([]);
   const [dismissedIds, setDismissedIds] = useState<number[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedMovieForDialog, setSelectedMovieForDialog] = useState<UnreviewedMovieResponse | null>(null);
   const [activeTab, setActiveTab] = useState<"reviews" | "recommendations">("reviews");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userId = user?.userId ?? null;
+  const dismissedReviewKey = userId ? `dismissedReviewMovieIds:${userId}` : null;
+  const dismissedRecommendationsKey = userId ? `dismissedRecommendationsCache:${userId}` : null;
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    // Load dismissed IDs from local storage
-    const stored = localStorage.getItem("dismissedReviewMovieIds");
-    if (stored) {
-      try {
-        setDismissedIds(JSON.parse(stored));
-      } catch (e) {
+    if (!isAuthenticated || !dismissedReviewKey) {
+      const resetTimer = window.setTimeout(() => {
+        setAllUnreviewed([]);
         setDismissedIds([]);
-      }
+        setIsDropdownOpen(false);
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
 
+    const loadDismissedTimer = window.setTimeout(() => {
+      const stored = localStorage.getItem(dismissedReviewKey);
+      if (stored) {
+        try {
+          setDismissedIds(JSON.parse(stored));
+        } catch {
+          setDismissedIds([]);
+        }
+      } else {
+        setDismissedIds([]);
+      }
+    }, 0);
+
+    let cancelled = false;
     const fetchUnreviewedMovies = async () => {
       try {
         const res = await apiFetch("/reviews/recent-unreviewed");
         const data = await res.json();
-        if (data?.result && Array.isArray(data.result)) {
+        if (!cancelled && data?.result && Array.isArray(data.result)) {
           setAllUnreviewed(data.result);
         }
       } catch (error) {
@@ -49,7 +65,11 @@ export function ReviewNotificationBanner() {
     };
 
     fetchUnreviewedMovies();
-  }, []);
+    return () => {
+      cancelled = true;
+      clearTimeout(loadDismissedTimer);
+    };
+  }, [isAuthenticated, dismissedReviewKey]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -76,7 +96,9 @@ export function ReviewNotificationBanner() {
   const handleDismissBanner = (movieId: number) => {
     const updated = [...dismissedIds, movieId];
     setDismissedIds(updated);
-    localStorage.setItem("dismissedReviewMovieIds", JSON.stringify(updated));
+    if (dismissedReviewKey) {
+      localStorage.setItem(dismissedReviewKey, JSON.stringify(updated));
+    }
   };
 
   // Find the first movie that is NOT dismissed to show in the main banner
@@ -86,29 +108,44 @@ export function ReviewNotificationBanner() {
   // According to requirements: "nếu nhấn X nữa thì đưa vô noti" -> only dismissed ones go to noti
   const notificationMovies = allUnreviewed.filter(m => dismissedIds.includes(m.movieId));
 
-  const [dismissedRecommendations, setDismissedRecommendations] = useState<any[]>([]);
+  const [dismissedRecommendations, setDismissedRecommendations] = useState<RecommendationItemResponse[]>([]);
 
   useEffect(() => {
-    // Load dismissed recommendations from sessionStorage
-    const storedRecs = sessionStorage.getItem("dismissedRecommendationsCache");
-    if (storedRecs) {
-      try {
-        setDismissedRecommendations(JSON.parse(storedRecs));
-      } catch (e) {}
+    if (!isAuthenticated || !dismissedRecommendationsKey) {
+      const resetTimer = window.setTimeout(() => {
+        setDismissedRecommendations([]);
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
+
+    const loadRecommendationsTimer = window.setTimeout(() => {
+      const storedRecs = sessionStorage.getItem(dismissedRecommendationsKey);
+      if (storedRecs) {
+        try {
+          setDismissedRecommendations(JSON.parse(storedRecs));
+        } catch {
+          setDismissedRecommendations([]);
+        }
+      } else {
+        setDismissedRecommendations([]);
+      }
+    }, 0);
 
     const handleRecommendationDismissed = (e: Event) => {
       const customEvent = e as CustomEvent;
-      const recs = customEvent.detail;
+      const recs = customEvent.detail as RecommendationItemResponse[] | undefined;
       if (recs && recs.length > 0) {
         setDismissedRecommendations(recs);
-        sessionStorage.setItem("dismissedRecommendationsCache", JSON.stringify(recs));
+        sessionStorage.setItem(dismissedRecommendationsKey, JSON.stringify(recs));
       }
     };
 
     window.addEventListener("recommendation:dismissed", handleRecommendationDismissed);
-    return () => window.removeEventListener("recommendation:dismissed", handleRecommendationDismissed);
-  }, []);
+    return () => {
+      clearTimeout(loadRecommendationsTimer);
+      window.removeEventListener("recommendation:dismissed", handleRecommendationDismissed);
+    };
+  }, [isAuthenticated, dismissedRecommendationsKey]);
 
   const handleConfirmReview = () => {
     if (selectedMovieForDialog) {
@@ -142,7 +179,7 @@ export function ReviewNotificationBanner() {
               <div>
                 <p className="font-semibold text-sm sm:text-base flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                  Bạn đã xem "{bannerMovie.movieName}" gần đây!
+                  Bạn đã xem &quot;{bannerMovie.movieName}&quot; gần đây!
                 </p>
                 <p className="text-sm text-blue-100 hidden sm:block">
                   Hãy chia sẻ cảm nghĩ của bạn về bộ phim này để giúp mọi người nhé.
@@ -247,7 +284,7 @@ export function ReviewNotificationBanner() {
                         Chưa có phim gợi ý nào.
                       </div>
                     ) : (
-                      dismissedRecommendations.map((movie: any) => (
+                      dismissedRecommendations.map((movie) => (
                         <Link
                           key={`rec-${movie.movieId}`}
                           href={`/movie/${movie.movieId}`}
@@ -297,7 +334,7 @@ export function ReviewNotificationBanner() {
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Đánh giá phim</h3>
               <p className="text-gray-600 text-sm mb-6">
-                Bạn có muốn chuyển đến trang đánh giá cho bộ phim <span className="font-semibold text-gray-900">"{selectedMovieForDialog.movieName}"</span> không?
+                Bạn có muốn chuyển đến trang đánh giá cho bộ phim <span className="font-semibold text-gray-900">&quot;{selectedMovieForDialog.movieName}&quot;</span> không?
               </p>
               <div className="flex gap-3">
                 <button

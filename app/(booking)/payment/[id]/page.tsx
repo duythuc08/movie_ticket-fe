@@ -1,10 +1,9 @@
 "use client";
 
-import { useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
+import { setBookingTimer, useBookingTimer } from "@/components/booking/hooks/use-booking-timer";
 import { ApiError, checkoutBooking, getApplicableVouchers, resumePayment } from "@/components/booking/service/booking.service";
 import { formatCurrency } from "@/components/booking/utils/booking.utils";
 import {
-  clearBookingState,
   getBookingState,
   mergeBookingState,
 } from "@/components/booking/utils/bookingStorage";
@@ -34,7 +33,7 @@ export default function PaymentPage() {
 
   const [paymentMethod, setPaymentMethod] = useState("MOMO");
   const [loading, setLoading] = useState(false);
-  const { minutes, seconds, progress, isUrgent, clearTimer } = useBookingTimer();
+  const { minutes, seconds, progress, isUrgent } = useBookingTimer();
   const [membershipData, setMembershipData] = useState<MembershipTier | null>(
     null,
   );
@@ -220,9 +219,11 @@ export default function PaymentPage() {
           discountAmount: result.discountAmount,
           memberDiscountAmount: result.memberDiscountAmount,
           paymentMethod: "VNPAY",
+          expiredTime: result.expiredTime,
         };
 
-        clearTimer();
+        setBookingTimer(result.expiredTime);
+        mergeBookingState({ expiredTime: result.expiredTime });
         sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
         window.location.href = result.paymentUrl;
       } catch (err) {
@@ -230,7 +231,14 @@ export default function PaymentPage() {
           // Đơn đã IN_PROGRESS — lấy lại URL thanh toán
           try {
             const resumed = await resumePayment(token, Number(orderId));
-            sessionStorage.setItem("pendingOrder", JSON.stringify({ ...bookingInfo, orderId, paymentMethod: "VNPAY" }));
+            setBookingTimer(resumed.expiredTime);
+            mergeBookingState({ expiredTime: resumed.expiredTime });
+            sessionStorage.setItem("pendingOrder", JSON.stringify({
+              ...bookingInfo,
+              orderId,
+              paymentMethod: "VNPAY",
+              expiredTime: resumed.expiredTime,
+            }));
             window.location.href = resumed.paymentUrl;
             return;
           } catch {
@@ -266,9 +274,11 @@ export default function PaymentPage() {
           discountAmount: result.discountAmount,
           memberDiscountAmount: result.memberDiscountAmount,
           paymentMethod: "MOMO",
+          expiredTime: result.expiredTime,
         };
 
-        clearTimer();
+        setBookingTimer(result.expiredTime);
+        mergeBookingState({ expiredTime: result.expiredTime });
         sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
         window.location.href = result.paymentUrl;
       } catch (err) {
@@ -276,7 +286,14 @@ export default function PaymentPage() {
           // Đơn đã IN_PROGRESS — lấy lại URL thanh toán
           try {
             const resumed = await resumePayment(token, Number(orderId));
-            sessionStorage.setItem("pendingOrder", JSON.stringify({ ...bookingInfo, orderId, paymentMethod: "MOMO" }));
+            setBookingTimer(resumed.expiredTime);
+            mergeBookingState({ expiredTime: resumed.expiredTime });
+            sessionStorage.setItem("pendingOrder", JSON.stringify({
+              ...bookingInfo,
+              orderId,
+              paymentMethod: "MOMO",
+              expiredTime: resumed.expiredTime,
+            }));
             window.location.href = resumed.paymentUrl;
             return;
           } catch {

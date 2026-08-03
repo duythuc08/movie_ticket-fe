@@ -111,9 +111,14 @@ export default function AdminRoomsPage() {
     queueMicrotask(() => {
       setPage(0);
       void loadRooms(0);
+    });
+  }, [loadRooms]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
       void loadCinemas();
     });
-  }, [loadRooms, loadCinemas]);
+  }, [loadCinemas]);
 
   useEffect(() => {
     if (searchParams.get("action") === "create") {
@@ -305,7 +310,6 @@ export default function AdminRoomsPage() {
           if (!isOpen) setSelectedRoom(null);
         }}
         room={selectedRoom}
-        defaultCinemaId={defaultCinemaId}
         cinemas={cinemas}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}

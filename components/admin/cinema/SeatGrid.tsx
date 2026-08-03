@@ -88,7 +88,17 @@ export function SeatGrid({ seats, onSeatAction, isLoading }: SeatGridProps) {
             return (
               <div key={rowLabel} className="flex items-center gap-1" style={{ height: "2rem" }}>
                 <span className="w-6 shrink-0 text-center text-xs font-semibold text-muted-foreground/40">{rowLabel}</span>
-                <div className="flex-1 border-t border-dashed border-muted-foreground/20 mx-1" />
+                <div
+                  className="grid gap-1"
+                  style={{ gridTemplateColumns: `repeat(${maxCol}, 2rem)` }}
+                >
+                  <div
+                    className="h-8 flex items-center"
+                    style={{ gridColumn: `1 / span ${maxCol}` }}
+                  >
+                    <div className="w-full border-t border-dashed border-muted-foreground/20" />
+                  </div>
+                </div>
               </div>
             );
           }

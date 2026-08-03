@@ -123,7 +123,7 @@ export async function checkoutBooking(
   orderId: number,
   promotionCode?: string,
   paymentMethod: "VNPAY" | "MOMO" = "VNPAY"
-): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number }> {
+): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number; expiredTime: string }> {
   const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/checkout`, {
     method: "POST",
     headers: authHeaders(token),
@@ -137,7 +137,7 @@ export async function checkoutBooking(
 export async function resumePayment(
   token: string,
   orderId: number,
-): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number }> {
+): Promise<{ paymentUrl: string; finalPrice: number; discountAmount: number; memberDiscountAmount: number; expiredTime: string }> {
   const res = await apiFetch(`${BASE_URL}/bookings/${orderId}/resume-payment`, {
     method: "POST",
     headers: authHeaders(token),

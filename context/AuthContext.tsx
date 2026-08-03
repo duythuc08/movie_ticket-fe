@@ -82,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredToken(newToken);
     setTokenCookie(newToken);
     if (newRefreshToken) setStoredRefreshToken(newRefreshToken);
+    setUser(null);
     setToken(newToken);
   }, []);
 

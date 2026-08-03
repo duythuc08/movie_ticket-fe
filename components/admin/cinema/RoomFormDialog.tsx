@@ -38,7 +38,7 @@ function RoomDefaultValueSync({
       shouldTouch: false,
       shouldValidate: false,
     });
-    form.clearErrors(["roomType", "roomStatus"]);
+    form.clearErrors(["cinemaId", "roomType", "roomStatus"]);
   }, [form, roomType, roomStatus]);
 
   return null;
@@ -48,7 +48,6 @@ interface RoomFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   room?: AdminRoom | null;
-  defaultCinemaId?: number | null;
   cinemas: AdminCinema[];
   onSubmit: (data: RoomFormSchema) => Promise<void>;
   isSubmitting: boolean;
@@ -58,7 +57,6 @@ export function RoomFormDialog({
   open,
   onOpenChange,
   room,
-  defaultCinemaId,
   cinemas,
   onSubmit,
   isSubmitting,
@@ -86,7 +84,7 @@ export function RoomFormDialog({
   const defaultValues = {
     name: room?.name ?? "",
     capacity: room?.capacity ?? 0,
-    cinemaId: room?.cinemas?.cinemaId ?? defaultCinemaId ?? 0,
+    cinemaId: room?.cinemas?.cinemaId ?? (undefined as unknown as number),
     roomType: (room?.roomType ?? "TWO_D") as RoomType,
     roomStatus: (room?.roomStatus ?? "OPERATIONAL") as RoomStatus,
     rowCount: "" as unknown as number,
@@ -105,7 +103,7 @@ export function RoomFormDialog({
       title={isCreateMode ? "Thêm phòng chiếu" : "Chỉnh sửa phòng chiếu"}
       subtitle={!isCreateMode ? `${room.cinemas?.name ?? ""} - ${room.name}` : undefined}
       updatedAt={null}
-      resetKey={room ? `${room.roomId}-${room.roomType}-${room.roomStatus}` : `create-${defaultCinemaId ?? "none"}`}
+      resetKey={room ? `${room.roomId}-${room.roomType}-${room.roomStatus}` : "create"}
       schema={schema}
       defaultValues={defaultValues}
       onSubmit={onSubmit}
@@ -146,7 +144,7 @@ export function RoomFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.cinemaId && (
+              {form.formState.errors.cinemaId && (form.formState.submitCount > 0 || form.formState.touchedFields.cinemaId) && (
                 <p className="text-xs text-destructive">
                   {form.formState.errors.cinemaId.message}
                 </p>

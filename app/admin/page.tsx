@@ -117,13 +117,13 @@ export default function AdminDashboardPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Tổng quan</h1>
+          <h1 className="text-3xl font-bold tracking-tight ">Tổng quan</h1>
           <p className="text-admin-3 mt-1 text-sm">Quản lý và theo dõi hiệu suất hệ thống rạp chiếu phim.</p>
         </div>
         
         <div className="flex gap-2">
           <Link href="/admin/movies?action=add">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 transition-all">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 transition-all">
               <PlusCircle className="w-4 h-4" />
               Thêm Phim Mới
             </Button>

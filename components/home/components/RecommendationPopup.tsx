@@ -6,17 +6,39 @@ import { RecommendationDialog, RecommendationItemResponse, GenreProfileItem } fr
 import { apiFetch } from "@/lib/fetchApi";
 
 export function RecommendationPopup() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendationItemResponse[]>([]);
   const [genreProfile, setGenreProfile] = useState<GenreProfileItem[]>([]);
   const [usedColdStart, setUsedColdStart] = useState(false);
+  const [recommendationUserId, setRecommendationUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !user?.userId) {
+      const resetTimer = window.setTimeout(() => {
+        setOpen(false);
+        setRecommendations([]);
+        setGenreProfile([]);
+        setUsedColdStart(false);
+        setRecommendationUserId(null);
+      }, 0);
+      return () => clearTimeout(resetTimer);
+    }
+
+    if (recommendationUserId && recommendationUserId !== user.userId) {
+      const resetTimer = window.setTimeout(() => {
+        setOpen(false);
+        setRecommendations([]);
+        setGenreProfile([]);
+        setUsedColdStart(false);
+        setRecommendationUserId(null);
+      }, 0);
+      return () => clearTimeout(resetTimer);
+    }
 
     // Check if we already showed it in this session to avoid spamming the user
-    const hasShown = sessionStorage.getItem("hasShownRecommendation_v2");
+    const hasShownKey = `hasShownRecommendation_v2:${user.userId}`;
+    const hasShown = sessionStorage.getItem(hasShownKey);
     if (hasShown) return;
 
     // Fetch recommendations
@@ -30,8 +52,9 @@ export function RecommendationPopup() {
             setRecommendations(result.recommendations);
             setGenreProfile(result.genreProfile ?? []);
             setUsedColdStart(!!result.usedColdStart);
+            setRecommendationUserId(user.userId);
             setOpen(true);
-            sessionStorage.setItem("hasShownRecommendation_v2", "true");
+            sessionStorage.setItem(hasShownKey, "true");
           }
         }
       } catch (error) {
@@ -42,9 +65,9 @@ export function RecommendationPopup() {
     // Small delay so it doesn't pop up too aggressively on page load
     const timer = setTimeout(fetchRecommendations, 1500);
     return () => clearTimeout(timer);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.userId, recommendationUserId]);
 
-  if (recommendations.length === 0) return null;
+  if (recommendations.length === 0 || recommendationUserId !== user?.userId) return null;
 
   return (
     <RecommendationDialog

@@ -32,10 +32,13 @@ export const roomFormSchema = z.object({
     .int("Sức chứa phải là số nguyên")
     .min(0, "Sức chứa phải từ 0")
     .max(1000, "Sức chứa tối đa 1000 ghế"),
-  cinemaId: z
-    .number({ error: "Vui lòng chọn rạp" })
-    .int()
-    .positive("ID rạp không hợp lệ"),
+  cinemaId: z.preprocess(
+    (val) => val === "" || val == null || Number(val) === 0 ? undefined : Number(val),
+    z
+      .number({ error: "Vui lòng chọn rạp" })
+      .int()
+      .positive("ID rạp không hợp lệ")
+  ),
   roomType: z.enum(["TWO_D", "THREE_D", "IMAX", "PREMIUM"] as const, {
     error: "Vui lòng chọn loại phòng",
   }),
