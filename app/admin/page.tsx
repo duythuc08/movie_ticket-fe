@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { Film, Users, PlusCircle, Megaphone, Activity, ChevronRight, ReceiptText, BarChart3, MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Film, Users, PlusCircle, Megaphone, Activity, ChevronRight, ReceiptText, BarChart3, MessageSquare, CheckCircle, XCircle, Loader2, Star } from "lucide-react";
 import { AdminBookingStats } from "@/components/admin/bookings/components/AdminBookingStats";
 import { fetchAdminMovies } from "@/services/admin/adminMovieService";
 import { adminUserService } from "@/services/admin/adminUserService";
 import { adminBookingService } from "@/services/admin/admin-booking";
-import { fetchAdminReviews } from "@/services/admin/adminReviewService";
+import { approveReview, fetchAdminReviews, rejectReview } from "@/services/admin/adminReviewService";
 import { adminStatisticService } from "@/services/admin/adminStatisticService";
 import { getStoredToken } from "@/components/auth/utils/auth.utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale/vi";
+import { toast } from "sonner";
 import type { AdminOrderSummaryResponse } from "@/types";
 import type { AdminReview } from "@/types/admin.type";
 import {
@@ -31,6 +32,11 @@ interface StatCardProps {
   value: string;
   icon: React.ReactNode;
   color: string;
+}
+
+interface DashboardChartPoint {
+  day: number | string;
+  revenue: number;
 }
 
 function StatCard({ title, value, icon, color }: StatCardProps) {
@@ -55,6 +61,113 @@ function formatVND(amount: number): string {
   }).format(amount || 0);
 }
 
+interface PendingReviewsTableProps {
+  loading: boolean;
+  reviews: AdminReview[];
+  processingReviewId: number | null;
+  onAction: (review: AdminReview, action: "approve" | "reject") => void;
+}
+
+function PendingReviewsWideTable({
+  loading,
+  reviews,
+  processingReviewId,
+  onAction,
+}: PendingReviewsTableProps) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full table-fixed text-left text-sm">
+        <thead className="border-b border-admin-border bg-admin-surface-3/50 text-xs uppercase text-admin-3">
+          <tr>
+            <th className="w-[18%] px-4 py-3 font-medium text-admin-3">Người dùng</th>
+            <th className="w-[18%] px-4 py-3 font-medium text-admin-3">Phim</th>
+            <th className="w-[9%] px-4 py-3 text-center font-medium text-admin-3">Điểm</th>
+            <th className="w-[27%] px-4 py-3 font-medium text-admin-3">Đánh giá</th>
+            <th className="w-[13%] px-4 py-3 font-medium text-admin-3">Thời gian</th>
+            <th className="w-[15%] px-4 py-3 text-right font-medium text-admin-3">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-admin-border">
+          {loading ? (
+            Array(3).fill(0).map((_, i) => (
+              <tr key={i} className="animate-pulse">
+                <td className="px-4 py-4"><div className="h-4 w-28 rounded bg-admin-surface-3" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-32 rounded bg-admin-surface-3" /></td>
+                <td className="px-4 py-4"><div className="mx-auto h-4 w-10 rounded bg-admin-surface-3" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-56 rounded bg-admin-surface-3" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-24 rounded bg-admin-surface-3" /></td>
+                <td className="px-4 py-4"><div className="ml-auto h-8 w-32 rounded bg-admin-surface-3" /></td>
+              </tr>
+            ))
+          ) : reviews.length > 0 ? (
+            reviews.map((review) => (
+              <tr key={review.reviewId} className="transition-colors hover:bg-admin-surface-3/30">
+                <td className="px-4 py-4 align-top">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-admin">{review.fullName || "Người dùng"}</div>
+                    <div className="truncate text-xs text-admin-3">@{review.username || "unknown"}</div>
+                  </div>
+                </td>
+                <td className="px-4 py-4 align-top">
+                  <div className="truncate font-medium text-admin-2">{review.movieTitle}</div>
+                </td>
+                <td className="px-4 py-4 text-center align-top">
+                  <span className="inline-flex items-center justify-center gap-1 font-medium text-amber-400">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    {review.rating}
+                  </span>
+                </td>
+                <td className="px-4 py-4 align-top">
+                  <p className="line-clamp-2 leading-5 text-admin-2" title={review.comment}>
+                    {review.comment}
+                  </p>
+                </td>
+                <td className="px-4 py-4 align-top text-xs leading-5 text-admin-3">
+                  {format(new Date(review.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+                </td>
+                <td className="px-4 py-4 align-top">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      className="h-8 gap-1.5 bg-emerald-600 px-3 text-xs hover:bg-emerald-700"
+                      disabled={processingReviewId === review.reviewId}
+                      onClick={() => onAction(review, "approve")}
+                    >
+                      {processingReviewId === review.reviewId ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-3.5 w-3.5" />
+                      )}
+                      Duyệt
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1.5 border-rose-500/30 px-3 text-xs text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+                      disabled={processingReviewId === review.reviewId}
+                      onClick={() => onAction(review, "reject")}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Từ chối
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="px-6 py-8 text-center text-admin-3">
+                <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-20" />
+                Không có đánh giá nào chờ duyệt
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
@@ -66,7 +179,8 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<AdminOrderSummaryResponse[]>([]);
   const [pendingReviews, setPendingReviews] = useState<AdminReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [processingReviewId, setProcessingReviewId] = useState<number | null>(null);
+  const [chartData, setChartData] = useState<DashboardChartPoint[]>([]);
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -113,6 +227,33 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, []);
 
+  const refreshPendingReviews = async (token: string) => {
+    const reviewsRes = await fetchAdminReviews(token, { page: 0, size: 5, status: "PENDING" });
+    setPendingReviews(reviewsRes.content || []);
+  };
+
+  const handleReviewAction = async (review: AdminReview, action: "approve" | "reject") => {
+    const token = getStoredToken();
+    if (!token) return;
+
+    setProcessingReviewId(review.reviewId);
+    try {
+      if (action === "approve") {
+        await approveReview(token, review.reviewId);
+        toast.success("Đã duyệt đánh giá");
+      } else {
+        await rejectReview(token, review.reviewId);
+        toast.success("Đã từ chối đánh giá");
+      }
+      setPendingReviews((current) => current.filter((item) => item.reviewId !== review.reviewId));
+      await refreshPendingReviews(token);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật đánh giá");
+    } finally {
+      setProcessingReviewId(null);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -139,8 +280,8 @@ export default function AdminDashboardPage() {
 
       <AdminBookingStats year={selectedYear} month={selectedMonth} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           
           {/* Chart Section */}
           <Card className="border-admin-border bg-admin-surface-2 overflow-hidden shadow-sm">
@@ -192,7 +333,7 @@ export default function AdminDashboardPage() {
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', color: '#F3F4F6' }}
-                      formatter={(value: any) => [formatVND(Number(value) || 0), "Doanh thu"]}
+                      formatter={(value: number | string) => [formatVND(Number(value) || 0), "Doanh thu"]}
                       labelFormatter={(label) => `Ngày ${label}`}
                     />
                     <Line 
@@ -208,23 +349,60 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <Film className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-semibold text-admin">Hệ thống</h2>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 animate-pulse">
+              <div className="h-28 rounded-xl bg-admin-surface-3 border border-admin-border"></div>
+              <div className="h-28 rounded-xl bg-admin-surface-3 border border-admin-border"></div>
+              <div className="h-28 rounded-xl bg-admin-surface-3 border border-admin-border"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              <StatCard
+                title="Phim đang chiếu"
+                value={showingMovies.toString()}
+                icon={<Film size={24} className="text-indigo-400" />}
+                color="bg-indigo-500/20 ring-1 ring-indigo-500/30"
+              />
+              <StatCard
+                title="Phim sắp chiếu"
+                value={comingMovies.toString()}
+                icon={<Film size={24} className="text-violet-400" />}
+                color="bg-violet-500/20 ring-1 ring-violet-500/30"
+              />
+              <StatCard
+                title="Tổng người dùng"
+                value={totalUsers.toLocaleString("vi-VN")}
+                icon={<Users size={24} className="text-sky-400" />}
+                color="bg-sky-500/20 ring-1 ring-sky-500/30"
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
           {/* Recent Orders Section (Today's Orders) */}
           <div className="flex items-center gap-2 mt-4">
             <Activity className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-xl font-semibold text-admin">Đơn Hàng Hôm Nay</h2>
+            <h2 className="text-xl font-semibold text-admin">Đơn hàng hôm nay</h2>
           </div>
           
           <Card className="border-admin-border bg-admin-surface-2 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
+              <table className="w-full table-fixed text-left text-sm">
                 <thead className="text-xs text-admin-3 uppercase bg-admin-surface-3/50 border-b border-admin-border">
                   <tr>
-                    <th className="px-6 py-4 font-medium">Khách hàng</th>
-                    <th className="px-6 py-4 font-medium">Phim & Rạp</th>
-                    <th className="px-6 py-4 font-medium">Thời gian</th>
-                    <th className="px-6 py-4 font-medium text-right">Tổng tiền</th>
-                    <th className="px-6 py-4 font-medium text-center">Trạng thái</th>
+                    <th className="w-[20%] px-6 py-4 font-medium">Khách hàng</th>
+                    <th className="w-[32%] px-6 py-4 font-medium">Phim & rạp</th>
+                    <th className="w-[18%] px-6 py-4 font-medium">Thời gian</th>
+                    <th className="w-[15%] px-6 py-4 text-right font-medium">Tổng tiền</th>
+                    <th className="w-[15%] px-6 py-4 text-center font-medium">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border">
@@ -241,18 +419,18 @@ export default function AdminDashboardPage() {
                   ) : recentOrders.length > 0 ? (
                     recentOrders.map((order) => (
                       <tr key={order.orderId} className="hover:bg-admin-surface-3/30 transition-colors">
-                        <td className="px-6 py-4 font-medium text-white">{order.fullName}</td>
-                        <td className="px-6 py-4">
-                          <div className="text-white truncate max-w-[200px]">{order.movieName || "N/A"}</div>
-                          <div className="text-xs text-admin-3 truncate max-w-[200px]">{order.cinemaName || "N/A"}</div>
+                        <td className="px-6 py-4 align-middle font-medium text-admin">{order.fullName}</td>
+                        <td className="px-6 py-4 align-middle">
+                          <div className="truncate font-medium text-admin-2">{order.movieName || "N/A"}</div>
+                          <div className="truncate text-xs text-admin-3">{order.cinemaName || "N/A"}</div>
                         </td>
-                        <td className="px-6 py-4 text-admin-2">
+                        <td className="px-6 py-4 align-middle text-admin-2">
                           {format(new Date(order.bookingTime), "dd/MM/yyyy HH:mm", { locale: vi })}
                         </td>
-                        <td className="px-6 py-4 text-right font-medium text-emerald-400">
+                        <td className="px-6 py-4 align-middle text-right font-medium text-emerald-400">
                           {formatVND(order.finalPrice)}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 align-middle text-center">
                           <span className={`px-2.5 py-1 text-xs rounded-full font-medium border ${
                             order.orderStatus === 'PAID' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                             order.orderStatus === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
@@ -287,52 +465,24 @@ export default function AdminDashboardPage() {
           {/* Pending Reviews Section */}
           <div className="flex items-center gap-2 mt-4">
             <MessageSquare className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-xl font-semibold text-admin">Bình luận chờ duyệt</h2>
+            <h2 className="text-xl font-semibold text-admin">Đánh giá chờ duyệt</h2>
           </div>
 
           <Card className="border-admin-border bg-admin-surface-2 overflow-hidden shadow-sm">
             <CardContent className="p-0">
-              <div className="divide-y divide-admin-border">
-                {loading ? (
-                  Array(3).fill(0).map((_, i) => (
-                    <div key={i} className="p-4 animate-pulse">
-                      <div className="h-4 bg-admin-surface-3 rounded w-1/3 mb-2"></div>
-                      <div className="h-3 bg-admin-surface-3 rounded w-full"></div>
-                    </div>
-                  ))
-                ) : pendingReviews.length > 0 ? (
-                  pendingReviews.map((review) => (
-                    <div key={review.reviewId} className="p-4 hover:bg-admin-surface-3/30 transition-colors">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="font-medium text-white text-sm">{review.username || "Người dùng"}</span>
-                        <span className="text-xs text-admin-3">{format(new Date(review.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}</span>
-                      </div>
-                      <p className="text-sm text-admin-2 line-clamp-2">{review.comment}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center text-admin-3">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                    Không có bình luận nào chờ duyệt
-                  </div>
-                )}
-              </div>
-              {!loading && pendingReviews.length > 0 && (
-                <div className="p-4 border-t border-admin-border bg-admin-surface-3/30 text-center">
-                  <Link href="/admin/reviews" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors">
-                    Xem tất cả đánh giá
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              )}
+              <PendingReviewsWideTable
+                loading={loading}
+                reviews={pendingReviews}
+                processingReviewId={processingReviewId}
+                onAction={handleReviewAction}
+              />
             </CardContent>
           </Card>
-        </div>
-
+        {false && (
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <Film className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-xl font-semibold text-admin">Hệ Thống</h2>
+            <h2 className="text-xl font-semibold text-admin">Hệ thống</h2>
           </div>
 
           {loading ? (
@@ -344,13 +494,13 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               <StatCard
-                title="Phim Đang Chiếu"
+                title="Phim đang chiếu"
                 value={showingMovies.toString()}
                 icon={<Film size={24} className="text-indigo-400" />}
                 color="bg-indigo-500/20 ring-1 ring-indigo-500/30"
               />
               <StatCard
-                title="Phim Sắp Chiếu"
+                title="Phim sắp chiếu"
                 value={comingMovies.toString()}
                 icon={<Film size={24} className="text-violet-400" />}
                 color="bg-violet-500/20 ring-1 ring-violet-500/30"
@@ -364,7 +514,8 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
-      </div>
+        )}
     </div>
   );
 }
+
