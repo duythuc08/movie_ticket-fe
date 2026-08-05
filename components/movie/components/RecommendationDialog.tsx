@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Play, Star, ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
+import { Play, Star, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "@/components/movie/components/ImageWithFallback";
 
@@ -36,6 +36,9 @@ interface RecommendationDialogProps {
 export function RecommendationDialog({ open, onOpenChange, recommendations, usedColdStart = false, genreProfile = [] }: RecommendationDialogProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isColdStartRecommendation =
+    usedColdStart ||
+    (recommendations.length > 0 && recommendations.every((item) => item.source === "cold_start_popularity"));
 
   // Dispatch event when dialog closes so ReviewNotificationBanner can pick it up
   useEffect(() => {
@@ -70,9 +73,9 @@ export function RecommendationDialog({ open, onOpenChange, recommendations, used
 
           <DialogHeader className="mb-4 flex flex-col items-center text-center space-y-3">
             <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              {usedColdStart ? "Phim phù hợp dành cho người dùng mới" : "Phim phù hợp dành cho bạn"}
+              {isColdStartRecommendation ? "Phim phù hợp dành cho người dùng mới" : "Phim phù hợp dành cho bạn"}
             </DialogTitle>
-            {usedColdStart || genreProfile.length === 0 ? (
+            {isColdStartRecommendation || genreProfile.length === 0 ? (
               <p className="text-sm sm:text-base text-gray-500 max-w-[80%] mx-auto leading-relaxed">
                 Dựa trên sở thích và đánh giá của bạn, chúng tôi đã tinh chọn những bộ phim đặc biệt này.
               </p>

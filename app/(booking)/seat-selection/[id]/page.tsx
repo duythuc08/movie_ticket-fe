@@ -22,6 +22,8 @@ const ROOM_TYPE_LABEL: Record<string, string> = {
   PREMIUM: "Premium",
 };
 
+const SEAT_CONFLICT_TOAST_ID = "seat-selection-conflict";
+
 const formatRoomType = (roomType?: string) => ROOM_TYPE_LABEL[roomType ?? ""] || roomType || "2D";
 
 export default function SeatSelectionPage() {
@@ -147,7 +149,9 @@ export default function SeatSelectionPage() {
             if (justReportedConflictRef.current) {
               justReportedConflictRef.current = false;
             } else {
-              toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.");
+              toast.warning("Một số ghế bạn chọn vừa được người khác đặt. Vui lòng chọn lại.", {
+                id: SEAT_CONFLICT_TOAST_ID,
+              });
             }
             return prev.filter((id) => !nowOccupiedByOthers.includes(id));
           }

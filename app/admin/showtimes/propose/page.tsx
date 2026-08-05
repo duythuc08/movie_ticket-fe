@@ -1,31 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { toast } from "sonner";
-import { ArrowLeft, Eye, Plus, DoorOpen, X, Check } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { PageHeader, ConfirmDialog } from "@/components/shared";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { SingleSelectWithSearch } from "@/components/shared";
-import { TimePicker24h } from "@/components/shared/TimePicker24h";
-import { cn } from "@/lib/utils";
-import { fetchActiveCinemasForSelect, fetchAdminCinemaById } from "@/services/admin/adminCinemaService";
-import { fetchAdminMovies } from "@/services/admin/adminMovieService";
-import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
 import { GanttChart } from "@/components/admin/showtime/gantt/GanttChart";
 import {
   RoomPlanCard,
-  computeUsedMinutes,
-  type RoomOption,
   type MovieOption,
+  type RoomOption,
   type RoomPlanState,
 } from "@/components/admin/showtime/propose/RoomPlanCard";
+import { ConfirmDialog, PageHeader, SingleSelectWithSearch } from "@/components/shared";
+import { TimePicker24h } from "@/components/shared/TimePicker24h";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
+import { fetchActiveCinemasForSelect, fetchAdminCinemaById } from "@/services/admin/adminCinemaService";
+import { fetchAdminMovies } from "@/services/admin/adminMovieService";
+import { fetchSeatsByRoom } from "@/services/admin/adminSeatService";
+import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
 import type { AdminCinema } from "@/types/admin.type";
 import type { Showtime, ShowTimeProposalRequest } from "@/types/admin/showtime";
+import { ArrowLeft, Check, DoorOpen, Eye, Plus, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { NumericFormat } from "react-number-format";
+import { toast } from "sonner";
 
 const BUFFER_MINUTES = 15; // khớp AdminShowTimeService.BUFFER_MINUTES ở backend
 
@@ -38,6 +39,36 @@ const toMinute = (hm: string) => {
   return h * 60 + m;
 };
 
+const SEAT_TYPE_LABEL: Record<string, string> = {
+  STANDARD: "Ghế thường",
+  VIP: "Ghế VIP",
+  COUPLE: "Ghế đôi",
+};
+
+const SEAT_TYPE_ORDER: Record<string, number> = {
+  STANDARD: 0,
+  VIP: 1,
+  COUPLE: 2,
+};
+
+const sortSeatTypes = (seatTypes: string[]) =>
+  [...seatTypes].sort(
+    (a, b) =>
+      (SEAT_TYPE_ORDER[a] ?? Number.MAX_SAFE_INTEGER) - (SEAT_TYPE_ORDER[b] ?? Number.MAX_SAFE_INTEGER) ||
+      a.localeCompare(b),
+  );
+
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  TWO_D: "2D",
+  THREE_D: "3D",
+  IMAX: "IMAX",
+  PREMIUM: "Premium",
+};
+
+const formatRoomType = (roomType: string) => ROOM_TYPE_LABEL[roomType] || roomType;
+
+const manualPriceKey = (roomType: string, seatType: string) => `${roomType}:${seatType}`;
+
 export default function ProposeShowtimesPage() {
   const { token } = useAuth();
   const router = useRouter();
@@ -49,11 +80,14 @@ export default function ProposeShowtimesPage() {
   const [fromDate, setFromDate] = useState(searchParams.get("from") || "");
   const [toDate, setToDate] = useState(searchParams.get("to") || "");
   const [openTime, setOpenTime] = useState("09:00");
-  const [closeTime, setCloseTime] = useState("23:59");
+  const [closeTime, setCloseTime] = useState("23:55");
 
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [movies, setMovies] = useState<MovieOption[]>([]);
   const [plans, setPlans] = useState<RoomPlanState[]>([]);
+  const [usePricePolicy, setUsePricePolicy] = useState(true);
+  const [manualPrices, setManualPrices] = useState<Record<string, number>>({});
+  const [seatTypesByRoom, setSeatTypesByRoom] = useState<Record<number, string[]>>({});
   const [isLoadingCinemaData, setIsLoadingCinemaData] = useState(false);
   // Số phút đã bị suất chiếu THẬT (SCHEDULED/ONGOING/FULLY_BOOKED...) chiếm sẵn trong từng phòng —
   // lấy worst-case (ngày bận nhất) trong toàn bộ khoảng ngày đã chọn, dùng để trừ vào "còn dư".
@@ -95,6 +129,8 @@ export default function ProposeShowtimesPage() {
     if (!token || !cinemaId) {
       setRooms([]);
       setPlans([]);
+      setSeatTypesByRoom({});
+      setManualPrices({});
       return;
     }
     setIsLoadingCinemaData(true);
@@ -108,6 +144,9 @@ export default function ProposeShowtimesPage() {
         const allMovies = [...nowShowingRes.content, ...comingSoonRes.content];
         setMovies(allMovies.map((m) => ({ movieId: m.movieId, title: m.title, duration: m.duration })));
         setPlans([{ id: newPlanId(), roomId: null, assignments: [] }]);
+        setSeatTypesByRoom({});
+        setManualPrices({});
+        setUsePricePolicy(true);
       })
       .catch(() => toast.error("Không thể tải dữ liệu phòng/phim của rạp"))
       .finally(() => setIsLoadingCinemaData(false));
@@ -175,6 +214,71 @@ export default function ProposeShowtimesPage() {
   }, [token, cinemaId, fromDate, toDate]);
 
   const chosenRoomIds = useMemo(() => new Set(plans.map((p) => p.roomId).filter((r): r is number => r != null)), [plans]);
+  const configuredPlanCount = useMemo(
+    () => plans.filter((plan) => plan.roomId != null).length,
+    [plans],
+  );
+  const selectedRoomIds = useMemo(() => Array.from(chosenRoomIds).sort((a, b) => a - b), [chosenRoomIds]);
+  const selectedRoomIdsKey = useMemo(() => selectedRoomIds.join(","), [selectedRoomIds]);
+  const selectedRoomTypePriceGroups = useMemo(
+    () => {
+      const groups = new Map<string, { roomType: string; roomNames: string[]; seatTypes: Set<string> }>();
+      selectedRoomIds.forEach((roomId) => {
+        const room = rooms.find((item) => item.roomId === roomId);
+        if (!room?.roomType) return;
+        const group = groups.get(room.roomType) ?? {
+          roomType: room.roomType,
+          roomNames: [],
+          seatTypes: new Set<string>(),
+        };
+        group.roomNames.push(room.name);
+        (seatTypesByRoom[roomId] || []).forEach((seatType) => group.seatTypes.add(seatType));
+        groups.set(room.roomType, group);
+      });
+      return Array.from(groups.values())
+        .map((group) => ({
+          roomType: group.roomType,
+          roomNames: group.roomNames.sort(),
+          seatTypes: sortSeatTypes(Array.from(group.seatTypes)),
+        }))
+        .sort((a, b) => a.roomType.localeCompare(b.roomType));
+    },
+    [selectedRoomIds, rooms, seatTypesByRoom],
+  );
+
+  useEffect(() => {
+    if (!token || selectedRoomIds.length === 0) {
+      queueMicrotask(() => setSeatTypesByRoom({}));
+      return;
+    }
+
+    let cancelled = false;
+    Promise.all(
+      selectedRoomIds.map(async (roomId) => {
+        const seats = await fetchSeatsByRoom(token, roomId);
+        const seatTypes = Array.from(
+          new Set(
+            seats
+              .filter((seat) => seat.entityStatus === "ACTIVE" && seat.seatType !== "AISLE")
+              .map((seat) => seat.seatType),
+          ),
+        );
+        return { roomId, seatTypes: sortSeatTypes(seatTypes) };
+      }),
+    )
+      .then((items) => {
+        if (cancelled) return;
+        const nextSeatTypesByRoom = Object.fromEntries(items.map((item) => [item.roomId, item.seatTypes]));
+        setSeatTypesByRoom(nextSeatTypesByRoom);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Không thể tải loại ghế của phòng đã chọn");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, selectedRoomIds, selectedRoomIdsKey]);
 
   const availableRoomsFor = useCallback(
     (planId: string) => {
@@ -184,10 +288,23 @@ export default function ProposeShowtimesPage() {
     [rooms, plans, chosenRoomIds],
   );
 
-  const handleAddPlan = () => setPlans((prev) => [...prev, { id: newPlanId(), roomId: null, assignments: [] }]);
+  const handleAddPlan = () =>
+    setPlans((prev) => {
+      if (prev.length >= rooms.length) {
+        toast.error("Đã mở đủ số phòng của rạp");
+        return prev;
+      }
+      return [...prev, { id: newPlanId(), roomId: null, assignments: [] }];
+    });
   const handleRemovePlan = (planId: string) => setPlans((prev) => prev.filter((p) => p.id !== planId));
   const handleChangeRoom = (planId: string, roomId: number | null) =>
-    setPlans((prev) => prev.map((p) => (p.id === planId ? { ...p, roomId, assignments: [] } : p)));
+    setPlans((prev) => {
+      if (roomId != null && prev.some((plan) => plan.id !== planId && plan.roomId === roomId)) {
+        toast.error("Phòng này đã được cấu hình ở dòng khác");
+        return prev;
+      }
+      return prev.map((p) => (p.id === planId ? { ...p, roomId, assignments: [] } : p));
+    });
   const handleAddMovie = (planId: string, movieId: number) =>
     setPlans((prev) =>
       prev.map((p) => (p.id === planId ? { ...p, assignments: [...p.assignments, { movieId, count: 1 }] } : p)),
@@ -222,9 +339,35 @@ export default function ProposeShowtimesPage() {
       .filter((p) => p.roomId != null && p.assignments.length > 0)
       .map((p) => ({ roomId: p.roomId as number, assignments: p.assignments }));
 
+    if (chosenRoomIds.size !== configuredPlanCount) {
+      toast.error("Mỗi phòng chỉ được cấu hình một lần");
+      return null;
+    }
+
     if (roomPlans.length === 0) {
       toast.error("Chọn ít nhất 1 phòng và ít nhất 1 phim cho phòng đó");
       return null;
+    }
+
+    const prices = selectedRoomIds.flatMap((roomId) => {
+      const room = rooms.find((item) => item.roomId === roomId);
+      if (!room?.roomType) return [];
+      return (seatTypesByRoom[roomId] || []).map((seatType) => ({
+        roomId,
+        roomType: room.roomType,
+        seatType,
+        price: manualPrices[manualPriceKey(room.roomType, seatType)] || 0,
+      }));
+    });
+    if (!usePricePolicy) {
+      if (prices.length === 0) {
+        toast.error("Không thể xác định loại ghế của các phòng đã chọn");
+        return null;
+      }
+      if (prices.some((item) => item.price <= 0)) {
+        toast.error("Vui lòng nhập giá lớn hơn 0 cho tất cả loại ghế của phòng");
+        return null;
+      }
     }
 
     return {
@@ -235,6 +378,8 @@ export default function ProposeShowtimesPage() {
       closeTime,
       roomPlans,
       dryRun,
+      usePricePolicy,
+      prices: usePricePolicy ? [] : prices,
     };
   };
 
@@ -415,6 +560,82 @@ export default function ProposeShowtimesPage() {
         </div>
       </div>
 
+      {cinemaId && (
+        <div className="bg-card border rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Chế độ giá</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Tự động dùng Bảng giá, hoặc nhập một bộ giá theo loại ghế của các phòng đã chọn.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={cn("text-sm", !usePricePolicy ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                Thủ công
+              </span>
+              <Switch checked={usePricePolicy} onCheckedChange={setUsePricePolicy} />
+              <span className={cn("text-sm", usePricePolicy ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                Tự động
+              </span>
+            </div>
+          </div>
+
+          {!usePricePolicy && (
+            <div className="space-y-3">
+              {selectedRoomTypePriceGroups.length === 0 ? (
+                <div className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
+                  Chọn phòng để hệ thống tải các loại ghế cần nhập giá.
+                </div>
+              ) : (
+                selectedRoomTypePriceGroups.map((group) => (
+                  <div key={group.roomType} className="rounded-lg border bg-muted/20 p-3 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">
+                        {formatRoomType(group.roomType)}
+                      </span>
+                      <Badge variant="outline" className="font-normal">
+                        {group.roomNames.join(", ")}
+                      </Badge>
+                    </div>
+                    {group.seatTypes.length === 0 ? (
+                      <div className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                        Chưa tải được loại ghế của phòng này.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {group.seatTypes.map((seatType) => {
+                          const key = manualPriceKey(group.roomType, seatType);
+                          return (
+                            <div key={key} className="space-y-2">
+                              <Label>{SEAT_TYPE_LABEL[seatType] || seatType}</Label>
+                              <NumericFormat
+                                customInput={Input}
+                                thousandSeparator="."
+                                decimalSeparator=","
+                                suffix="đ"
+                                allowNegative={false}
+                                placeholder="0đ"
+                                value={manualPrices[key] || ""}
+                                onValueChange={(values) =>
+                                  setManualPrices((current) => ({
+                                    ...current,
+                                    [key]: values.floatValue ?? 0,
+                                  }))
+                                }
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {isLoadingCinemaData ? (
         <div className="p-10 text-center text-muted-foreground">Đang tải dữ liệu phòng/phim...</div>
       ) : cinemaId ? (
@@ -425,7 +646,7 @@ export default function ProposeShowtimesPage() {
               Cấu hình theo phòng
             </h2>
             <Badge variant="secondary" className="font-normal">
-              {chosenRoomIds.size}/{rooms.length} phòng đã cấu hình
+              {configuredPlanCount}/{rooms.length} phòng đã cấu hình
             </Badge>
           </div>
 
@@ -451,17 +672,17 @@ export default function ProposeShowtimesPage() {
 
           <button
             type="button"
-            disabled={chosenRoomIds.size >= rooms.length}
+            disabled={plans.length >= rooms.length}
             onClick={handleAddPlan}
             className={cn(
               "w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed py-4 text-sm font-medium transition-colors",
-              chosenRoomIds.size >= rooms.length
+              plans.length >= rooms.length
                 ? "border-border/60 text-muted-foreground/60 cursor-not-allowed"
                 : "border-border text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 cursor-pointer",
             )}
           >
             <Plus className="h-4 w-4" />
-            {chosenRoomIds.size >= rooms.length ? "Đã cấu hình hết phòng của rạp" : "Thêm phòng"}
+            {plans.length >= rooms.length ? "Đã mở đủ số phòng của rạp" : "Thêm phòng"}
           </button>
         </div>
       ) : (

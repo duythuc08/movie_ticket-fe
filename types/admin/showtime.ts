@@ -96,6 +96,8 @@ export interface ShowTimeProposalRequest {
     closeTime: string; // HH:mm
     roomPlans: ProposalRoomPlan[];
     dryRun: boolean;
+    usePricePolicy?: boolean;
+    prices?: Array<{ roomId?: number; roomType: string; seatType: string; price: number }>;
     /** Khi có: admin đã kéo-thả chỉnh tay trong Preview — ghi thẳng, không tính lại thuật toán. */
     overrideShowtimes?: ShowTimeProposalOverrideItem[];
 }

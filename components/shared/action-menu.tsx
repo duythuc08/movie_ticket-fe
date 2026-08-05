@@ -47,7 +47,12 @@ export function ActionMenu({ actions }: ActionMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+          onClick={(event) => event.stopPropagation()}
+        >
           <span className="sr-only">Mở menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -71,7 +76,10 @@ function ActionMenuItem({ action }: { action: ActionItem }) {
   const Icon = action.icon;
   return (
     <DropdownMenuItem
-      onClick={action.onClick}
+      onClick={(event) => {
+        event.stopPropagation();
+        action.onClick();
+      }}
       disabled={action.disabled}
       className={cn(action.variant === "destructive" && "text-destructive focus:text-destructive")}
     >
