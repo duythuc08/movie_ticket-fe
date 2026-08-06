@@ -24,13 +24,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const BANNER_TYPE_FILTER = [
-  { label: "Phim",     value: "MOVIE" },
+  { label: "Phim", value: "MOVIE" },
   { label: "Sự kiện", value: "EVENT" },
 ];
 
 const ACTIVE_FILTER = [
-  { label: "Hiển thị", value: "true"  },
-  { label: "Ẩn",       value: "false" },
+  { label: "Hiển thị", value: "true" },
+  { label: "Ẩn", value: "false" },
 ];
 
 const PAGE_SIZE = 10;
@@ -38,15 +38,15 @@ const PAGE_SIZE = 10;
 export default function AdminBannersPage() {
   const { token } = useAuth();
 
-  const [banners,        setBanners]        = useState<AdminBanner[]>([]);
-  const [isLoading,      setIsLoading]      = useState(false);
-  const [isBulkOpen,     setIsBulkOpen]     = useState(false);
-  const [isEditOpen,     setIsEditOpen]     = useState(false);
-  const [isDetailOpen,   setIsDetailOpen]   = useState(false);
-  const [isDeleteOpen,   setIsDeleteOpen]   = useState(false);
+  const [banners, setBanners] = useState<AdminBanner[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedBanner, setSelectedBanner] = useState<AdminBanner | null>(null);
-  const [isSubmitting,   setIsSubmitting]   = useState(false);
-  const [isDeleting,     setIsDeleting]     = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -136,15 +136,15 @@ export default function AdminBannersPage() {
         finalImageUrl = await uploadFileAndGetUrl(token, data.imageUrl);
       }
       await updateBanner(token, selectedBanner.id, {
-        imageUrl:    finalImageUrl,
-        title:       data.title,
+        imageUrl: finalImageUrl,
+        title: data.title,
         description: data.description || undefined,
-        linkUrl:     data.linkUrl     || undefined,
-        priority:    data.priority,
-        active:      data.active,
-        bannerType:  data.bannerType,
-        movieId:     data.movieId    ?? undefined,
-        eventId:     data.eventId    ?? undefined,
+        linkUrl: data.linkUrl || undefined,
+        priority: data.priority,
+        active: data.active,
+        bannerType: data.bannerType,
+        movieId: data.movieId ?? undefined,
+        eventId: data.eventId ?? undefined,
       });
       toast.success(`Đã cập nhật banner "${data.title}"`);
       setIsEditOpen(false);
@@ -159,13 +159,36 @@ export default function AdminBannersPage() {
 
   async function handleToggleActive(banner: AdminBanner) {
     if (!token) return;
-    const nextState = banner.active ? "ẩn" : "hiển thị";
+    const isCurrentlyActive = banner.entityStatus === "ACTIVE";
+    const nextState = isCurrentlyActive ? "vô hiệu hóa" : "kích hoạt";
     try {
-      await toggleBannerActive(token, banner.id, banner.active);
+      await toggleBannerActive(token, banner.id, isCurrentlyActive);
       toast.success(`Đã ${nextState} banner "${banner.title}"`);
       loadBanners(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Không thể ${nextState} banner`);
+    }
+  }
+
+  async function handleToggleHome(banner: AdminBanner) {
+    if (!token) return;
+    const nextState = banner.active ? "ẩn khỏi trang chủ" : "hiển thị trên trang chủ";
+    try {
+      await updateBanner(token, banner.id, {
+        imageUrl: banner.imageUrl,
+        title: banner.title,
+        description: banner.description || undefined,
+        linkUrl: banner.linkUrl || undefined,
+        priority: banner.priority,
+        active: !banner.active,
+        bannerType: banner.bannerType,
+        movieId: banner.movies?.movieId ?? null,
+        eventId: banner.event?.id ?? null,
+      });
+      toast.success(`Đã ${nextState} banner "${banner.title}"`);
+      loadBanners(page);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : `Không thể thay đổi hiển thị banner`);
     }
   }
 
@@ -187,10 +210,11 @@ export default function AdminBannersPage() {
 
   const columns = useMemo(
     () => createBannerColumns({
-      onViewDetail:   handleViewDetail,
-      onEdit:         handleEdit,
-      onDelete:       handleDeleteClick,
+      onViewDetail: handleViewDetail,
+      onEdit: handleEdit,
+      onDelete: handleDeleteClick,
       onToggleActive: handleToggleActive,
+      onToggleHome: handleToggleHome,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [token]
@@ -296,7 +320,7 @@ export default function AdminBannersPage() {
           if (!open) setSelectedBanner(null);
         }}
         banner={selectedBanner}
-        onSubmit={async () => {}}
+        onSubmit={async () => { }}
         isSubmitting={false}
         readOnly
         onEdit={() => {

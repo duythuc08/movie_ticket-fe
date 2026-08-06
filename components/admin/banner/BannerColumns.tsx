@@ -18,6 +18,7 @@ interface BannerColumnActions {
   onEdit: (banner: AdminBanner) => void;
   onDelete: (banner: AdminBanner) => void;
   onToggleActive: (banner: AdminBanner) => void;
+  onToggleHome: (banner: AdminBanner) => void;
 }
 
 export function createBannerColumns(
@@ -83,14 +84,27 @@ export function createBannerColumns(
       ),
     },
     {
+      accessorKey: "entityStatus",
+      header: "Trạng thái",
+      cell: ({ row }) => {
+        const banner = row.original;
+        return (
+          <Switch
+            checked={banner.entityStatus === "ACTIVE"}
+            onCheckedChange={() => actions.onToggleActive(banner)}
+          />
+        );
+      },
+    },
+    {
       accessorKey: "active",
-      header: "Hoạt động",
+      header: "Hiện Trang Chủ",
       cell: ({ row }) => {
         const banner = row.original;
         return (
           <Switch
             checked={banner.active}
-            onCheckedChange={() => actions.onToggleActive(banner)}
+            onCheckedChange={() => actions.onToggleHome(banner)}
           />
         );
       },
@@ -111,12 +125,6 @@ export function createBannerColumns(
                 label: "Chỉnh sửa",
                 icon: Pencil,
                 onClick: () => actions.onEdit(banner),
-              },
-              {
-                label: banner.active ? "Ẩn banner" : "Hiển thị banner",
-                icon: banner.active ? PowerOff : Power,
-                onClick: () => actions.onToggleActive(banner),
-                variant: banner.active ? "destructive" : "default",
               },
             ]}
           />

@@ -1,4 +1,4 @@
-import type { AdminListQuery } from "./common";
+import type { EntityStatus, AdminListQuery } from "./common";
 
 export type BannerType = "MOVIE" | "EVENT";
 
@@ -22,6 +22,7 @@ export interface AdminBanner {
   linkUrl: string;
   priority: number;
   active: boolean;
+  entityStatus: EntityStatus;
   bannerType: BannerType;
   movies: AdminBannerMovie | null;
   event: AdminBannerEvent | null;

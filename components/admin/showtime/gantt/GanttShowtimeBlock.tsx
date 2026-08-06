@@ -51,11 +51,11 @@ const checkIsCrossDay = (ganttStartHour: number, startIso: string, endIso: strin
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  DRAFT:        "bg-violet-500/80 border-violet-500 border-dashed text-white",
-  SCHEDULED:    "bg-blue-500 border-blue-600 text-white",
-  ONGOING:      "bg-emerald-500 border-emerald-600 text-white",
-  COMPLETED:    "bg-slate-400 border-slate-500 text-white opacity-70",
-  CANCELLED:    "bg-red-400 border-red-500 text-white opacity-80",
+  DRAFT: "bg-violet-500/80 border-violet-500 border-dashed text-white",
+  SCHEDULED: "bg-blue-500 border-blue-600 text-white",
+  ONGOING: "bg-emerald-500 border-emerald-600 text-white",
+  COMPLETED: "bg-slate-400 border-slate-500 text-white opacity-70",
+  CANCELLED: "bg-red-400 border-red-500 text-white opacity-80",
   FULLY_BOOKED: "bg-orange-400 border-orange-500 text-white",
 };
 
@@ -167,21 +167,21 @@ export const GanttShowtimeBlock = ({
             className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              onApproveDraft?.(showtime);
+              onViewDetail?.(showtime);
             }}
           >
-            <Check className="w-4 h-4 mr-2" />
-            Duyệt suất này
+            <Eye className="w-4 h-4 mr-2" />
+            Xem chi tiết
           </DropdownMenuItem>
           <DropdownMenuItem
             className="focus:bg-slate-100 focus:text-slate-900 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              onEditDraftTime?.(showtime);
+              onApproveDraft?.(showtime);
             }}
           >
-            <Pencil className="w-4 h-4 mr-2" />
-            Sửa giờ
+            <Check className="w-4 h-4 mr-2" />
+            Duyệt suất này
           </DropdownMenuItem>
           <DropdownMenuItem
             className="focus:bg-red-50 focus:text-red-600 cursor-pointer text-red-600"

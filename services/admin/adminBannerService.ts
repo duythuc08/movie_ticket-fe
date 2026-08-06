@@ -29,10 +29,10 @@ export async function fetchAdminBanners(
   const titleFilterString = title ? buildLikeFilterString({ title }) : undefined;
   const combinedFilter = combineFilterStrings(filterString, titleFilterString);
 
-  const params: Record<string, string | number | undefined> = {
+  const params: Record<string, string | number | string[] | undefined> = {
     page,
     size,
-    sort: "priority,asc",
+    sort: ["active,desc", "priority,asc"],
   };
 
   if (combinedFilter) params.filter = combinedFilter;

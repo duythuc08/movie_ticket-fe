@@ -19,14 +19,18 @@ import { apiFetch } from "@/lib/fetchApi";
 export async function adminGet<T>(
   token: string,
   path: string,
-  queryParams?: Record<string, string | number | undefined>,
+  queryParams?: Record<string, string | number | string[] | undefined>,
 ): Promise<T> {
   const url = new URL(`${ADMIN_BASE}${path}`, window.location.origin);
 
   if (queryParams) {
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.set(key, String(value));
+        if (Array.isArray(value)) {
+          value.forEach((v) => url.searchParams.append(key, String(v)));
+        } else {
+          url.searchParams.set(key, String(value));
+        }
       }
     });
   }

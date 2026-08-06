@@ -153,20 +153,22 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
               <div className="p-12 text-center text-muted-foreground">Đang tải chi tiết...</div>
             ) : detail ? (
               <>
-                <div className="flex border-b bg-card sticky top-0 z-10 px-6 pt-4">
-                  <button 
-                    onClick={() => setActiveTab("general")} 
-                    className={cn("px-4 py-2 border-b-2 font-medium text-sm transition-colors", activeTab === "general" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
-                  >
-                    Thông tin chung
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab("seats")} 
-                    className={cn("px-4 py-2 border-b-2 font-medium text-sm transition-colors", activeTab === "seats" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
-                  >
-                    Sơ đồ ghế
-                  </button>
-                </div>
+                {detail.showTimeStatus !== "DRAFT" && (
+                  <div className="flex border-b bg-card sticky top-0 z-10 px-6 pt-4">
+                    <button 
+                      onClick={() => setActiveTab("general")} 
+                      className={cn("px-4 py-2 border-b-2 font-medium text-sm transition-colors", activeTab === "general" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
+                    >
+                      Thông tin chung
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab("seats")} 
+                      className={cn("px-4 py-2 border-b-2 font-medium text-sm transition-colors", activeTab === "seats" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
+                    >
+                      Sơ đồ ghế
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-6">
                   {activeTab === "general" && (

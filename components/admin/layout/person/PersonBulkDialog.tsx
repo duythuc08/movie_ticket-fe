@@ -182,10 +182,10 @@ export function PersonBulkDialog({ open, onOpenChange, onSubmit, isSubmitting }:
           <DialogHeader className="bg-muted/40 border-b border-border px-6 py-4 shrink-0 flex flex-row items-center justify-between space-y-0">
             <div className="space-y-1">
               <DialogTitle className="text-base font-bold">Thêm nhiều nhân sự</DialogTitle>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground flex items-center">
                 Thêm nhiều diễn viên / đạo diễn cùng lúc
                 <Badge variant="secondary" className="ml-2 rounded-full text-[10px] px-2">{fields.length}</Badge>
-              </p>
+              </div>
             </div>
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               <X size={16} />
