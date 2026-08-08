@@ -41,7 +41,15 @@ export default function AdminUsersPage() {
 
   const buildFilter = useCallback(() => {
     const parts: string[] = [];
-    if (keyword) parts.push(`username~'${keyword}'`);
+    if (keyword) {
+      const tokens = keyword.trim().split(/\s+/).filter(Boolean);
+      if (tokens.length > 0) {
+        const tokenClauses = tokens.map(
+          (t) => `(username~'${t}' or firstname~'${t}' or lastname~'${t}')`
+        );
+        parts.push(`(${tokenClauses.join(" and ")})`);
+      }
+    }
     if (statusFilter !== "all") parts.push(`userStatus:'${statusFilter}'`);
     return parts.join(" and ") || undefined;
   }, [keyword, statusFilter]);
@@ -147,7 +155,7 @@ export default function AdminUsersPage() {
             <SelectItem value="all">-- Tất cả --</SelectItem>
             <SelectItem value="UNVERIFIED">Chưa xác minh</SelectItem>
             <SelectItem value="VERIFIED">Đã xác minh</SelectItem>
-            <SelectItem value="BANNED">Bị cấm</SelectItem>
+            <SelectItem value="BANNED">Bị khóa</SelectItem>
           </SelectContent>
         </Select>
         <Button

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 const USER_STATUS_LABELS: Record<string, string> = {
   UNVERIFIED: "Chưa xác minh",
   VERIFIED:   "Đã xác minh",
-  BANNED:     "Bị cấm",
+  BANNED:     "Bị khóa",
 };
 
 const USER_STATUS_VARIANT: Record<string, string> = {

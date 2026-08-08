@@ -19,7 +19,7 @@ interface UserColumnsProps {
 const USER_STATUS_MAP: StatusMap = {
   UNVERIFIED: { label: "Chưa xác minh", variant: "warning"     },
   VERIFIED:   { label: "Đã xác minh",   variant: "success"     },
-  BANNED:     { label: "Bị cấm",        variant: "destructive" },
+  BANNED:     { label: "Bị khóa",        variant: "destructive" },
 };
 
 export const createUserColumns = ({

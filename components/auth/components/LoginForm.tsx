@@ -183,7 +183,6 @@ export function LoginForm() {
                     Đăng ký ngay
                   </Link>
                 </p>
-                <p className="text-xs text-white/40">Demo: admin@gmail.com / 123456</p>
                 <p className="text-[11px] text-white/40 leading-relaxed max-w-xs mx-auto">
                   Trang này được bảo vệ bởi reCAPTCHA của Google.{" "}
                   <Link href="#" className="underline hover:text-white/70">Privacy Policy</Link>
