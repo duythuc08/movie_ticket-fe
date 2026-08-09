@@ -16,6 +16,19 @@ const getTypeColor = (seatType: string): string => {
   }
 };
 
+const SEAT_TYPE_VI: Record<string, string> = {
+  STANDARD: "Thường",
+  VIP: "VIP",
+  COUPLE: "Đôi",
+};
+
+const SEAT_STATUS_VI: Record<string, string> = {
+  AVAILABLE: "Còn trống",
+  RESERVED: "Đặt trước",
+  SOLD: "Đã bán",
+  BLOCKED: "Khóa",
+};
+
 const getStatusColor = (status: string): string | null => {
   switch (status) {
     case "SOLD":     return "bg-red-400 border-red-500 text-white";
@@ -95,7 +108,7 @@ export const AdminSeatGrid = ({ items }: AdminSeatGridProps) => {
                   return (
                     <div
                       key={seat.seatId}
-                      title={`${label} – ${seat.seatType} – ${seat.seatShowTimeStatus}`}
+                      title={`${label} – Ghế ${SEAT_TYPE_VI[seat.seatType] ?? seat.seatType} – ${SEAT_STATUS_VI[seat.seatShowTimeStatus] ?? seat.seatShowTimeStatus}`}
                       style={{ gridColumn: seat.seatNumber }}
                       className={cn(
                         "w-10 h-10 flex items-center justify-center border rounded-t-lg text-[9px] font-bold select-none",

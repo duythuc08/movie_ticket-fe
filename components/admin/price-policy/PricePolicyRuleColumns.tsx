@@ -66,16 +66,19 @@ export const createPricePolicyRuleColumns = ({
     {
       accessorKey: "roomType",
       header: "Loại phòng",
-      cell: ({ row }) => <span className="text-sm">{ROOM_TYPE_LABEL[row.original.roomType]}</span>,
+      filterFn: "equals",
+      cell: ({ row }) => <span className="text-sm font-medium">{ROOM_TYPE_LABEL[row.original.roomType] ?? row.original.roomType}</span>,
     },
     {
       accessorKey: "seatType",
       header: "Loại ghế",
-      cell: ({ row }) => <span className="text-sm">{SEAT_TYPE_LABEL[row.original.seatType]}</span>,
+      filterFn: "equals",
+      cell: ({ row }) => <span className="text-sm font-medium">{SEAT_TYPE_LABEL[row.original.seatType] ?? row.original.seatType}</span>,
     },
     {
       accessorKey: "ruleType",
       header: "Loại rule",
+      filterFn: "equals",
       cell: ({ row }) => <StatusBadge status={row.original.ruleType} statusMap={RULE_TYPE_MAP} />,
     },
     {

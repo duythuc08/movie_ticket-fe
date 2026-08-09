@@ -205,22 +205,30 @@ export function DataTable<TData>({
 
         {filters?.map((filter) => {
           const currentFilterValue = (table.getColumn(filter.key)?.getFilterValue() as string) || "__all__";
+          const selectedOption = filter.options.find((opt) => opt.value === currentFilterValue);
           return (
             <Select
               key={`${filter.key}-${filterKey}`}
               value={currentFilterValue}
               onValueChange={(value) => handleFilterChange(filter.key, value)}
             >
-              <SelectTrigger className="w-45">
-                <SelectValue placeholder={filter.label} />
+              <SelectTrigger className="w-auto min-w-[170px] h-9 px-3 gap-2">
+                <div className="flex items-center gap-1.5 truncate text-sm">
+                  <span className="text-muted-foreground font-normal">{filter.label}:</span>
+                  <span className="font-medium text-foreground">
+                    {currentFilterValue === "__all__"
+                      ? "Tất cả"
+                      : (selectedOption?.label ?? currentFilterValue)}
+                  </span>
+                </div>
               </SelectTrigger>
               <SelectContent data-admin="">
+                <SelectItem value="__all__">Tất cả {filter.label.toLowerCase()}</SelectItem>
                 {filter.options.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
                 ))}
-                <SelectItem value="__all__">Tất cả</SelectItem>
               </SelectContent>
             </Select>
           );

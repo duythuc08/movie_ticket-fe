@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ConfirmDialog } from "@/components/shared";
+import { ConfirmDialog, StatusBadge, type StatusMap } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { adminShowtimeService } from "@/services/admin/adminShowtimeService";
@@ -13,6 +13,21 @@ import { AdminSeatGrid } from "./AdminSeatGrid";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { X, MonitorPlay, Film, Building2, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const STATUS_MAP: StatusMap = {
+  DRAFT:        { label: "Bản nháp",    variant: "secondary" },
+  SCHEDULED:    { label: "Đã lên lịch", variant: "upcoming" },
+  ONGOING:      { label: "Đang chiếu",  variant: "warning" },
+  COMPLETED:    { label: "Đã xong",     variant: "success" },
+  CANCELLED:    { label: "Đã huỷ",      variant: "destructive" },
+  FULLY_BOOKED: { label: "Full ghế",    variant: "default" },
+};
+
+const SEAT_TYPE_LABELS: Record<string, string> = {
+  STANDARD: "Ghế thường",
+  VIP: "Ghế VIP",
+  COUPLE: "Ghế đôi",
+};
 
 interface ShowtimeDetailDialogProps {
   open: boolean;
@@ -192,7 +207,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                           </div>
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Trạng thái</p>
-                            <Badge variant="outline" className="font-bold">{detail.showTimeStatus}</Badge>
+                            <StatusBadge status={detail.showTimeStatus} statusMap={STATUS_MAP} />
                           </div>
                           <div>
                             <p className="text-muted-foreground text-xs font-medium mb-1 uppercase tracking-wider">Bắt đầu</p>
@@ -224,7 +239,7 @@ export const ShowtimeDetailDialog = ({ open, onOpenChange, showTimeId, onRefresh
                             <tbody>
                               {detail.prices?.map((price) => (
                                 <tr key={price.id ?? price.seatType} className="border-b hover:bg-muted/30 transition-colors">
-                                  <td className="p-2 font-medium">{price.seatType}</td>
+                                  <td className="p-2 font-medium">{SEAT_TYPE_LABELS[price.seatType] ?? price.seatType}</td>
                                   <td className="p-2 text-right">
                                     <ShowtimePriceEdit
                                       showTimeId={detail.showTimeId}
